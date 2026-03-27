@@ -102,6 +102,107 @@ def row_to_dict(cursor, row) -> dict:
     return {col[0]: serialize(val) for col, val in zip(cursor.description, row)}
 
 
+def resolve_identity(cursor, user_id: str, fbclid: Optional[str] = None, buyer_id: Optional[str] = None) -> str:
+    """
+    Cross-site / cross-browser identity resolution.
+    Returns the canonical user_id (oldest known) and remaps all events if a match is found.
+    Priority: fbclid (cross-site, no conversion needed) → buyer_id (cross-browser, at conversion)
+    """
+    canonical = None
+
+    # 1. fbclid — same Facebook ad click = same person, works cross-site before conversion
+    if fbclid:
+        cursor.execute(
+            """
+            SELECT TOP 1 user_id FROM user_events
+            WHERE fbclid = %s AND user_id != %s
+            ORDER BY timestamp ASC
+            """,
+            (fbclid, user_id)
+        )
+        row = cursor.fetchone()
+        if row:
+            canonical = row[0]
+
+    # 2. buyer_id — Digistore permanent ID, only available at conversion
+    if not canonical and buyer_id:
+        cursor.execute(
+            """
+            SELECT TOP 1 user_id FROM conversions
+            WHERE buyer_id = %s AND user_id != %s
+            ORDER BY timestamp ASC
+            """,
+            (buyer_id, user_id)
+        )
+        row = cursor.fetchone()
+        if row:
+            canonical = row[0]
+
+    if canonical:
+        print(f"[identity] Merging {user_id} → {canonical} (fbclid={fbclid}, buyer_id={buyer_id})")
+
+        # 1. Remap all pageviews / actions to canonical
+        cursor.execute(
+            "UPDATE user_events SET user_id = %s WHERE user_id = %s",
+            (canonical, user_id)
+        )
+
+        # 2. Merge user_profiles: absorb stale counts into canonical, then delete stale
+        cursor.execute(
+            "SELECT total_pageviews, total_conversions, total_revenue, domains_visited, first_seen "
+            "FROM user_profiles WHERE user_id = %s",
+            (user_id,)
+        )
+        stale = cursor.fetchone()
+
+        if stale:
+            stale_pv, stale_cv, stale_rev, stale_doms, stale_first = stale
+            try:
+                stale_doms_list = json.loads(stale_doms or "[]")
+            except Exception:
+                stale_doms_list = []
+
+            cursor.execute(
+                "SELECT domains_visited, first_seen FROM user_profiles WHERE user_id = %s",
+                (canonical,)
+            )
+            canon_row = cursor.fetchone()
+            if canon_row:
+                try:
+                    canon_doms_list = json.loads(canon_row[0] or "[]")
+                except Exception:
+                    canon_doms_list = []
+
+                # Merge domain lists (deduplicate, preserve order)
+                merged_doms = canon_doms_list + [d for d in stale_doms_list if d not in canon_doms_list]
+
+                # Keep the earliest first_seen across both profiles
+                candidates = [t for t in [canon_row[1], stale_first] if t is not None]
+                new_first = min(candidates) if candidates else datetime.utcnow()
+
+                cursor.execute(
+                    """
+                    UPDATE user_profiles SET
+                        total_pageviews   = total_pageviews   + %s,
+                        total_conversions = total_conversions + %s,
+                        total_revenue     = COALESCE(total_revenue, 0) + %s,
+                        domains_visited   = %s,
+                        first_seen        = %s,
+                        updated_at        = %s
+                    WHERE user_id = %s
+                    """,
+                    (stale_pv or 0, stale_cv or 0, stale_rev or 0,
+                     json.dumps(merged_doms), new_first, datetime.utcnow(), canonical)
+                )
+
+            # Remove the stale profile now that it's been absorbed
+            cursor.execute("DELETE FROM user_profiles WHERE user_id = %s", (user_id,))
+
+        return canonical
+
+    return user_id
+
+
 def upsert_profile(
     cursor,
     user_id: str,
@@ -118,8 +219,8 @@ def upsert_profile(
     now = ts or datetime.utcnow()
 
     cursor.execute(
-        "SELECT domains_visited, first_touch_slug FROM user_profiles WHERE user_id = ?",
-        user_id
+        "SELECT domains_visited, first_touch_slug FROM user_profiles WHERE user_id = %s",
+        (user_id,)
     )
     row = cursor.fetchone()
 
@@ -132,14 +233,14 @@ def upsert_profile(
                 (user_id, first_seen, last_seen, total_pageviews, total_conversions,
                  total_revenue, domains_visited, first_touch_slug, last_touch_slug,
                  country, device_type, created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """,
-            user_id, now, now,
+            (user_id, now, now,
             1 if is_pageview else 0,
             1 if is_conversion else 0,
             value if is_conversion else 0,
             domains, slug, slug,
-            country, device_type, now, now
+            country, device_type, now, now)
         )
     else:
         # Existing user → UPDATE
@@ -155,26 +256,26 @@ def upsert_profile(
             cursor.execute(
                 """
                 UPDATE user_profiles SET
-                    last_seen           = ?,
+                    last_seen           = %s,
                     total_pageviews     = total_pageviews + 1,
-                    last_touch_slug     = COALESCE(?, last_touch_slug),
-                    domains_visited     = ?,
-                    updated_at          = ?
-                WHERE user_id = ?
+                    last_touch_slug     = COALESCE(%s, last_touch_slug),
+                    domains_visited     = %s,
+                    updated_at          = %s
+                WHERE user_id = %s
                 """,
-                now, slug, json.dumps(domains_list), now, user_id
+                (now, slug, json.dumps(domains_list), now, user_id)
             )
         elif is_conversion:
             cursor.execute(
                 """
                 UPDATE user_profiles SET
-                    last_seen           = ?,
+                    last_seen           = %s,
                     total_conversions   = total_conversions + 1,
-                    total_revenue       = COALESCE(total_revenue, 0) + ?,
-                    updated_at          = ?
-                WHERE user_id = ?
+                    total_revenue       = COALESCE(total_revenue, 0) + %s,
+                    updated_at          = %s
+                WHERE user_id = %s
                 """,
-                now, value, now, user_id
+                (now, value, now, user_id)
             )
 
 
@@ -222,6 +323,7 @@ class ConversionPayload(BaseModel):
     vat_amount:                 Optional[float] = None
     transaction_id:             Optional[str]   = None
     tags:                       Optional[str]   = None
+    buyer_id:                   Optional[str]   = None   # Digistore permanent buyer ID
 
 
 class ActionPayload(BaseModel):
@@ -247,24 +349,27 @@ async def track_pageview(payload: PageviewPayload, request: Request):
         conn = get_conn()
         c    = conn.cursor()
 
+        # fbclid-based cross-site identity resolution
+        uid = resolve_identity(c, payload.user_id, fbclid=payload.fbclid)
+
         c.execute(
             """
             INSERT INTO user_events
                 (user_id, event_type, domain, url, slug, referrer,
                  utm_source, utm_medium, utm_campaign, utm_content, utm_term, utm_id, fbclid,
                  device_type, browser, os, screen_resolution, language, country, timestamp)
-            VALUES (?,?,?,?,?,?, ?,?,?,?,?,?,?, ?,?,?,?,?,?,?)
+            VALUES (%s,%s,%s,%s,%s,%s, %s,%s,%s,%s,%s,%s,%s, %s,%s,%s,%s,%s,%s,%s)
             """,
-            payload.user_id, "pageview",
+            (uid, "pageview",
             payload.domain, payload.url, payload.slug, payload.referrer,
             payload.utm_source, payload.utm_medium, payload.utm_campaign,
             payload.utm_content, payload.utm_term, payload.utm_id, payload.fbclid,
             payload.device_type, payload.browser, payload.os,
-            payload.screen_resolution, payload.language, payload.country, ts
+            payload.screen_resolution, payload.language, payload.country, ts)
         )
 
         upsert_profile(
-            c, payload.user_id, is_pageview=True,
+            c, uid, is_pageview=True,
             slug=payload.slug, domain=payload.domain,
             country=payload.country, device_type=payload.device_type, ts=ts
         )
@@ -293,10 +398,13 @@ async def track_conversion(payload: ConversionPayload, request: Request):
         c    = conn.cursor()
 
         # Skip duplicate orders
-        c.execute("SELECT id FROM conversions WHERE order_id = ?", payload.order_id)
+        c.execute("SELECT id FROM conversions WHERE order_id = %s", (payload.order_id,))
         if c.fetchone():
             conn.close()
             return {"success": True, "note": "duplicate_skipped"}
+
+        # Identity resolution — fbclid (cross-site) + buyer_id (cross-browser)
+        uid = resolve_identity(c, uid, buyer_id=payload.buyer_id)
 
         # Calculate time_to_conversion if frontend didn't provide it
         ttc = payload.time_to_conversion_minutes
@@ -304,10 +412,10 @@ async def track_conversion(payload: ConversionPayload, request: Request):
             c.execute(
                 """
                 SELECT TOP 1 timestamp FROM user_events
-                WHERE user_id = ? AND event_type = 'pageview'
+                WHERE user_id = %s AND event_type = 'pageview'
                 ORDER BY timestamp ASC
                 """,
-                uid
+                (uid,)
             )
             r = c.fetchone()
             if r and r[0]:
@@ -320,10 +428,10 @@ async def track_conversion(payload: ConversionPayload, request: Request):
             c.execute(
                 """
                 SELECT TOP 1 slug FROM user_events
-                WHERE user_id = ? AND event_type = 'pageview' AND slug IS NOT NULL
+                WHERE user_id = %s AND event_type = 'pageview' AND slug IS NOT NULL
                 ORDER BY timestamp ASC
                 """,
-                uid
+                (uid,)
             )
             r = c.fetchone()
             if r:
@@ -333,12 +441,12 @@ async def track_conversion(payload: ConversionPayload, request: Request):
             """
             INSERT INTO conversions
                 (user_id, order_id, product_name, product_id, value, currency,
-                 domain, attribution_slug, time_to_conversion_minutes, timestamp)
-            VALUES (?,?,?,?,?,?,?,?,?,?)
+                 domain, attribution_slug, time_to_conversion_minutes, timestamp, buyer_id)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """,
-            uid, payload.order_id, payload.product_name, payload.product_id,
+            (uid, payload.order_id, payload.product_name, payload.product_id,
             payload.value, payload.currency, payload.domain,
-            slug, ttc, ts
+            slug, ttc, ts, payload.buyer_id)
         )
 
         upsert_profile(c, uid, is_conversion=True, value=payload.value or 0, ts=ts)
@@ -371,11 +479,11 @@ async def track_action(payload: ActionPayload, request: Request):
         c.execute(
             """
             INSERT INTO user_events (user_id, event_type, domain, url, timestamp, metadata)
-            VALUES (?,?,?,?,?,?)
+            VALUES (%s,%s,%s,%s,%s,%s)
             """,
-            payload.user_id, payload.event_type or "custom_event",
+            (payload.user_id, payload.event_type or "custom_event",
             payload.domain, payload.url, ts,
-            json.dumps(meta) if meta else None
+            json.dumps(meta) if meta else None)
         )
         conn.close()
 
@@ -426,9 +534,9 @@ async def track_pixel(
         c.execute(
             """
             INSERT INTO user_events (user_id, event_type, domain, url, slug, timestamp, metadata)
-            VALUES (?,?,?,?,?,?,?)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
             """,
-            user_id, event_type, domain, url, slug, ts, json.dumps(meta)
+            (user_id, event_type, domain, url, slug, ts, json.dumps(meta))
         )
 
         if event_type == "pageview":
@@ -473,11 +581,11 @@ async def track_beacon(request: Request, api_key: Optional[str] = Query(None)):
         c.execute(
             """
             INSERT INTO user_events (user_id, event_type, domain, url, slug, timestamp, metadata)
-            VALUES (?,?,?,?,?,?,?)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
             """,
-            uid, event_type,
+            (uid, event_type,
             data.get("domain"), data.get("url"), data.get("slug"),
-            ts, json.dumps(meta)
+            ts, json.dumps(meta))
         )
 
         if event_type == "pageview":
@@ -510,24 +618,24 @@ async def get_user_journey(
         conn = get_conn()
         c    = conn.cursor()
 
-        c.execute("SELECT * FROM user_profiles WHERE user_id = ?", user_id)
+        c.execute("SELECT * FROM user_profiles WHERE user_id = %s", (user_id,))
         profile_row = c.fetchone()
         profile     = row_to_dict(c, profile_row) if profile_row else {}
 
         c.execute(
             """
-            SELECT TOP (?) event_type, domain, url, slug, utm_content, timestamp, metadata
+            SELECT TOP (%s) event_type, domain, url, slug, utm_content, timestamp, metadata
             FROM user_events
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY timestamp ASC
             """,
-            limit, user_id
+            (limit, user_id)
         )
         events = [row_to_dict(c, r) for r in c.fetchall()]
 
         c.execute(
-            "SELECT * FROM conversions WHERE user_id = ? ORDER BY timestamp ASC",
-            user_id
+            "SELECT * FROM conversions WHERE user_id = %s ORDER BY timestamp ASC",
+            (user_id,)
         )
         conversions = [row_to_dict(c, r) for r in c.fetchall()]
 

@@ -545,6 +545,10 @@
 	async function trackConversion(conversionData = {}) {
 		const trafficSource = getTrafficSource();
 
+		// Extract Digistore buyer_id from URL — persistent cross-browser identifier
+		const urlParams = new URLSearchParams(window.location.search);
+		const buyerId = urlParams.get('buyer_id') || null;
+
 		const payload = {
 			user_id: await getUserId(),
 			order_id: conversionData.order_id || null,
@@ -556,7 +560,8 @@
 			conversion_page: window.location.href,
 			timestamp: new Date().toISOString(),
 			attribution_slug: trafficSource.slug,
-			time_to_conversion_minutes: null // Backend poate calcula
+			time_to_conversion_minutes: null, // Backend poate calcula
+			buyer_id: buyerId
 		};
 
 		await sendEvent('/api/conversions', payload);
