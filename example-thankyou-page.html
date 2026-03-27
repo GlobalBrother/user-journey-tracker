@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mulțumim pentru comandă! | Upsell 1</title>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- IMPORTANT: Această pagină este UPSELL 1                            -->
+    <!-- Servește ca Thank You Page pentru produsul MAIN de pe Landing Page -->
+    <!-- Digistore24 face redirect aici după plata inițială                 -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <!-- USER JOURNEY TRACKER - CONFIGURARE + INCLUDE SCRIPT                        -->
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+    <script>
+    // STEP 1: Configurare tracker (aceeași ca pe landing pages)
+    window.AC_CONFIG = {
+        API_ENDPOINT: 'https://your-backend.azurewebsites.net',  // URL backend
+        API_KEY: 'your-api-key-here',                             // API key
+        CHECKOUT_DOMAINS: ['digistore24.com', 'thrivecart.com'],
+        DEBUG_MODE: true  // false în producție, true pentru testing
+    };
+    </script>
+
+    <!-- STEP 2: Include tracker script -->
+    <script src="app-core.js" defer></script>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 80px;
+            color: #4CAF50;
+        }
+        .order-details {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="success-icon">✓</div>
+<h1>Mulțumim pentru comandă!</h1>
+<p>Comanda ta a fost înregistrată cu succes.</p>
+
+<div class="order-details">
+    <h2>Detalii comandă:</h2>
+    <p><strong>Număr comandă:</strong> <span id="order-id">ORDER-123456</span></p>
+    <p><strong>Produs:</strong> <span id="product-name">Fire Cider - Amish Recipe</span></p>
+    <p><strong>Valoare:</strong> <span id="order-value">47.00</span> EUR</p>
+</div>
+
+<p>Vei primi un email de confirmare în câteva minute.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CONVERSION TRACKING - Automat din URL parameters                           -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<script>
+window.addEventListener('load', function() {
+
+    // Helper: Extrage parametri din URL
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: Extrage detalii comandă DINAMIC din URL (format Digistore24)
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // Digistore24 trimite acești parametri în URL când face redirect către Upsell:
+    // - order_id: Order ID (ex: 5EKWWSXL)
+    // - product_id / digistore_initial_product_id: Product ID (ex: 640053)
+    // - product_name: Product Name (URL encoded, ex: Forgotten+Home+Apothecary...)
+    // - amount: Total order value cu VAT (ex: 51.16)
+    // - net_amount: Order value fără VAT (ex: 46.99)
+    // - vat_amount: VAT amount (ex: 4.17)
+    // - currency: Currency (EUR, USD, etc.)
+    // - custom: User ID + Facebook data (URL encoded: user_id---_fbc%3D...)
+    //
+    // TOATE aceste valori sunt EXTRASE DINAMIC - ZERO hardcoding!
+
+    // Extrage Order ID DINAMIC din URL (Digistore24 folosește 'order_id')
+    const orderId = getUrlParameter('order_id') ||
+                    getUrlParameter('order') ||
+                    getUrlParameter('transaction_id') ||
+                    'UNKNOWN';
+
+    // Extrage Product ID DINAMIC din URL (diferit pentru fiecare produs)
+    const productId = getUrlParameter('product_id') ||
+                      getUrlParameter('digistore_initial_product_id') ||
+                      '';
+
+    // Extrage Product Name DINAMIC și decode URL encoding
+    const productNameRaw = getUrlParameter('product_name') || 'Unknown Product';
+    const productName = decodeURIComponent(productNameRaw.replace(/\+/g, ' '));
+
+    // ⭐ IMPORTANT: Extrage ORDER VALUE (prețul) DINAMIC din URL
+    // Digistore24 trimite:
+    // - amount: Total CU VAT (recomandat pentru tracking - ce a plătit user-ul efectiv)
+    // - net_amount: Total FĂRĂ VAT
+    // - vat_amount: Doar VAT-ul
+    const orderValue = parseFloat(
+        getUrlParameter('amount') ||          // Total cu VAT (RECOMANDAT)
+        getUrlParameter('net_amount') ||      // Total fără VAT
+        getUrlParameter('order_value') ||     // Alternativ
+        '0.00'
+    );
+
+    // Extrage Currency DINAMIC
+    const currency = getUrlParameter('currency') || 'EUR';
+
+    // Additional Digistore24 fields (optional pentru metadata)
+    const netAmount = parseFloat(getUrlParameter('net_amount') || '0');
+    const vatAmount = parseFloat(getUrlParameter('vat_amount') || '0');
+    const transactionId = getUrlParameter('transaction_id') || '';
+    const buyerEmail = getUrlParameter('buyer_email') || '';
+
+    // ⭐ CRITICAL: Extrage User ID din parametrul 'custom' (format: user_id---_fbc=...)
+    // IMPORTANT: Parametrul este URL encoded, trebuie decodat!
+    const customParamRaw = getUrlParameter('custom') || '';
+    let trackingUserId = null;
+
+    if (customParamRaw) {
+        try {
+            // Decode URL encoding (ex: %3D → =, %2B → +)
+            const customParam = decodeURIComponent(customParamRaw);
+
+            // Extrage user_id din format: "user_id---_fbc=..."
+            const parts = customParam.split('---');
+            trackingUserId = parts[0]; // Prima parte e user_id
+
+            console.log('✅ User ID extracted from custom parameter:', trackingUserId);
+            console.log('📊 Full custom data:', customParam.substring(0, 100) + '...');
+        } catch (err) {
+            console.error('❌ Failed to decode custom parameter:', err);
+        }
+    } else {
+        console.warn('⚠️ Custom parameter missing - conversion attribution might be lost');
+        console.warn('⚠️ Backend will try to match using product_id + timestamp from checkout_initiated event');
+    }
+
+    // Optional: Afișează în pagină
+    document.getElementById('order-id').textContent = orderId;
+    document.getElementById('product-name').textContent = productName;
+    document.getElementById('order-value').textContent = orderValue.toFixed(2);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Track conversion când tracker-ul este loaded
+    // ═══════════════════════════════════════════════════════════════════════
+
+    if (window.AppCore) {
+        trackConversion();
+    } else {
+        // Așteaptă până se încarcă tracker-ul (max 5 secunde)
+        let attempts = 0;
+        const checkTracker = setInterval(function() {
+            attempts++;
+            if (window.AppCore) {
+                clearInterval(checkTracker);
+                trackConversion();
+            } else if (attempts > 50) {
+                clearInterval(checkTracker);
+                console.error('AppCore failed to load');
+            }
+        }, 100);
+    }
+
+    function trackConversion() {
+        // Track conversion conform API-SPECIFICATION.md
+        //
+        // IMPORTANT: Backend-ul va folosi 'tracking_user_id' din URL (custom parameter)
+        // pentru matching dacă există. Dacă nu există, va folosi fingerprint user_id
+        // și va face matching cu checkout_initiated event (product_id + timestamp).
+
+        console.log('📊 Tracking conversion with data:', {
+            order_id: orderId,
+            product_id: productId,
+            product_name: productName,
+            value: orderValue,
+            currency: currency,
+            tracking_user_id: trackingUserId
+        });
+
+        AppCore.trackConversion({
+            order_id: orderId,
+            product_id: productId,
+            product_name: productName,
+            value: orderValue,              // Total cu VAT (ce a plătit user-ul efectiv)
+            currency: currency,
+
+            // ⭐ CRITICAL: User ID din custom parameter (pentru matching în backend)
+            tracking_user_id: trackingUserId,
+
+            // Optional: Digistore24 specific fields pentru raportare detaliată
+            net_amount: netAmount,           // Total fără VAT
+            vat_amount: vatAmount,           // VAT amount
+            transaction_id: transactionId,   // Digistore24 transaction ID
+            buyer_email: buyerEmail,         // Email cumpărător (optional, criptat în URL)
+            payment_type: getUrlParameter('billing_status') || 'completed',
+            affiliate_id: getUrlParameter('affiliate_id') || null,
+            tags: getUrlParameter('tags') || 'MAIN'  // Ex: MAIN, UPSELL1, UPSELL2
+        });
+
+        console.log('✅ Conversion tracked successfully!');
+        console.log('📈 Order:', orderId, '| Product:', productId, '| Value:', orderValue, currency);
+
+        // Optional: Trimite și către Meta Conversion API sau alte platforme
+        sendToMetaConversionAPI({
+            event_name: 'Purchase',
+            event_id: 'purchase_' + orderId,
+            value: orderValue,
+            currency: currency
+        });
+    }
+
+    // Optional: Meta Conversion API
+    function sendToMetaConversionAPI(data) {
+        // Implementează trimis către server care face call la Meta CAPI
+        fetch('/api/meta-conversion', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        }).catch(err => console.error('Failed to send to Meta:', err));
+    }
+});
+</script>
+
+<!-- Optional: Facebook Pixel pentru verificare -->
+<script>
+// Facebook Pixel Code (dacă îl folosești)
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+
+// Înlocuiește cu Pixel ID-ul tău
+fbq('init', 'YOUR_PIXEL_ID');
+fbq('track', 'Purchase', {
+    value: 47.00,
+    currency: 'EUR'
+});
+</script>
+
+</body>
+</html>
