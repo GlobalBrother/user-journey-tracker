@@ -22,10 +22,14 @@
 	const CONFIG = {
 		// URL-ul backend-ului (fără trailing slash)
 		// LOCAL: 'http://localhost:8000'  |  PRODUCTIE: 'https://user-tracking-api.azurewebsites.net'
-		API_ENDPOINT: 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net',
+
+		// API_ENDPOINT: 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net',
+		// API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1',
+
+		API_ENDPOINT: 'https://nonphotographically-valgus-gertude.ngrok-free.dev',
 
 		// API Key pentru autentificare (gol = dezactivat)
-		API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1',
+		API_KEY: '',
 
 		// Domenii de checkout unde să adaugi user_id în URL
 		CHECKOUT_DOMAINS: ['digistore24.com', 'thrivecart.com'],

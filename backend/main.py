@@ -15,9 +15,10 @@ Endpoints:
 from fastapi import FastAPI, Request, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Any, Dict
-import pyodbc
+import pymssql
 import json
 import base64
 import os
@@ -34,18 +35,8 @@ load_dotenv()
 API_KEY     = os.getenv("API_KEY", "change-me")
 DB_USER     = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-CONN_STR = (
-    "Driver={ODBC Driver 18 for SQL Server};"
-    "Server=tcp:gb-ads-sql-server.database.windows.net,1433;"
-    "Database=userTracker;"
-    f"Uid={DB_USER};"
-    f"Pwd={DB_PASSWORD};"
-    "Encrypt=yes;"
-    "TrustServerCertificate=no;"
-    "Connection Timeout=30;"
-    "Authentication=ActiveDirectoryPassword"
-)
+DB_HOST     = "gb-ads-sql-server.database.windows.net"
+DB_NAME     = "userTracker"
 
 # 1x1 transparent GIF pixel
 PIXEL_GIF = base64.b64decode(
@@ -71,7 +62,15 @@ app.add_middleware(
 # ══════════════════════════════════════════════════════════════════════
 
 def get_conn():
-    return pyodbc.connect(CONN_STR, autocommit=True)
+    return pymssql.connect(
+        server=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        login_timeout=30,
+        as_dict=False,
+        autocommit=True
+    )
 
 
 def check_key(request: Request, query_key: Optional[str] = None):
@@ -565,3 +564,29 @@ async def health():
         "db":        db_status,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+# ══════════════════════════════════════════════════════════════════════
+# META CONVERSION API PROXY
+# ══════════════════════════════════════════════════════════════════════
+
+class MetaConversionPayload(BaseModel):
+    event_name: str
+    event_id: Optional[str] = None
+    value: Optional[float] = None
+    currency: Optional[str] = None
+    extra: Optional[Dict[str, Any]] = None
+
+@app.post("/api/meta-conversion", status_code=200)
+async def meta_conversion(payload: MetaConversionPayload, request: Request):
+    """
+    Stub for Meta Conversion API proxy.
+    Wire up real Meta CAPI call here when Pixel ID + access token are available.
+    """
+    print(f"[meta-conversion] {payload.event_name} | id={payload.event_id} | value={payload.value} {payload.currency}")
+    return {"status": "received", "event_name": payload.event_name}
+
+# ══════════════════════════════════════════════════════════════════════
+# STATIC FILES — serve HTML test pages (must be last, after all routes)
+# ══════════════════════════════════════════════════════════════════════
+_STATIC_DIR = os.path.join(os.path.dirname(__file__), "..")
+app.mount("/", StaticFiles(directory=_STATIC_DIR, html=True), name="static")
