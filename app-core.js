@@ -21,15 +21,10 @@
 
 	const CONFIG = {
 		// URL-ul backend-ului (fără trailing slash)
-		// LOCAL: 'http://localhost:8000'  |  PRODUCTIE: 'https://user-tracking-api.azurewebsites.net'
+		API_ENDPOINT: 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net',
 
-		// API_ENDPOINT: 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net',
-		// API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1',
-
-		API_ENDPOINT: 'https://nonphotographically-valgus-gertude.ngrok-free.dev',
-
-		// API Key pentru autentificare (gol = dezactivat)
-		API_KEY: '',
+		// API Key pentru autentificare
+		API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1',
 
 		// Domenii de checkout unde să adaugi user_id în URL
 		CHECKOUT_DOMAINS: ['digistore24.com', 'thrivecart.com'],
@@ -161,12 +156,28 @@
 		return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 	}
 
+	/**
+	 * Calculează cohort_id = SHA-256(utm_campaign|utm_source|utm_medium|timezone|device_type|language)
+	 * Grupează useri din același audience chiar dacă user_id diferă (Safari, cross-domain).
+	 */
+	async function calculateCohortId(urlParams, deviceType, language) {
+		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+		const raw = [
+			urlParams.utm_campaign || '',
+			urlParams.utm_source   || '',
+			urlParams.utm_medium   || '',
+			timezone,
+			deviceType             || '',
+			language               || ''
+		].join('|');
+		return await hashString(raw);
+	}
+
 	// ═══════════════════════════════════════════════════════════════
 	// USER ID MANAGEMENT
 	// ═══════════════════════════════════════════════════════════════
 
 	const STORAGE_KEY = 'ac_uid';
-	const STORAGE_KEY_FINGERPRINT = 'ac_fp';
 	const STORAGE_KEY_FIRST_SEEN = 'ac_first';
 
 	let userId = null;
@@ -179,32 +190,27 @@
 	async function getUserId() {
 		if (userId) return userId;
 
-		// 1. Check localStorage (cache per-domain)
+		// 1. Check localStorage — dacă există, îl folosim direct.
+		// NU verificăm fingerprint match pe return visits: Safari 17+ adaugă noise
+		// la Canvas per sesiune, deci fingerprint-ul se schimbă la fiecare vizită
+		// și ar genera un user_id nou la fiecare return visit pe iOS Safari.
 		const storedUserId = localStorage.getItem(STORAGE_KEY);
-		const storedFingerprint = localStorage.getItem(STORAGE_KEY_FINGERPRINT);
-
-		// 2. Generează fingerprint
-		fingerprint = await generateFingerprint();
-
-		// 3. Dacă avem user_id în localStorage și fingerprint match, folosește-l
-		if (storedUserId && storedFingerprint === fingerprint) {
+		if (storedUserId) {
 			userId = storedUserId;
-			debugLog('User ID from cache:', userId);
+			debugLog('User ID from localStorage:', userId);
 			return userId;
 		}
 
-		// 4. Dacă fingerprint există dar user_id diferit (sau lipsă), folosește fingerprint ca user_id
-		if (storedUserId && storedFingerprint !== fingerprint) {
-			debugLog('Fingerprint changed - possible different device/browser');
-		}
-
-		// User ID = Fingerprint (consistent cross-domain)
+		// 2. Prima vizită pe acest domeniu — generează fingerprint.
+		// Fingerprint-ul este util cross-domain pe Chrome/Firefox (unde e stabil):
+		// dacă userul a vizitat domeniul A înainte, domeniul B va genera același
+		// fingerprint → același user_id fără să fi vizitat B înainte.
+		// Pe iOS Safari fingerprint-ul diferă per domeniu (canvas noise per eTLD+1),
+		// deci nu ajută cross-domain, dar nici nu strică — tot generează un ID unic.
+		fingerprint = await generateFingerprint();
 		userId = fingerprint;
 
-		// 5. Salvează în localStorage pentru viteza viitoare
 		localStorage.setItem(STORAGE_KEY, userId);
-		localStorage.setItem(STORAGE_KEY_FINGERPRINT, fingerprint);
-
 		if (!localStorage.getItem(STORAGE_KEY_FIRST_SEEN)) {
 			localStorage.setItem(STORAGE_KEY_FIRST_SEEN, new Date().toISOString());
 		}
@@ -476,6 +482,7 @@
 
 		const payload = {
 			user_id: await getUserId(),
+			cohort_id: await calculateCohortId(urlParams, deviceType, navigator.language),
 			domain: window.location.hostname,
 			url: window.location.href,
 			slug: urlParams.slug,  // Now contains utm_content (most specific!)
@@ -545,12 +552,12 @@
 	async function trackConversion(conversionData = {}) {
 		const trafficSource = getTrafficSource();
 
-		// Extract Digistore buyer_id from URL — persistent cross-browser identifier
 		const urlParams = new URLSearchParams(window.location.search);
-		const buyerId = urlParams.get('buyer_id') || null;
+		const deviceType = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
 
 		const payload = {
 			user_id: await getUserId(),
+			cohort_id: await calculateCohortId(trafficSource, deviceType, navigator.language),
 			order_id: conversionData.order_id || null,
 			product_name: conversionData.product_name || null,
 			product_id: conversionData.product_id || null,
@@ -560,8 +567,7 @@
 			conversion_page: window.location.href,
 			timestamp: new Date().toISOString(),
 			attribution_slug: trafficSource.slug,
-			time_to_conversion_minutes: null, // Backend poate calcula
-			buyer_id: buyerId
+			time_to_conversion_minutes: null // Backend poate calcula
 		};
 
 		await sendEvent('/api/conversions', payload);

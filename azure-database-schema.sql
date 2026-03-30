@@ -44,6 +44,14 @@ CREATE TABLE user_events (
     viewport_size VARCHAR(50) NULL,
     user_agent VARCHAR(1000) NULL,
 
+    -- Geographic (server-side IP lookup — ipapi.co)
+    country VARCHAR(10) NULL,
+    geo_region VARCHAR(150) NULL,
+    geo_city VARCHAR(150) NULL,
+
+    -- Cohort (stabil per campanie/device/limbă — util pentru Safari cross-domain)
+    cohort_id VARCHAR(64) NULL,
+
     -- Metadata
     created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
 
@@ -54,7 +62,9 @@ CREATE TABLE user_events (
     INDEX idx_domain (domain),
     INDEX idx_slug (slug),
     INDEX idx_event_type (event_type),
-    INDEX idx_user_timestamp (user_id, timestamp DESC)
+    INDEX idx_user_timestamp (user_id, timestamp DESC),
+    INDEX idx_cohort_id (cohort_id),
+    INDEX idx_country (country)
 );
 GO
 
@@ -95,6 +105,14 @@ CREATE TABLE conversions (
     utm_medium VARCHAR(255) NULL,
     utm_campaign VARCHAR(255) NULL,
 
+    -- Geographic (server-side IP lookup)
+    country VARCHAR(10) NULL,
+    geo_region VARCHAR(150) NULL,
+    geo_city VARCHAR(150) NULL,
+
+    -- Cohort
+    cohort_id VARCHAR(64) NULL,
+
     -- Metadata
     created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
 
@@ -104,7 +122,9 @@ CREATE TABLE conversions (
     INDEX idx_order_id (order_id),
     INDEX idx_digistore_order_id (digistore_order_id),
     INDEX idx_slug (slug),
-    INDEX idx_domain (domain)
+    INDEX idx_domain (domain),
+    INDEX idx_cohort_id (cohort_id),
+    INDEX idx_country (country)
 );
 GO
 
