@@ -139,6 +139,19 @@
 
     .btn-secondary:hover { background: var(--border); }
 
+    .btn-user-journey {
+      background: transparent;
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: monospace;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-user-journey:hover { background: rgba(99,102,241,0.15); }
+
     .btn-sm {
       padding: 4px 10px;
       font-size: 12px;
@@ -704,10 +717,11 @@
               <th>Value</th>
               <th>Slug</th>
               <th>Time</th>
+              <th>User Journey</th>
             </tr>
           </thead>
           <tbody id="recentConvBody">
-            <tr><td colspan="5" class="loading"><span class="spinner"></span> Loading…</td></tr>
+            <tr><td colspan="6" class="loading"><span class="spinner"></span> Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -1035,18 +1049,32 @@ function renderBreakdown(data) {
 function renderRecentConversions(convs) {
   const tbody = document.getElementById('recentConvBody');
   if (!convs || convs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">No conversions yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No conversions yet.</td></tr>';
     return;
   }
-  tbody.innerHTML = convs.map(c => `
+  tbody.innerHTML = convs.map(c => {
+    const shortId = c.user_id ? c.user_id.slice(0, 8) + '…' : '—';
+    return `
     <tr>
       <td style="font-family:monospace;font-size:11px;color:var(--accent2);">${escHtml(c.order_id || '—')}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(c.product_name || '')}">${escHtml(c.product_name || '—')}</td>
       <td style="color:var(--green);font-weight:600;">${fmtEUR(c.value)}</td>
       <td class="td-slug" style="max-width:100px;" title="${escHtml(c.attribution_slug || '')}">${escHtml(c.attribution_slug || 'direct')}</td>
       <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${fmtDate(c.timestamp)}</td>
+      <td>${c.user_id ? `<button class="btn-user-journey" data-uid="${escHtml(c.user_id)}" title="${escHtml(c.user_id)}">🔍 ${escHtml(shortId)}</button>` : '—'}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
+
+  // click → scroll to lookup and trigger
+  tbody.querySelectorAll('.btn-user-journey').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const uid = btn.dataset.uid;
+      document.getElementById('userIdInput').value = uid;
+      document.getElementById('userIdInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      lookupUser(uid);
+    });
+  });
 }
 
 // ════════════════════════════════════════
