@@ -674,11 +674,67 @@
     </div>
   </div>
 
+  <!-- Sites Performance -->
+  <div class="panel" style="margin-bottom:24px;">
+    <div class="panel-header">
+      <span class="panel-title">Sites Performance</span>
+      <span id="domainCount" style="font-size:12px;color:var(--text3);">—</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-col-d="domain">Domain</th>
+            <th data-col-d="users">Users</th>
+            <th data-col-d="pageviews">Pageviews</th>
+            <th data-col-d="conversions">Conversions</th>
+            <th data-col-d="revenue">Revenue</th>
+            <th data-col-d="conversion_rate">Conv. Rate</th>
+          </tr>
+        </thead>
+        <tbody id="domainTableBody">
+          <tr><td colspan="6" class="loading"><span class="spinner"></span> Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Audience Cohorts -->
+  <div class="panel" style="margin-bottom:24px;">
+    <div class="panel-header">
+      <span class="panel-title">Audience Cohorts</span>
+      <span style="font-size:12px;color:var(--text3);">Users grouped by traffic source + device — includes users that cannot be individually identified</span>
+    </div>
+    <div class="panel-body" style="padding-bottom:0;">
+      <div id="cohortSummary" style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Medium</th>
+            <th>Campaign</th>
+            <th>Device</th>
+            <th>Language</th>
+            <th>Users</th>
+            <th>Pageviews</th>
+            <th>Conversions</th>
+            <th>Revenue</th>
+            <th>Conv. Rate</th>
+          </tr>
+        </thead>
+        <tbody id="cohortTableBody">
+          <tr><td colspan="10" class="loading"><span class="spinner"></span> Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Daily Trend -->
   <div class="panel" style="margin-bottom:24px;">
     <div class="panel-header">
-      <span class="panel-title">Daily Trend</span>
-      <div style="display:flex;gap:12px;font-size:12px;">
+      <span class="panel-title">Daily Trend</span>      <div style="display:flex;gap:12px;font-size:12px;">
         <span style="color:var(--accent2);">&#9632; Pageviews</span>
         <span style="color:var(--green);">&#9632; Conversions</span>
         <span style="color:var(--yellow);">&#9632; Revenue (€)</span>
@@ -789,6 +845,8 @@ const HEADERS = {
 // STATE
 // ════════════════════════════════════════
 let statsData      = null;
+let sortColD       = 'revenue';
+let sortDirD       = 'desc';
 let sortCol        = 'revenue';
 let sortDir        = 'desc';
 let refreshTimer   = null;
@@ -860,6 +918,24 @@ async function fetchRecentConversions() {
   const params = new URLSearchParams({ limit: 20 });
   if (slug) params.set('slug', slug);
   const res = await fetch(`${API_ENDPOINT}/api/analytics/conversions/recent?${params}`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function fetchDomains() {
+  const start = document.getElementById('startDate').value;
+  const end   = document.getElementById('endDate').value;
+  const params = new URLSearchParams({ start_date: start, end_date: end });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/domains?${params}`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function fetchCohorts() {
+  const start = document.getElementById('startDate').value;
+  const end   = document.getElementById('endDate').value;
+  const params = new URLSearchParams({ start_date: start, end_date: end, limit: 30 });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/cohorts?${params}`, { headers: HEADERS });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -1194,6 +1270,103 @@ function renderSlugTable(slugs) {
 }
 
 // ════════════════════════════════════════
+// RENDER DOMAIN TABLE
+// ════════════════════════════════════════
+function renderDomainTable(domains) {
+  document.getElementById('domainCount').textContent = domains.length + ' sites';
+
+  const sorted = [...domains].sort((a, b) => {
+    const av = a[sortColD] ?? 0;
+    const bv = b[sortColD] ?? 0;
+    if (typeof av === 'string') return sortDirD === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return sortDirD === 'asc' ? av - bv : bv - av;
+  });
+
+  document.querySelectorAll('thead th[data-col-d]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.colD === sortColD) th.classList.add(sortDirD === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+
+  const tbody = document.getElementById('domainTableBody');
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No data for this period.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sorted.map(d => `
+    <tr>
+      <td style="font-weight:500;color:var(--accent2);">${escHtml(d.domain)}</td>
+      <td>${fmtNum(d.users)}</td>
+      <td>${fmtNum(d.pageviews)}</td>
+      <td>${fmtNum(d.conversions)}</td>
+      <td>${fmtEUR(d.revenue)}</td>
+      <td>${convRateBadge(d.conversion_rate)}</td>
+    </tr>
+  `).join('');
+}
+
+// ════════════════════════════════════════
+// RENDER COHORTS
+// ════════════════════════════════════════
+function renderCohorts(data) {
+  const summaryEl = document.getElementById('cohortSummary');
+  const tbody     = document.getElementById('cohortTableBody');
+
+  if (!data || !data.cohorts) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohort data.</td></tr>';
+    return;
+  }
+
+  const s = data.summary;
+  const covColor = s.coverage_pct >= 80 ? 'var(--green)' : s.coverage_pct >= 50 ? 'var(--yellow)' : 'var(--red, #ef4444)';
+
+  summaryEl.innerHTML = `
+    <div class="profile-stat">
+      <div class="profile-stat-value">${fmtNum(s.total_cohorts)}</div>
+      <div class="profile-stat-label">Unique Cohorts</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-value" style="color:${covColor}">${s.coverage_pct}%</div>
+      <div class="profile-stat-label">Users with Cohort ID</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-value">${fmtNum(s.users_with_cohort)}</div>
+      <div class="profile-stat-label">of ${fmtNum(s.total_users)} total</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);align-self:center;max-width:320px;line-height:1.5;">
+      ℹ️ Users that cannot be individually identified (e.g. Safari ITP) are grouped into cohorts
+      based on traffic source + device, ensuring no visit is lost from reporting.
+    </div>
+  `;
+
+  const deviceIcons = { mobile: '📱', desktop: '🖥️', tablet: '📟', unknown: '❓' };
+
+  if (data.cohorts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohorts found for the selected period.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.cohorts.map(c => {
+    const icon = deviceIcons[c.device_type] || '❓';
+    const shortCohort = c.cohort_id ? c.cohort_id.slice(0, 8) + '…' : '—';
+    return `
+      <tr title="Cohort ID: ${escHtml(c.cohort_id || '')}">
+        <td style="color:var(--accent2);">${escHtml(c.utm_source)}</td>
+        <td style="color:var(--text2);">${escHtml(c.utm_medium)}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;" title="${escHtml(c.utm_campaign)}">${escHtml(c.utm_campaign)}</td>
+        <td>${icon} ${escHtml(c.device_type)}</td>
+        <td style="color:var(--text3);">${escHtml(c.language)}</td>
+        <td>${fmtNum(c.users)}</td>
+        <td>${fmtNum(c.pageviews)}</td>
+        <td>${fmtNum(c.conversions)}</td>
+        <td style="color:var(--green);font-weight:600;">${fmtEUR(c.revenue)}</td>
+        <td>${convRateBadge(c.conversion_rate)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ════════════════════════════════════════
 // RENDER JOURNEYS
 // ════════════════════════════════════════
 function renderJourneys(journeys) {
@@ -1233,17 +1406,21 @@ async function loadStats() {
   banner.style.display = 'none';
 
   try {
-    const [stats, trend, breakdown, recentConvs] = await Promise.all([
+    const [stats, trend, breakdown, recentConvs, domains, cohorts] = await Promise.all([
       fetchStats(),
       fetchTrend(),
       fetchBreakdown(),
       fetchRecentConversions(),
+      fetchDomains(),
+      fetchCohorts(),
     ]);
 
     statsData = stats;
     renderKPIs(stats);
     renderCharts(stats.by_slug || []);
     renderSlugTable(stats.by_slug || []);
+    renderDomainTable(domains || []);
+    renderCohorts(cohorts);
     renderJourneys(stats.top_journeys || []);
     renderTrendChart(trend);
     renderBreakdown(breakdown);
@@ -1368,6 +1545,30 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
       sortDir = col === 'slug' ? 'asc' : 'desc';
     }
     if (statsData) renderSlugTable(statsData.by_slug || []);
+  });
+});
+
+// Sort domain table columns
+document.querySelectorAll('thead th[data-col-d]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.colD;
+    if (sortColD === col) {
+      sortDirD = sortDirD === 'desc' ? 'asc' : 'desc';
+    } else {
+      sortColD = col;
+      sortDirD = col === 'domain' ? 'asc' : 'desc';
+    }
+    // re-fetch not needed — re-render from cached data
+    const cached = Array.from(document.querySelectorAll('#domainTableBody tr[data-domain]')).map(r => ({
+      domain: r.dataset.domain,
+      users: +r.cells[1].textContent.replace(/,/g,''),
+      pageviews: +r.cells[2].textContent.replace(/,/g,''),
+      conversions: +r.cells[3].textContent.replace(/,/g,''),
+      revenue: parseFloat(r.cells[4].textContent.replace(/[€,]/g,'')),
+      conversion_rate: parseFloat(r.cells[5].textContent),
+    }));
+    // Simpler: just reload
+    loadStats();
   });
 });
 
