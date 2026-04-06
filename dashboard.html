@@ -661,6 +661,60 @@
     </div>
   </div>
 
+  <!-- Daily Trend -->
+  <div class="panel" style="margin-bottom:24px;">
+    <div class="panel-header">
+      <span class="panel-title">Daily Trend</span>
+      <div style="display:flex;gap:12px;font-size:12px;">
+        <span style="color:var(--accent2);">&#9632; Pageviews</span>
+        <span style="color:var(--green);">&#9632; Conversions</span>
+        <span style="color:var(--yellow);">&#9632; Revenue (€)</span>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="chart-container" style="height:220px;">
+        <canvas id="chartTrend"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breakdown + Recent Conversions -->
+  <div class="grid-2" style="margin-bottom:24px;">
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Device &amp; Country Breakdown</span>
+      </div>
+      <div class="panel-body" id="breakdownBody">
+        <div class="loading"><span class="spinner"></span> Loading…</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Recent Conversions</span>
+        <span style="font-size:12px;color:var(--text3);">Last 20</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Value</th>
+              <th>Slug</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="recentConvBody">
+            <tr><td colspan="5" class="loading"><span class="spinner"></span> Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
   <!-- Cross-domain journeys -->
   <div class="panel" style="margin-bottom:24px;">
     <div class="panel-header">
@@ -726,6 +780,7 @@ let sortDir        = 'desc';
 let refreshTimer   = null;
 let chartRevenue   = null;
 let chartConvRate  = null;
+let chartTrend     = null;
 
 // ════════════════════════════════════════
 // DATE HELPERS
@@ -760,6 +815,37 @@ async function fetchStats() {
 
 async function fetchJourney(userId) {
   const res = await fetch(`${API_ENDPOINT}/api/journey/${encodeURIComponent(userId)}?limit=200`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function fetchTrend() {
+  const start = document.getElementById('startDate').value;
+  const end   = document.getElementById('endDate').value;
+  const slug  = document.getElementById('slugFilter').value.trim();
+  const params = new URLSearchParams({ start_date: start, end_date: end });
+  if (slug) params.set('slug', slug);
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/trend?${params}`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function fetchBreakdown() {
+  const start = document.getElementById('startDate').value;
+  const end   = document.getElementById('endDate').value;
+  const slug  = document.getElementById('slugFilter').value.trim();
+  const params = new URLSearchParams({ start_date: start, end_date: end });
+  if (slug) params.set('slug', slug);
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/breakdown?${params}`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function fetchRecentConversions() {
+  const slug = document.getElementById('slugFilter').value.trim();
+  const params = new URLSearchParams({ limit: 20 });
+  if (slug) params.set('slug', slug);
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/conversions/recent?${params}`, { headers: HEADERS });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -809,6 +895,158 @@ function renderKPIs(data) {
   document.getElementById('kpiAvgOrder').textContent    = 'avg order: ' + fmtEUR(avgOrder);
   document.getElementById('kpiCrossDomain').textContent = fmtNum(data.cross_domain_users);
   document.getElementById('kpiAvgDomains').textContent  = 'avg domains: ' + (data.avg_domains_per_user || '—');
+}
+
+// ════════════════════════════════════════
+// RENDER TREND CHART
+// ════════════════════════════════════════
+function renderTrendChart(days) {
+  const labels = days.map(d => d.date);
+
+  if (chartTrend) chartTrend.destroy();
+  chartTrend = new Chart(document.getElementById('chartTrend'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Pageviews',
+          data: days.map(d => d.pageviews),
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34,211,238,0.08)',
+          tension: 0.3,
+          fill: true,
+          pointRadius: 3,
+          yAxisID: 'yLeft',
+        },
+        {
+          label: 'Conversions',
+          data: days.map(d => d.conversions),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.08)',
+          tension: 0.3,
+          fill: false,
+          pointRadius: 3,
+          yAxisID: 'yLeft',
+        },
+        {
+          label: 'Revenue (€)',
+          data: days.map(d => d.revenue),
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245,158,11,0.08)',
+          tension: 0.3,
+          fill: false,
+          pointRadius: 3,
+          borderDash: [4, 3],
+          yAxisID: 'yRight',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              if (ctx.dataset.label === 'Revenue (€)') return ' €' + v.toFixed(2);
+              return ' ' + v;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: '#2e3250' },
+          ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 14 },
+        },
+        yLeft: {
+          position: 'left',
+          grid: { color: '#2e3250' },
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+        },
+        yRight: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { color: '#f59e0b', font: { size: 11 }, callback: v => '€' + v },
+        },
+      },
+    },
+  });
+}
+
+// ════════════════════════════════════════
+// RENDER BREAKDOWN
+// ════════════════════════════════════════
+function renderBreakdown(data) {
+  const el = document.getElementById('breakdownBody');
+  if (!data) { el.innerHTML = '<div class="empty">No data.</div>'; return; }
+
+  const deviceIcons = { mobile: '📱', desktop: '🖥', tablet: '📟', unknown: '❓' };
+
+  const totalDev = (data.by_device || []).reduce((s, r) => s + r.users, 0) || 1;
+  const totalCo  = (data.by_country || []).reduce((s, r) => s + r.users, 0) || 1;
+
+  const devHtml = (data.by_device || []).map(r => {
+    const pct = Math.round(r.users / totalDev * 100);
+    const icon = deviceIcons[r.device_type] || '❓';
+    return `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
+          <span>${icon} ${escHtml(r.device_type)}</span>
+          <span style="color:var(--text2);">${fmtNum(r.users)} users &nbsp;<strong>${pct}%</strong></span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:6px;">
+          <div style="background:var(--accent);border-radius:4px;height:6px;width:${pct}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const coHtml = (data.by_country || []).slice(0, 8).map(r => {
+    const pct = Math.round(r.users / totalCo * 100);
+    return `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
+          <span>${escHtml(r.country || 'unknown')}</span>
+          <span style="color:var(--text2);">${fmtNum(r.users)} users &nbsp;<strong>${pct}%</strong></span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:6px;">
+          <div style="background:var(--accent2);border-radius:4px;height:6px;width:${pct}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">DEVICE</div>
+    ${devHtml}
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin:16px 0 10px;">COUNTRY (top 8)</div>
+    ${coHtml}
+  `;
+}
+
+// ════════════════════════════════════════
+// RENDER RECENT CONVERSIONS
+// ════════════════════════════════════════
+function renderRecentConversions(convs) {
+  const tbody = document.getElementById('recentConvBody');
+  if (!convs || convs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No conversions yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = convs.map(c => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--accent2);">${escHtml(c.order_id || '—')}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(c.product_name || '')}">${escHtml(c.product_name || '—')}</td>
+      <td style="color:var(--green);font-weight:600;">${fmtEUR(c.value)}</td>
+      <td class="td-slug" style="max-width:100px;" title="${escHtml(c.attribution_slug || '')}">${escHtml(c.attribution_slug || 'direct')}</td>
+      <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${fmtDate(c.timestamp)}</td>
+    </tr>
+  `).join('');
 }
 
 // ════════════════════════════════════════
@@ -967,11 +1205,21 @@ async function loadStats() {
   banner.style.display = 'none';
 
   try {
-    statsData = await fetchStats();
-    renderKPIs(statsData);
-    renderCharts(statsData.by_slug || []);
-    renderSlugTable(statsData.by_slug || []);
-    renderJourneys(statsData.top_journeys || []);
+    const [stats, trend, breakdown, recentConvs] = await Promise.all([
+      fetchStats(),
+      fetchTrend(),
+      fetchBreakdown(),
+      fetchRecentConversions(),
+    ]);
+
+    statsData = stats;
+    renderKPIs(stats);
+    renderCharts(stats.by_slug || []);
+    renderSlugTable(stats.by_slug || []);
+    renderJourneys(stats.top_journeys || []);
+    renderTrendChart(trend);
+    renderBreakdown(breakdown);
+    renderRecentConversions(recentConvs);
 
     document.getElementById('lastUpdated').textContent =
       'Updated ' + new Date().toLocaleTimeString('en-GB');
