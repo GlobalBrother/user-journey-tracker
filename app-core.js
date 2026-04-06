@@ -23,8 +23,8 @@
 		// URL-ul backend-ului (fără trailing slash)
 		API_ENDPOINT: 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net',
 
-		// API Key pentru autentificare
-		API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1',
+		// API Key injectat din pagină via window.AppCoreConfig.API_KEY
+		API_KEY: (window.AppCoreConfig && window.AppCoreConfig.API_KEY) || '',
 
 		// Domenii de checkout unde să adaugi user_id în URL
 		CHECKOUT_DOMAINS: ['digistore24.com', 'thrivecart.com'],
