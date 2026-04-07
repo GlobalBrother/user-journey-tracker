@@ -1373,32 +1373,44 @@
 			const totalDev = (data.by_device || []).reduce((s, r) => s + r.users, 0) || 1;
 			const totalCo = (data.by_country || []).reduce((s, r) => s + r.users, 0) || 1;
 
-			const devHtml = (data.by_device || []).map(r => {
+			// Sort unknown to the bottom
+			const sortUnknown = (a, b) => {
+				const aU = (a.device_type || a.country || '') === 'unknown';
+				const bU = (b.device_type || b.country || '') === 'unknown';
+				return aU === bU ? 0 : aU ? 1 : -1;
+			};
+
+			const devRows = [...(data.by_device || [])].sort(sortUnknown);
+			const devHtml = devRows.map(r => {
 				const pct = Math.round(r.users / totalDev * 100);
 				const icon = deviceIcons[r.device_type] || '❓';
+				const isUnknown = r.device_type === 'unknown';
 				return `
-      <div style="margin-bottom:10px;">
+      <div style="margin-bottom:10px;${isUnknown ? 'opacity:0.45;' : ''}">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
-          <span>${icon} ${escHtml(r.device_type)}</span>
+          <span>${icon} ${escHtml(r.device_type)}${isUnknown ? ' <span style="font-size:10px;font-style:italic;">(not detected)</span>' : ''}</span>
           <span style="color:var(--text2);">${fmtNum(r.users)} users &nbsp;<strong>${pct}%</strong></span>
         </div>
         <div style="background:var(--border);border-radius:4px;height:6px;">
-          <div style="background:var(--accent);border-radius:4px;height:6px;width:${pct}%;"></div>
+          <div style="background:${isUnknown ? 'var(--text3)' : 'var(--accent)'};border-radius:4px;height:6px;width:${pct}%;"></div>
         </div>
       </div>
     `;
 			}).join('');
 
-			const coHtml = (data.by_country || []).slice(0, 8).map(r => {
+			const coRows = [...(data.by_country || [])].sort(sortUnknown).slice(0, 8);
+			const coHtml = coRows.map(r => {
 				const pct = Math.round(r.users / totalCo * 100);
+				const country = r.country || 'unknown';
+				const isUnknown = country === 'unknown';
 				return `
-      <div style="margin-bottom:10px;">
+      <div style="margin-bottom:10px;${isUnknown ? 'opacity:0.45;' : ''}">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
-          <span>${escHtml(r.country || 'unknown')}</span>
+          <span>${escHtml(country)}${isUnknown ? ' <span style="font-size:10px;font-style:italic;">(not detected)</span>' : ''}</span>
           <span style="color:var(--text2);">${fmtNum(r.users)} users &nbsp;<strong>${pct}%</strong></span>
         </div>
         <div style="background:var(--border);border-radius:4px;height:6px;">
-          <div style="background:var(--accent2);border-radius:4px;height:6px;width:${pct}%;"></div>
+          <div style="background:${isUnknown ? 'var(--text3)' : 'var(--accent2)'};border-radius:4px;height:6px;width:${pct}%;"></div>
         </div>
       </div>
     `;
