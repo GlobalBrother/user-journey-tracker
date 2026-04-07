@@ -1,0 +1,28 @@
+<script>
+  window.AppCoreConfig = {
+    API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1'
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js" defer></script>
+<script>
+  (function() {
+    // Datele comenzii din Checkout Champ
+    var orderId   = window.globalOrderData && window.globalOrderData.orderId;
+    var orderData = JSON.parse(sessionStorage.getItem('orderData') || '{}');
+    var totals    = JSON.parse(sessionStorage.getItem('totals')    || '{}');
+
+    // Valoarea comenzii - din totals sau orderData
+    var value = parseFloat(totals.itemTotal || orderData.total || 0);
+
+    // Product ID din array-ul CC
+    var productId = window.productOrderArray && window.productOrderArray[0];
+
+    AppCore.trackConversion({
+      order_id:     orderId     || 'unknown',
+      product_name: 'Main Product',   // ← schimbă cu numele real
+      product_id:   productId   || '193',
+      value:        value,
+      currency:     'EUR'       // ← sau moneda ta
+    });
+  })();
+</script>

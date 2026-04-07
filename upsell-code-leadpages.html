@@ -1,0 +1,24 @@
+<script>
+  window.AppCoreConfig = {
+    API_KEY: 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1'
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js" defer></script>
+<script>
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+
+    // Singurii parametri necriptați de Digistore
+    var orderId   = params.get('order_id');                       // ex: 'WH7YT23H'
+    var productId = params.get('digistore_initial_product_id');   // ex: '594082'
+
+    // amount și product_name sunt criptate — le punem hardcodat
+    AppCore.trackConversion({
+      order_id:     orderId   || 'unknown',
+      product_id:   productId || '594082',
+      product_name: 'Numele produsului tau',  // ← hardcodat, nu vine din URL
+      value:        47.00,                    // ← hardcodat, prețul real al produsului
+      currency:     'EUR'
+    });
+  })();
+</script>

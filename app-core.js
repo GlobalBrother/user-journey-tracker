@@ -183,6 +183,7 @@
 	let userId = null;
 	let fingerprint = null;
 	let pageviewSent = false;
+	let pageLoadStartTime = null;
 
 	/**
 	 * Obține sau creează user ID
@@ -462,11 +463,41 @@
 	// ═══════════════════════════════════════════════════════════════
 
 	/**
+	 * Trimite un eveniment page_exit via Beacon când userul iese de pe pagină.
+	 * Beacon este singurul API disponibil în evenimentele de tip pagehide.
+	 */
+	function _sendPageExitEvent() {
+		if (!pageLoadStartTime || !CONFIG.API_KEY) return;
+		const secs = Math.round((Date.now() - pageLoadStartTime) / 1000);
+		if (secs < 1) return;
+		const uid = localStorage.getItem(STORAGE_KEY);
+		if (!uid) return;
+		try {
+			const payload = JSON.stringify({
+				user_id: uid,
+				event_type: 'custom_event',
+				event_name: 'page_exit',
+				domain: window.location.hostname,
+				url: window.location.href,
+				timestamp: new Date().toISOString(),
+				event_source: 'beacon',
+				metadata: { event_name: 'page_exit', time_on_page_seconds: secs }
+			});
+			navigator.sendBeacon(
+				`${CONFIG.API_ENDPOINT}/api/b?api_key=${encodeURIComponent(CONFIG.API_KEY)}`,
+				new Blob([payload], { type: 'application/json' })
+			);
+		} catch (e) { /* silently fail — page is being hidden */ }
+	}
+
+	/**
 	 * Track pageview (automat) - Conform API-SPECIFICATION.md
 	 */
 	async function trackPageview() {
 		if (pageviewSent) return;
 		pageviewSent = true;
+		pageLoadStartTime = Date.now();
+		window.addEventListener('pagehide', _sendPageExitEvent, { once: true });
 
 		const urlParams = extractUrlParameters();
 		saveTrafficSource(urlParams);

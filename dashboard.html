@@ -665,6 +665,47 @@
 		.refresh-ring.active {
 			opacity: 1;
 		}
+
+		/* ── KPI DELTA ── */
+		.kpi-delta {
+			font-size: 11px;
+			margin-top: 5px;
+			font-weight: 600;
+			line-height: 1.4;
+		}
+		.delta-up   { color: var(--green); }
+		.delta-down { color: var(--red); }
+		.delta-neutral { color: var(--text3); }
+
+		/* ── FUNNEL ── */
+		.funnel-steps { display: flex; flex-direction: column; gap: 10px; }
+		.funnel-step  { display: flex; align-items: center; gap: 12px; }
+		.funnel-step-label {
+			width: 200px; font-size: 12px; color: var(--text2);
+			white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+		}
+		.funnel-bar-wrap {
+			flex: 1; background: var(--surface2); border-radius: 4px; height: 34px;
+			overflow: hidden; position: relative; min-width: 60px;
+		}
+		.funnel-bar-fill {
+			border-radius: 4px; height: 100%; transition: width 0.6s ease;
+			display: flex; align-items: center; padding-left: 10px; min-width: 0;
+		}
+		.funnel-bar-text { font-size: 12px; font-weight: 600; color: white; white-space: nowrap; }
+		.funnel-step-meta { width: 100px; text-align: right; font-size: 11px; flex-shrink: 0; }
+		.funnel-builder { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+		.funnel-step-input { display: flex; align-items: center; gap: 8px; }
+		.funnel-step-num {
+			width: 22px; height: 22px; background: var(--surface2); border: 1px solid var(--border);
+			border-radius: 50%; display: flex; align-items: center; justify-content: center;
+			font-size: 11px; font-weight: 700; flex-shrink: 0; color: var(--text);
+		}
+		.funnel-step-remove {
+			background: none; border: none; color: var(--text3); cursor: pointer;
+			font-size: 18px; padding: 0 4px; line-height: 1;
+		}
+		.funnel-step-remove:hover { color: var(--red); }
 	</style>
 </head>
 
@@ -732,26 +773,43 @@
 				<div class="kpi-label">Unique Users</div>
 				<div class="kpi-value" id="kpiUsers">—</div>
 				<div class="kpi-sub">cross-domain</div>
+				<div class="kpi-delta" id="deltaUsers"><span class="delta-neutral">—</span></div>
 			</div>
 			<div class="kpi-card cyan">
 				<div class="kpi-label">Pageviews</div>
 				<div class="kpi-value" id="kpiPageviews">—</div>
 				<div class="kpi-sub">total visits</div>
+				<div class="kpi-delta" id="deltaPageviews"><span class="delta-neutral">—</span></div>
 			</div>
 			<div class="kpi-card green">
 				<div class="kpi-label">Conversions</div>
 				<div class="kpi-value" id="kpiConversions">—</div>
 				<div class="kpi-sub" id="kpiConvRate">rate: —</div>
+				<div class="kpi-delta" id="deltaConversions"><span class="delta-neutral">—</span></div>
 			</div>
 			<div class="kpi-card yellow">
 				<div class="kpi-label">Revenue</div>
 				<div class="kpi-value" id="kpiRevenue">—</div>
 				<div class="kpi-sub" id="kpiAvgOrder">avg order: —</div>
+				<div class="kpi-delta" id="deltaRevenue"><span class="delta-neutral">—</span></div>
 			</div>
 			<div class="kpi-card red">
 				<div class="kpi-label">Cross-Domain Users</div>
 				<div class="kpi-value" id="kpiCrossDomain">—</div>
 				<div class="kpi-sub" id="kpiAvgDomains">avg domains: —</div>
+				<div class="kpi-delta" id="deltaCrossDomain"><span class="delta-neutral">—</span></div>
+			</div>
+			<div class="kpi-card purple">
+				<div class="kpi-label">Bounce Rate</div>
+				<div class="kpi-value" id="kpiBounceRate">—</div>
+				<div class="kpi-sub">single-page visitors</div>
+				<div class="kpi-delta" id="deltaBounce"><span class="delta-neutral">—</span></div>
+			</div>
+			<div class="kpi-card cyan">
+				<div class="kpi-label">Avg Time on Page</div>
+				<div class="kpi-value" id="kpiTimeOnPage">—</div>
+				<div class="kpi-sub">per session</div>
+				<div class="kpi-delta" id="deltaTime"><span class="delta-neutral">—</span></div>
 			</div>
 		</div>
 
@@ -939,6 +997,27 @@
 			</div>
 		</div>
 
+		<!-- Conversion Funnel -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Conversion Funnel</span>
+				<span style="font-size:12px;color:var(--text3);">Define your funnel steps — see exact drop-off between each stage</span>
+			</div>
+			<div class="panel-body">
+				<div style="font-size:12px;color:var(--text2);margin-bottom:14px;">
+					Introdu domenii (ex: <code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">mysite.com</code>) sau
+					<code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">conversion</code> ca ultimul pas pentru comenzi.
+					Numărăm userii care au parcurs <strong>toți</strong> pașii anteriori.
+				</div>
+				<div class="funnel-builder" id="funnelBuilder"></div>
+				<div style="display:flex;gap:8px;margin-bottom:0;">
+					<button class="btn btn-secondary btn-sm" id="btnAddFunnelStep">+ Add Step</button>
+					<button class="btn btn-primary btn-sm" id="btnCalcFunnel">▶ Calculate Funnel</button>
+				</div>
+				<div id="funnelResult" style="margin-top:20px;"></div>
+			</div>
+		</div>
+
 		<!-- User Journey Lookup -->
 		<div class="panel">
 			<div class="panel-header">
@@ -989,6 +1068,7 @@
 		// STATE
 		// ════════════════════════════════════════
 		let statsData = null;
+		let prevStatsData = null;
 		let sortColD = 'revenue';
 		let sortDirD = 'desc';
 		let sortCol = 'revenue';
@@ -1085,6 +1165,15 @@
 			return res.json();
 		}
 
+		async function fetchFunnel(steps, signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ steps: steps.join(','), start_date: start, end_date: end });
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/funnel?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
+
 		// ════════════════════════════════════════
 		// FORMAT HELPERS
 		// ════════════════════════════════════════
@@ -1108,6 +1197,38 @@
 			return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 		}
 
+		function fmtTime(secs) {
+			if (!secs || secs <= 0) return '—';
+			const m = Math.floor(secs / 60);
+			const s = Math.round(secs % 60);
+			return m === 0 ? `${s}s` : `${m}m ${s}s`;
+		}
+
+		// invertColors=true means lower is better (e.g. bounce rate)
+		function fmtDelta(current, previous, invertColors) {
+			if (previous === null || previous === undefined || previous === 0) {
+				return '<span class="delta-neutral">—</span>';
+			}
+			const pct = ((current - previous) / previous) * 100;
+			if (Math.abs(pct) < 0.5) return '<span class="delta-neutral">≈ 0% vs prev</span>';
+			const up = pct > 0;
+			const isGood = invertColors ? !up : up;
+			const cls = isGood ? 'delta-up' : 'delta-down';
+			const arrow = up ? '▲' : '▼';
+			return `<span class="${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs prev</span>`;
+		}
+
+		function getPreviousPeriod(startStr, endStr) {
+			const start = new Date(startStr + 'T00:00:00');
+			const end   = new Date(endStr   + 'T00:00:00');
+			const days  = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+			const prevEnd   = new Date(start);
+			prevEnd.setDate(prevEnd.getDate() - 1);
+			const prevStart = new Date(prevEnd);
+			prevStart.setDate(prevStart.getDate() - days + 1);
+			return { start: toISO(prevStart), end: toISO(prevEnd) };
+		}
+
 		function convRateBadge(rate) {
 			const r = parseFloat(rate) || 0;
 			if (r >= 3) return `<span class="badge badge-green">${fmtPct(r)}</span>`;
@@ -1118,8 +1239,10 @@
 		// ════════════════════════════════════════
 		// RENDER KPIs
 		// ════════════════════════════════════════
-		function renderKPIs(data) {
+		function renderKPIs(data, prevData) {
 			const t = data.totals;
+			const e = data.engagement || {};
+
 			document.getElementById('kpiUsers').textContent = fmtNum(t.unique_users);
 			document.getElementById('kpiPageviews').textContent = fmtNum(t.total_pageviews);
 			document.getElementById('kpiConversions').textContent = fmtNum(t.total_conversions);
@@ -1130,6 +1253,31 @@
 			document.getElementById('kpiAvgOrder').textContent = 'avg order: ' + fmtEUR(avgOrder);
 			document.getElementById('kpiCrossDomain').textContent = fmtNum(data.cross_domain_users);
 			document.getElementById('kpiAvgDomains').textContent = 'avg domains: ' + (data.avg_domains_per_user || '—');
+
+			// Bounce rate & time on page
+			document.getElementById('kpiBounceRate').textContent =
+				e.bounce_rate !== undefined ? fmtPct(e.bounce_rate) : '—';
+			document.getElementById('kpiTimeOnPage').textContent =
+				(e.avg_time_on_page_seconds !== null && e.avg_time_on_page_seconds !== undefined)
+					? fmtTime(e.avg_time_on_page_seconds) : '—';
+
+			// Period deltas
+			if (prevData) {
+				const pt = prevData.totals;
+				const pe = prevData.engagement || {};
+				document.getElementById('deltaUsers').innerHTML       = fmtDelta(t.unique_users, pt.unique_users);
+				document.getElementById('deltaPageviews').innerHTML   = fmtDelta(t.total_pageviews, pt.total_pageviews);
+				document.getElementById('deltaConversions').innerHTML = fmtDelta(t.total_conversions, pt.total_conversions);
+				document.getElementById('deltaRevenue').innerHTML     = fmtDelta(t.total_revenue, pt.total_revenue);
+				document.getElementById('deltaCrossDomain').innerHTML = fmtDelta(data.cross_domain_users, prevData.cross_domain_users);
+				document.getElementById('deltaBounce').innerHTML      = fmtDelta(e.bounce_rate, pe.bounce_rate, true);
+				if (e.avg_time_on_page_seconds && pe.avg_time_on_page_seconds) {
+					document.getElementById('deltaTime').innerHTML = fmtDelta(e.avg_time_on_page_seconds, pe.avg_time_on_page_seconds, true);
+				}
+			} else {
+				['deltaUsers','deltaPageviews','deltaConversions','deltaRevenue','deltaCrossDomain','deltaBounce','deltaTime']
+					.forEach(id => document.getElementById(id).innerHTML = '<span class="delta-neutral">—</span>');
+			}
 		}
 
 		// ════════════════════════════════════════
@@ -1556,17 +1704,31 @@
 			banner.style.display = 'none';
 
 			try {
-				const [stats, trend, breakdown, recentConvs, domains, cohorts] = await Promise.all([
+				const start = document.getElementById('startDate').value;
+				const end   = document.getElementById('endDate').value;
+				const slug  = document.getElementById('slugFilter').value.trim();
+
+				// Fetch previous period for comparison (silently fail if unavailable)
+				const prev = getPreviousPeriod(start, end);
+				const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
+				if (slug) prevParams.set('slug', slug);
+				const prevStatsPromise = fetch(`${API_ENDPOINT}/api/analytics/stats?${prevParams}`, { headers: HEADERS, signal })
+					.then(r => r.ok ? r.json() : null)
+					.catch(() => null);
+
+				const [stats, trend, breakdown, recentConvs, domains, cohorts, prevStats] = await Promise.all([
 					fetchStats(signal),
 					fetchTrend(signal),
 					fetchBreakdown(signal),
 					fetchRecentConversions(signal),
 					fetchDomains(signal),
 					fetchCohorts(signal),
+					prevStatsPromise,
 				]);
 
-				statsData = stats;
-				renderKPIs(stats);
+				statsData     = stats;
+				prevStatsData = prevStats;
+				renderKPIs(stats, prevStats);
 				renderCharts(stats.by_slug || []);
 				renderSlugTable(stats.by_slug || []);
 				renderDomainTable(domains || []);
@@ -1596,6 +1758,68 @@
 			if (val > 0) {
 				refreshTimer = setInterval(loadStats, val * 1000);
 			}
+		}
+
+		// ════════════════════════════════════════
+		// RENDER FUNNEL
+		// ════════════════════════════════════════
+		const FUNNEL_COLORS = ['#6366f1','#22d3ee','#22c55e','#f59e0b','#a78bfa','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9'];
+
+		function renderFunnel(steps) {
+			const el = document.getElementById('funnelResult');
+			if (!steps || steps.length === 0) {
+				el.innerHTML = '<div class="empty">No data for the selected period.</div>';
+				return;
+			}
+			const maxUsers = steps[0].users || 1;
+			el.innerHTML = '<div class="funnel-steps">' + steps.map((s, i) => {
+				const pct  = maxUsers > 0 ? Math.max(4, Math.round(s.users / maxUsers * 100)) : 4;
+				const color = FUNNEL_COLORS[i % FUNNEL_COLORS.length];
+				const dropHtml = i > 0
+					? `<span style="color:var(--red);">▼ ${s.drop_from_prev}% drop</span>`
+					: '<span style="color:var(--text3);">entry step</span>';
+				return `
+	<div class="funnel-step">
+	  <div class="funnel-step-label" title="${escHtml(s.name)}">
+	    <span style="background:${color};color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;font-size:10px;font-weight:700;margin-right:6px;flex-shrink:0;">${s.step}</span>
+	    ${escHtml(s.name)}
+	  </div>
+	  <div class="funnel-bar-wrap">
+	    <div class="funnel-bar-fill" style="width:${pct}%;background:${color};">
+	      <span class="funnel-bar-text">${fmtNum(s.users)} users &nbsp;·&nbsp; ${s.pct_of_first}%</span>
+	    </div>
+	  </div>
+	  <div class="funnel-step-meta">${dropHtml}</div>
+	</div>`;
+			}).join('') + '</div>';
+		}
+
+		// ════════════════════════════════════════
+		// FUNNEL BUILDER
+		// ════════════════════════════════════════
+		const funnelSteps = ['', '', 'conversion'];
+		let funnelAbort = null;
+
+		function renderFunnelBuilder() {
+			const el = document.getElementById('funnelBuilder');
+			el.innerHTML = funnelSteps.map((val, i) => `
+	<div class="funnel-step-input">
+	  <div class="funnel-step-num">${i + 1}</div>
+	  <input type="text" class="funnel-step-val"
+	    placeholder="${i === 0 ? 'First domain (e.g. site-a.com)' : i === funnelSteps.length - 1 ? '"conversion" or domain' : 'Next domain'}"
+	    value="${escHtml(val)}" style="flex:1;" data-idx="${i}" />
+	  ${i >= 2 ? `<button class="funnel-step-remove" data-idx="${i}" title="Remove step">×</button>` : ''}
+	</div>`).join('');
+
+			el.querySelectorAll('.funnel-step-val').forEach(input => {
+				input.addEventListener('input', e => { funnelSteps[+e.target.dataset.idx] = e.target.value.trim(); });
+			});
+			el.querySelectorAll('.funnel-step-remove').forEach(btn => {
+				btn.addEventListener('click', () => {
+					funnelSteps.splice(+btn.dataset.idx, 1);
+					renderFunnelBuilder();
+				});
+			});
 		}
 
 		// ════════════════════════════════════════
@@ -1757,7 +1981,33 @@
 		// ════════════════════════════════════════
 		initDates();
 		setupAutoRefresh();
+		renderFunnelBuilder();
 		loadStats();
+
+		document.getElementById('btnAddFunnelStep').addEventListener('click', () => {
+			if (funnelSteps.length < 10) {
+				funnelSteps.push('');
+				renderFunnelBuilder();
+			}
+		});
+
+		document.getElementById('btnCalcFunnel').addEventListener('click', async () => {
+			const steps = funnelSteps.filter(s => s.trim());
+			if (steps.length < 2) {
+				document.getElementById('funnelResult').innerHTML = '<div class="empty">Adaugă cel puțin 2 pași.</div>';
+				return;
+			}
+			if (funnelAbort) funnelAbort.abort();
+			funnelAbort = new AbortController();
+			document.getElementById('funnelResult').innerHTML = '<div class="loading"><span class="spinner"></span> Se calculează…</div>';
+			try {
+				const data = await fetchFunnel(steps, funnelAbort.signal);
+				renderFunnel(data);
+			} catch (err) {
+				if (err.name === 'AbortError') return;
+				document.getElementById('funnelResult').innerHTML = `<div class="empty">⚠ ${escHtml(err.message)}</div>`;
+			}
+		});
 	</script>
 </body>
 
