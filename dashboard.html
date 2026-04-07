@@ -1,1090 +1,1234 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Journey Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2e3250;
-      --accent: #6366f1;
-      --accent2: #22d3ee;
-      --green: #22c55e;
-      --red: #ef4444;
-      --yellow: #f59e0b;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      font-size: 14px;
-      min-height: 100vh;
-    }
-
-    /* ── HEADER ── */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .logo-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.3); }
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .last-updated {
-      color: var(--text3);
-      font-size: 12px;
-    }
-
-    /* ── CONTROLS ── */
-    .controls {
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    label {
-      color: var(--text2);
-      font-size: 13px;
-    }
-
-    input[type="date"], input[type="text"], select {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    input[type="date"]:focus, input[type="text"]:focus {
-      border-color: var(--accent);
-    }
-
-    .btn {
-      padding: 7px 16px;
-      border-radius: 6px;
-      border: none;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-primary:hover { background: #5558e3; }
-
-    .btn-secondary {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover { background: var(--border); }
-
-    .btn-user-journey {
-      background: transparent;
-      border: 1px solid var(--accent2);
-      color: var(--accent2);
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-family: monospace;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn-user-journey:hover { background: rgba(99,102,241,0.15); }
-
-    .btn-sm {
-      padding: 4px 10px;
-      font-size: 12px;
-    }
-
-    .separator { width: 1px; height: 24px; background: var(--border); }
-
-    /* ── MAIN LAYOUT ── */
-    main {
-      padding: 24px;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    /* ── KPI CARDS ── */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .kpi-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-    }
-
-    .kpi-card.purple::before { background: var(--accent); }
-    .kpi-card.cyan::before   { background: var(--accent2); }
-    .kpi-card.green::before  { background: var(--green); }
-    .kpi-card.yellow::before { background: var(--yellow); }
-    .kpi-card.red::before    { background: var(--red); }
-
-    .kpi-label {
-      color: var(--text2);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 10px;
-    }
-
-    .kpi-value {
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-
-    .kpi-sub {
-      color: var(--text3);
-      font-size: 12px;
-    }
-
-    /* ── TWO-COL LAYOUT ── */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 900px) {
-      .grid-2 { grid-template-columns: 1fr; }
-    }
-
-    /* ── PANELS ── */
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .panel-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .panel-title {
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .panel-body {
-      padding: 20px;
-    }
-
-    /* ── TABLE ── */
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    thead th {
-      color: var(--text3);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    thead th:hover { color: var(--text); }
-    thead th.sort-asc::after  { content: ' ↑'; }
-    thead th.sort-desc::after { content: ' ↓'; }
-
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-      cursor: pointer;
-    }
-
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--surface2); }
-
-    td {
-      padding: 10px 12px;
-      font-size: 13px;
-    }
-
-    .td-slug {
-      font-family: monospace;
-      font-size: 12px;
-      color: var(--accent2);
-      max-width: 280px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
-    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
-    .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
-
-    /* ── CHART ── */
-    .chart-container {
-      position: relative;
-      height: 240px;
-    }
-
-    /* ── JOURNEYS ── */
-    .journey-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .journey-item {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .journey-domains {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .domain-chip {
-      background: rgba(99,102,241,0.15);
-      color: var(--accent);
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-family: monospace;
-    }
-
-    .arrow-sep { color: var(--text3); font-size: 12px; }
-
-    .journey-meta {
-      display: flex;
-      gap: 16px;
-      font-size: 12px;
-      color: var(--text2);
-      white-space: nowrap;
-    }
-
-    /* ── SEARCH / JOURNEY MODAL ── */
-    .search-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .search-bar input {
-      flex: 1;
-    }
-
-    .journey-timeline { display: flex; flex-direction: column; gap: 0; }
-
-    .timeline-item {
-      display: flex;
-      gap: 16px;
-      padding: 10px 0;
-      position: relative;
-    }
-
-    .timeline-item:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      left: 12px;
-      top: 32px;
-      bottom: -2px;
-      width: 1px;
-      background: var(--border);
-    }
-
-    .timeline-dot {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      margin-top: 2px;
-    }
-
-    .dot-pageview   { background: rgba(99,102,241,0.2); color: var(--accent); }
-    .dot-conversion { background: rgba(34,197,94,0.2);  color: var(--green); }
-    .dot-custom     { background: rgba(245,158,11,0.2); color: var(--yellow); }
-
-    .timeline-content { flex: 1; }
-
-    .timeline-type {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .timeline-detail { font-size: 12px; color: var(--text2); }
-    .timeline-time   { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
-    /* ── MODAL ── */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 200;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 40px 20px;
-      overflow-y: auto;
-    }
-
-    .overlay.open { display: flex; }
-
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 680px;
-      padding: 24px;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-
-    .modal-title { font-size: 16px; font-weight: 600; }
-    .modal-subtitle { font-size: 12px; color: var(--text3); margin-top: 4px; }
-
-    .close-btn {
-      background: none;
-      border: none;
-      color: var(--text2);
-      cursor: pointer;
-      font-size: 20px;
-      line-height: 1;
-      padding: 0;
-    }
-
-    .close-btn:hover { color: var(--text); }
-
-    .profile-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .profile-stat {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-    }
-
-    .profile-stat-value { font-size: 20px; font-weight: 700; }
-    .profile-stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
-    /* ── LOADING & EMPTY ── */
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      color: var(--text3);
-    }
-
-    .spinner {
-      width: 20px; height: 20px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      margin-right: 10px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .empty {
-      text-align: center;
-      padding: 40px;
-      color: var(--text3);
-    }
-
-    .error-banner {
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.3);
-      color: #fca5a5;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-    }
-
-    /* ── AUTO-REFRESH indicator ── */
-    .refresh-ring {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      animation: spin 1s linear infinite;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .refresh-ring.active { opacity: 1; }
-  </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>User Journey Dashboard</title>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+	<style>
+		*,
+		*::before,
+		*::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		:root {
+			--bg: #0f1117;
+			--surface: #1a1d27;
+			--surface2: #22263a;
+			--border: #2e3250;
+			--accent: #6366f1;
+			--accent2: #22d3ee;
+			--green: #22c55e;
+			--red: #ef4444;
+			--yellow: #f59e0b;
+			--text: #e2e8f0;
+			--text2: #94a3b8;
+			--text3: #64748b;
+		}
+
+		body {
+			background: var(--bg);
+			color: var(--text);
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+			font-size: 14px;
+			min-height: 100vh;
+		}
+
+		/* ── HEADER ── */
+		header {
+			background: var(--surface);
+			border-bottom: 1px solid var(--border);
+			padding: 0 24px;
+			height: 60px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			position: sticky;
+			top: 0;
+			z-index: 100;
+		}
+
+		.logo {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			font-size: 16px;
+			font-weight: 600;
+		}
+
+		.logo-dot {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: var(--accent);
+			animation: pulse 2s infinite;
+		}
+
+		@keyframes pulse {
+
+			0%,
+			100% {
+				opacity: 1;
+				transform: scale(1);
+			}
+
+			50% {
+				opacity: 0.5;
+				transform: scale(1.3);
+			}
+		}
+
+		.header-right {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.last-updated {
+			color: var(--text3);
+			font-size: 12px;
+		}
+
+		/* ── CONTROLS ── */
+		.controls {
+			padding: 16px 24px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+			background: var(--surface);
+			border-bottom: 1px solid var(--border);
+		}
+
+		.control-group {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		label {
+			color: var(--text2);
+			font-size: 13px;
+		}
+
+		input[type="date"],
+		input[type="text"],
+		select {
+			background: var(--bg);
+			border: 1px solid var(--border);
+			color: var(--text);
+			padding: 6px 10px;
+			border-radius: 6px;
+			font-size: 13px;
+			outline: none;
+			transition: border-color 0.15s;
+		}
+
+		input[type="date"]:focus,
+		input[type="text"]:focus {
+			border-color: var(--accent);
+		}
+
+		.btn {
+			padding: 7px 16px;
+			border-radius: 6px;
+			border: none;
+			font-size: 13px;
+			font-weight: 500;
+			cursor: pointer;
+			transition: all 0.15s;
+		}
+
+		.btn-primary {
+			background: var(--accent);
+			color: #fff;
+		}
+
+		.btn-primary:hover {
+			background: #5558e3;
+		}
+
+		.btn-secondary {
+			background: var(--surface2);
+			color: var(--text);
+			border: 1px solid var(--border);
+		}
+
+		.btn-secondary:hover {
+			background: var(--border);
+		}
+
+		.btn-user-journey {
+			background: transparent;
+			border: 1px solid var(--accent2);
+			color: var(--accent2);
+			border-radius: 4px;
+			padding: 2px 8px;
+			font-size: 11px;
+			font-family: monospace;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
+		.btn-user-journey:hover {
+			background: rgba(99, 102, 241, 0.15);
+		}
+
+		.btn-sm {
+			padding: 4px 10px;
+			font-size: 12px;
+		}
+
+		.separator {
+			width: 1px;
+			height: 24px;
+			background: var(--border);
+		}
+
+		/* ── MAIN LAYOUT ── */
+		main {
+			padding: 24px;
+			max-width: 1600px;
+			margin: 0 auto;
+		}
+
+		/* ── KPI CARDS ── */
+		.kpi-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 16px;
+			margin-bottom: 24px;
+		}
+
+		.kpi-card {
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			padding: 20px;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.kpi-card::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 3px;
+		}
+
+		.kpi-card.purple::before {
+			background: var(--accent);
+		}
+
+		.kpi-card.cyan::before {
+			background: var(--accent2);
+		}
+
+		.kpi-card.green::before {
+			background: var(--green);
+		}
+
+		.kpi-card.yellow::before {
+			background: var(--yellow);
+		}
+
+		.kpi-card.red::before {
+			background: var(--red);
+		}
+
+		.kpi-label {
+			color: var(--text2);
+			font-size: 12px;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			margin-bottom: 10px;
+		}
+
+		.kpi-value {
+			font-size: 28px;
+			font-weight: 700;
+			line-height: 1;
+			margin-bottom: 6px;
+		}
+
+		.kpi-sub {
+			color: var(--text3);
+			font-size: 12px;
+		}
+
+		/* ── TWO-COL LAYOUT ── */
+		.grid-2 {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 16px;
+			margin-bottom: 24px;
+		}
+
+		@media (max-width: 900px) {
+			.grid-2 {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		/* ── PANELS ── */
+		.panel {
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+
+		.panel-header {
+			padding: 16px 20px;
+			border-bottom: 1px solid var(--border);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.panel-title {
+			font-size: 14px;
+			font-weight: 600;
+		}
+
+		.panel-body {
+			padding: 20px;
+		}
+
+		/* ── TABLE ── */
+		.table-wrap {
+			overflow-x: auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		thead th {
+			color: var(--text3);
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			padding: 10px 12px;
+			text-align: left;
+			border-bottom: 1px solid var(--border);
+			white-space: nowrap;
+			cursor: pointer;
+			user-select: none;
+		}
+
+		thead th:hover {
+			color: var(--text);
+		}
+
+		thead th.sort-asc::after {
+			content: ' ↑';
+		}
+
+		thead th.sort-desc::after {
+			content: ' ↓';
+		}
+
+		tbody tr {
+			border-bottom: 1px solid var(--border);
+			transition: background 0.1s;
+			cursor: pointer;
+		}
+
+		tbody tr:last-child {
+			border-bottom: none;
+		}
+
+		tbody tr:hover {
+			background: var(--surface2);
+		}
+
+		td {
+			padding: 10px 12px;
+			font-size: 13px;
+		}
+
+		.td-slug {
+			font-family: monospace;
+			font-size: 12px;
+			color: var(--accent2);
+			max-width: 280px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.badge {
+			display: inline-block;
+			padding: 2px 8px;
+			border-radius: 4px;
+			font-size: 11px;
+			font-weight: 600;
+		}
+
+		.badge-green {
+			background: rgba(34, 197, 94, 0.15);
+			color: var(--green);
+		}
+
+		.badge-yellow {
+			background: rgba(245, 158, 11, 0.15);
+			color: var(--yellow);
+		}
+
+		.badge-red {
+			background: rgba(239, 68, 68, 0.15);
+			color: var(--red);
+		}
+
+		/* ── CHART ── */
+		.chart-container {
+			position: relative;
+			height: 240px;
+		}
+
+		/* ── JOURNEYS ── */
+		.journey-list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.journey-item {
+			background: var(--surface2);
+			border-radius: 8px;
+			padding: 12px 16px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.journey-domains {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-wrap: wrap;
+		}
+
+		.domain-chip {
+			background: rgba(99, 102, 241, 0.15);
+			color: var(--accent);
+			font-size: 11px;
+			padding: 2px 8px;
+			border-radius: 4px;
+			font-family: monospace;
+		}
+
+		.arrow-sep {
+			color: var(--text3);
+			font-size: 12px;
+		}
+
+		.journey-meta {
+			display: flex;
+			gap: 16px;
+			font-size: 12px;
+			color: var(--text2);
+			white-space: nowrap;
+		}
+
+		/* ── SEARCH / JOURNEY MODAL ── */
+		.search-bar {
+			display: flex;
+			gap: 8px;
+			margin-bottom: 16px;
+		}
+
+		.search-bar input {
+			flex: 1;
+		}
+
+		.journey-timeline {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+		}
+
+		.timeline-item {
+			display: flex;
+			gap: 16px;
+			padding: 10px 0;
+			position: relative;
+		}
+
+		.timeline-item:not(:last-child)::after {
+			content: '';
+			position: absolute;
+			left: 12px;
+			top: 32px;
+			bottom: -2px;
+			width: 1px;
+			background: var(--border);
+		}
+
+		.timeline-dot {
+			width: 24px;
+			height: 24px;
+			border-radius: 50%;
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 12px;
+			margin-top: 2px;
+		}
+
+		.dot-pageview {
+			background: rgba(99, 102, 241, 0.2);
+			color: var(--accent);
+		}
+
+		.dot-conversion {
+			background: rgba(34, 197, 94, 0.2);
+			color: var(--green);
+		}
+
+		.dot-custom {
+			background: rgba(245, 158, 11, 0.2);
+			color: var(--yellow);
+		}
+
+		.timeline-content {
+			flex: 1;
+		}
+
+		.timeline-type {
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			font-weight: 600;
+			margin-bottom: 2px;
+		}
+
+		.timeline-detail {
+			font-size: 12px;
+			color: var(--text2);
+		}
+
+		.timeline-time {
+			font-size: 11px;
+			color: var(--text3);
+			margin-top: 2px;
+		}
+
+		/* ── MODAL ── */
+		.overlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.7);
+			z-index: 200;
+			align-items: flex-start;
+			justify-content: center;
+			padding: 40px 20px;
+			overflow-y: auto;
+		}
+
+		.overlay.open {
+			display: flex;
+		}
+
+		.modal {
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: 16px;
+			width: 100%;
+			max-width: 680px;
+			padding: 24px;
+		}
+
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			margin-bottom: 20px;
+		}
+
+		.modal-title {
+			font-size: 16px;
+			font-weight: 600;
+		}
+
+		.modal-subtitle {
+			font-size: 12px;
+			color: var(--text3);
+			margin-top: 4px;
+		}
+
+		.close-btn {
+			background: none;
+			border: none;
+			color: var(--text2);
+			cursor: pointer;
+			font-size: 20px;
+			line-height: 1;
+			padding: 0;
+		}
+
+		.close-btn:hover {
+			color: var(--text);
+		}
+
+		.profile-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 12px;
+			margin-bottom: 20px;
+		}
+
+		.profile-stat {
+			background: var(--surface2);
+			border-radius: 8px;
+			padding: 12px;
+			text-align: center;
+		}
+
+		.profile-stat-value {
+			font-size: 20px;
+			font-weight: 700;
+		}
+
+		.profile-stat-label {
+			font-size: 11px;
+			color: var(--text3);
+			margin-top: 2px;
+		}
+
+		/* ── LOADING & EMPTY ── */
+		.loading {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 40px;
+			color: var(--text3);
+		}
+
+		.spinner {
+			width: 20px;
+			height: 20px;
+			border: 2px solid var(--border);
+			border-top-color: var(--accent);
+			border-radius: 50%;
+			animation: spin 0.6s linear infinite;
+			margin-right: 10px;
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.empty {
+			text-align: center;
+			padding: 40px;
+			color: var(--text3);
+		}
+
+		.error-banner {
+			background: rgba(239, 68, 68, 0.1);
+			border: 1px solid rgba(239, 68, 68, 0.3);
+			color: #fca5a5;
+			border-radius: 8px;
+			padding: 12px 16px;
+			font-size: 13px;
+			margin-bottom: 16px;
+			display: none;
+		}
+
+		/* ── AUTO-REFRESH indicator ── */
+		.refresh-ring {
+			display: inline-block;
+			width: 14px;
+			height: 14px;
+			border-radius: 50%;
+			border: 2px solid var(--border);
+			border-top-color: var(--accent);
+			animation: spin 1s linear infinite;
+			opacity: 0;
+			transition: opacity 0.2s;
+		}
+
+		.refresh-ring.active {
+			opacity: 1;
+		}
+	</style>
 </head>
+
 <body>
 
-<!-- ════════════════════════════════════════
+	<!-- ════════════════════════════════════════
      HEADER
 ════════════════════════════════════════ -->
-<header>
-  <div class="logo">
-    <div class="logo-dot"></div>
-    User Journey Dashboard
-  </div>
-  <div class="header-right">
-    <span class="last-updated" id="lastUpdated">—</span>
-    <span class="refresh-ring" id="refreshRing"></span>
-    <button class="btn btn-secondary btn-sm" id="btnRefresh">↻ Refresh</button>
-  </div>
-</header>
+	<header>
+		<div class="logo">
+			<div class="logo-dot"></div>
+			User Journey Dashboard
+		</div>
+		<div class="header-right">
+			<span class="last-updated" id="lastUpdated">—</span>
+			<span class="refresh-ring" id="refreshRing"></span>
+			<button class="btn btn-secondary btn-sm" id="btnRefresh">↻ Refresh</button>
+		</div>
+	</header>
 
-<!-- ════════════════════════════════════════
+	<!-- ════════════════════════════════════════
      CONTROLS
 ════════════════════════════════════════ -->
-<div class="controls">
-  <div class="control-group">
-    <label>From</label>
-    <input type="date" id="startDate" />
-  </div>
-  <div class="control-group">
-    <label>To</label>
-    <input type="date" id="endDate" />
-  </div>
-  <div class="separator"></div>
-  <button class="btn btn-secondary btn-sm" data-preset="7">Last 7 days</button>
-  <button class="btn btn-secondary btn-sm" data-preset="30">Last 30 days</button>
-  <button class="btn btn-secondary btn-sm" data-preset="90">Last 90 days</button>
-  <div class="separator"></div>
-  <div class="control-group">
-    <label>Slug filter</label>
-    <input type="text" id="slugFilter" placeholder="utm_content / slug…" style="width:220px" />
-  </div>
-  <button class="btn btn-primary btn-sm" id="btnApply">Apply</button>
-  <div class="separator"></div>
-  <div class="control-group">
-    <label>Auto-refresh</label>
-    <select id="autoRefresh">
-      <option value="0">Off</option>
-      <option value="30">30s</option>
-      <option value="60" selected>60s</option>
-      <option value="300">5 min</option>
-    </select>
-  </div>
-</div>
+	<div class="controls">
+		<div class="control-group">
+			<label>From</label>
+			<input type="date" id="startDate" />
+		</div>
+		<div class="control-group">
+			<label>To</label>
+			<input type="date" id="endDate" />
+		</div>
+		<div class="separator"></div>
+		<button class="btn btn-secondary btn-sm" data-preset="7">Last 7 days</button>
+		<button class="btn btn-secondary btn-sm" data-preset="30">Last 30 days</button>
+		<button class="btn btn-secondary btn-sm" data-preset="90">Last 90 days</button>
+		<div class="separator"></div>
+		<div class="control-group">
+			<label>Slug filter</label>
+			<input type="text" id="slugFilter" placeholder="utm_content / slug…" style="width:220px" />
+		</div>
+		<button class="btn btn-primary btn-sm" id="btnApply">Apply</button>
+		<div class="separator"></div>
+		<div class="control-group">
+			<label>Auto-refresh</label>
+			<select id="autoRefresh">
+				<option value="0">Off</option>
+				<option value="30">30s</option>
+				<option value="60" selected>60s</option>
+				<option value="300">5 min</option>
+			</select>
+		</div>
+	</div>
 
-<!-- ════════════════════════════════════════
+	<!-- ════════════════════════════════════════
      MAIN
 ════════════════════════════════════════ -->
-<main>
+	<main>
 
-  <div class="error-banner" id="errorBanner"></div>
+		<div class="error-banner" id="errorBanner"></div>
 
-  <!-- KPI Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card purple">
-      <div class="kpi-label">Unique Users</div>
-      <div class="kpi-value" id="kpiUsers">—</div>
-      <div class="kpi-sub">cross-domain</div>
-    </div>
-    <div class="kpi-card cyan">
-      <div class="kpi-label">Pageviews</div>
-      <div class="kpi-value" id="kpiPageviews">—</div>
-      <div class="kpi-sub">total visits</div>
-    </div>
-    <div class="kpi-card green">
-      <div class="kpi-label">Conversions</div>
-      <div class="kpi-value" id="kpiConversions">—</div>
-      <div class="kpi-sub" id="kpiConvRate">rate: —</div>
-    </div>
-    <div class="kpi-card yellow">
-      <div class="kpi-label">Revenue</div>
-      <div class="kpi-value" id="kpiRevenue">—</div>
-      <div class="kpi-sub" id="kpiAvgOrder">avg order: —</div>
-    </div>
-    <div class="kpi-card red">
-      <div class="kpi-label">Cross-Domain Users</div>
-      <div class="kpi-value" id="kpiCrossDomain">—</div>
-      <div class="kpi-sub" id="kpiAvgDomains">avg domains: —</div>
-    </div>
-  </div>
+		<!-- KPI Cards -->
+		<div class="kpi-grid">
+			<div class="kpi-card purple">
+				<div class="kpi-label">Unique Users</div>
+				<div class="kpi-value" id="kpiUsers">—</div>
+				<div class="kpi-sub">cross-domain</div>
+			</div>
+			<div class="kpi-card cyan">
+				<div class="kpi-label">Pageviews</div>
+				<div class="kpi-value" id="kpiPageviews">—</div>
+				<div class="kpi-sub">total visits</div>
+			</div>
+			<div class="kpi-card green">
+				<div class="kpi-label">Conversions</div>
+				<div class="kpi-value" id="kpiConversions">—</div>
+				<div class="kpi-sub" id="kpiConvRate">rate: —</div>
+			</div>
+			<div class="kpi-card yellow">
+				<div class="kpi-label">Revenue</div>
+				<div class="kpi-value" id="kpiRevenue">—</div>
+				<div class="kpi-sub" id="kpiAvgOrder">avg order: —</div>
+			</div>
+			<div class="kpi-card red">
+				<div class="kpi-label">Cross-Domain Users</div>
+				<div class="kpi-value" id="kpiCrossDomain">—</div>
+				<div class="kpi-sub" id="kpiAvgDomains">avg domains: —</div>
+			</div>
+		</div>
 
-  <!-- Charts row -->
-  <div class="grid-2" style="margin-bottom:24px;">
+		<!-- Charts row -->
+		<div class="grid-2" style="margin-bottom:24px;">
 
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Revenue by Slug (Top 10)</span>
-      </div>
-      <div class="panel-body">
-        <div class="chart-container">
-          <canvas id="chartRevenue"></canvas>
-        </div>
-      </div>
-    </div>
+			<div class="panel">
+				<div class="panel-header">
+					<span class="panel-title">Revenue by Slug (Top 10)</span>
+				</div>
+				<div class="panel-body">
+					<div class="chart-container">
+						<canvas id="chartRevenue"></canvas>
+					</div>
+				</div>
+			</div>
 
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Conversion Rate by Slug (Top 10)</span>
-      </div>
-      <div class="panel-body">
-        <div class="chart-container">
-          <canvas id="chartConvRate"></canvas>
-        </div>
-      </div>
-    </div>
+			<div class="panel">
+				<div class="panel-header">
+					<span class="panel-title">Conversion Rate by Slug (Top 10)</span>
+				</div>
+				<div class="panel-body">
+					<div class="chart-container">
+						<canvas id="chartConvRate"></canvas>
+					</div>
+				</div>
+			</div>
 
-  </div>
+		</div>
 
-  <!-- Slugs table -->
-  <div class="panel" style="margin-bottom:24px;">
-    <div class="panel-header">
-      <span class="panel-title">Ad Slugs Performance</span>
-      <span id="slugCount" style="font-size:12px;color:var(--text3);">—</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th data-col="slug">Slug / utm_content</th>
-            <th data-col="users">Users</th>
-            <th data-col="pageviews">Pageviews</th>
-            <th data-col="conversions">Conversions</th>
-            <th data-col="revenue">Revenue</th>
-            <th data-col="conversion_rate">Conv. Rate</th>
-          </tr>
-        </thead>
-        <tbody id="slugTableBody">
-          <tr><td colspan="6" class="loading"><span class="spinner"></span> Loading…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+		<!-- Slugs table -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Ad Slugs Performance</span>
+				<span id="slugCount" style="font-size:12px;color:var(--text3);">—</span>
+			</div>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th data-col="slug">Slug / utm_content</th>
+							<th data-col="users">Users</th>
+							<th data-col="pageviews">Pageviews</th>
+							<th data-col="conversions">Conversions</th>
+							<th data-col="revenue">Revenue</th>
+							<th data-col="conversion_rate">Conv. Rate</th>
+						</tr>
+					</thead>
+					<tbody id="slugTableBody">
+						<tr>
+							<td colspan="6" class="loading"><span class="spinner"></span> Loading…</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
 
-  <!-- Sites Performance -->
-  <div class="panel" style="margin-bottom:24px;">
-    <div class="panel-header">
-      <span class="panel-title">Sites Performance</span>
-      <span id="domainCount" style="font-size:12px;color:var(--text3);">—</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th data-col-d="domain">Domain</th>
-            <th data-col-d="users">Users</th>
-            <th data-col-d="pageviews">Pageviews</th>
-            <th data-col-d="conversions">Conversions</th>
-            <th data-col-d="revenue">Revenue</th>
-            <th data-col-d="conversion_rate">Conv. Rate</th>
-          </tr>
-        </thead>
-        <tbody id="domainTableBody">
-          <tr><td colspan="6" class="loading"><span class="spinner"></span> Loading…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+		<!-- Sites Performance -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Sites Performance</span>
+				<span id="domainCount" style="font-size:12px;color:var(--text3);">—</span>
+			</div>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th data-col-d="domain">Domain</th>
+							<th data-col-d="users">Users</th>
+							<th data-col-d="pageviews">Pageviews</th>
+							<th data-col-d="conversions">Conversions</th>
+							<th data-col-d="revenue">Revenue</th>
+							<th data-col-d="conversion_rate">Conv. Rate</th>
+						</tr>
+					</thead>
+					<tbody id="domainTableBody">
+						<tr>
+							<td colspan="6" class="loading"><span class="spinner"></span> Loading…</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
 
-  <!-- Audience Cohorts -->
-  <div class="panel" style="margin-bottom:24px;">
-    <div class="panel-header">
-      <span class="panel-title">Audience Cohorts</span>
-      <span style="font-size:12px;color:var(--text3);">Users grouped by traffic source + device — includes users that cannot be individually identified</span>
-    </div>
-    <div class="panel-body" style="padding-bottom:0;">
-      <div id="cohortSummary" style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;"></div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Source</th>
-            <th>Medium</th>
-            <th>Campaign</th>
-            <th>Device</th>
-            <th>Language</th>
-            <th>Users</th>
-            <th>Pageviews</th>
-            <th>Conversions</th>
-            <th>Revenue</th>
-            <th>Conv. Rate</th>
-          </tr>
-        </thead>
-        <tbody id="cohortTableBody">
-          <tr><td colspan="10" class="loading"><span class="spinner"></span> Loading…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+		<!-- Audience Cohorts -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Audience Cohorts</span>
+				<span style="font-size:12px;color:var(--text3);">Users grouped by traffic source + device — includes users that
+					cannot be individually identified</span>
+			</div>
+			<div class="panel-body" style="padding-bottom:0;">
+				<div id="cohortSummary" style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;"></div>
+			</div>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th>Source</th>
+							<th>Medium</th>
+							<th>Campaign</th>
+							<th>Device</th>
+							<th>Language</th>
+							<th>Users</th>
+							<th>Pageviews</th>
+							<th>Conversions</th>
+							<th>Revenue</th>
+							<th>Conv. Rate</th>
+						</tr>
+					</thead>
+					<tbody id="cohortTableBody">
+						<tr>
+							<td colspan="10" class="loading"><span class="spinner"></span> Loading…</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
 
-  <!-- Daily Trend -->
-  <div class="panel" style="margin-bottom:24px;">
-    <div class="panel-header">
-      <span class="panel-title">Daily Trend</span>      <div style="display:flex;gap:12px;font-size:12px;">
-        <span style="color:var(--accent2);">&#9632; Pageviews</span>
-        <span style="color:var(--green);">&#9632; Conversions</span>
-        <span style="color:var(--yellow);">&#9632; Revenue (€)</span>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div class="chart-container" style="height:220px;">
-        <canvas id="chartTrend"></canvas>
-      </div>
-    </div>
-  </div>
+		<!-- Daily Trend -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Daily Trend</span>
+				<div style="display:flex;gap:12px;font-size:12px;">
+					<span style="color:var(--accent2);">&#9632; Pageviews</span>
+					<span style="color:var(--green);">&#9632; Conversions</span>
+					<span style="color:var(--yellow);">&#9632; Revenue (€)</span>
+				</div>
+			</div>
+			<div class="panel-body">
+				<div class="chart-container" style="height:220px;">
+					<canvas id="chartTrend"></canvas>
+				</div>
+			</div>
+		</div>
 
-  <!-- Breakdown + Recent Conversions -->
-  <div class="grid-2" style="margin-bottom:24px;">
+		<!-- Breakdown + Recent Conversions -->
+		<div class="grid-2" style="margin-bottom:24px;">
 
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Device &amp; Country Breakdown</span>
-      </div>
-      <div class="panel-body" id="breakdownBody">
-        <div class="loading"><span class="spinner"></span> Loading…</div>
-      </div>
-    </div>
+			<div class="panel">
+				<div class="panel-header">
+					<span class="panel-title">Device &amp; Country Breakdown</span>
+				</div>
+				<div class="panel-body" id="breakdownBody">
+					<div class="loading"><span class="spinner"></span> Loading…</div>
+				</div>
+			</div>
 
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Recent Conversions</span>
-        <span style="font-size:12px;color:var(--text3);">Last 20</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Product</th>
-              <th>Value</th>
-              <th>Slug</th>
-              <th>Time</th>
-              <th>User Journey</th>
-            </tr>
-          </thead>
-          <tbody id="recentConvBody">
-            <tr><td colspan="6" class="loading"><span class="spinner"></span> Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+			<div class="panel">
+				<div class="panel-header">
+					<span class="panel-title">Recent Conversions</span>
+					<span style="font-size:12px;color:var(--text3);">Last 20</span>
+				</div>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>Order ID</th>
+								<th>Product</th>
+								<th>Value</th>
+								<th>Slug</th>
+								<th>Time</th>
+								<th>User Journey</th>
+							</tr>
+						</thead>
+						<tbody id="recentConvBody">
+							<tr>
+								<td colspan="6" class="loading"><span class="spinner"></span> Loading…</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
-  </div>
+		</div>
 
-  <!-- Cross-domain journeys -->
-  <div class="panel" style="margin-bottom:24px;">
-    <div class="panel-header">
-      <span class="panel-title">Top Cross-Domain Journeys</span>
-      <span style="font-size:12px;color:var(--text3);">Users who visited multiple landing pages</span>
-    </div>
-    <div class="panel-body" id="journeyList">
-      <div class="loading"><span class="spinner"></span> Loading…</div>
-    </div>
-  </div>
+		<!-- Cross-domain journeys -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Top Cross-Domain Journeys</span>
+				<span style="font-size:12px;color:var(--text3);">Users who visited multiple landing pages</span>
+			</div>
+			<div class="panel-body" id="journeyList">
+				<div class="loading"><span class="spinner"></span> Loading…</div>
+			</div>
+		</div>
 
-  <!-- User Journey Lookup -->
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-title">User Journey Lookup</span>
-      <span style="font-size:12px;color:var(--text3);">Paste a user_id to see the full journey</span>
-    </div>
-    <div class="panel-body">
-      <div class="search-bar">
-        <input type="text" id="userIdInput" placeholder="user_id (SHA-256 fingerprint)…" style="font-family:monospace;font-size:12px;" />
-        <button class="btn btn-primary" id="btnLookup">Look up</button>
-      </div>
-      <div id="journeyResult"></div>
-    </div>
-  </div>
+		<!-- User Journey Lookup -->
+		<div class="panel">
+			<div class="panel-header">
+				<span class="panel-title">User Journey Lookup</span>
+				<span style="font-size:12px;color:var(--text3);">Paste a user_id to see the full journey</span>
+			</div>
+			<div class="panel-body">
+				<div class="search-bar">
+					<input type="text" id="userIdInput" placeholder="user_id (SHA-256 fingerprint)…"
+						style="font-family:monospace;font-size:12px;" />
+					<button class="btn btn-primary" id="btnLookup">Look up</button>
+				</div>
+				<div id="journeyResult"></div>
+			</div>
+		</div>
 
-</main>
+	</main>
 
-<!-- ════════════════════════════════════════
+	<!-- ════════════════════════════════════════
      JOURNEY MODAL
 ════════════════════════════════════════ -->
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="modalTitle">User Journey</div>
-        <div class="modal-subtitle" id="modalSubtitle"></div>
-      </div>
-      <button class="close-btn" id="btnCloseModal">✕</button>
-    </div>
-    <div id="modalBody"></div>
-  </div>
-</div>
+	<div class="overlay" id="overlay">
+		<div class="modal">
+			<div class="modal-header">
+				<div>
+					<div class="modal-title" id="modalTitle">User Journey</div>
+					<div class="modal-subtitle" id="modalSubtitle"></div>
+				</div>
+				<button class="close-btn" id="btnCloseModal">✕</button>
+			</div>
+			<div id="modalBody"></div>
+		</div>
+	</div>
 
-<script>
-// ════════════════════════════════════════
-// CONFIG
-// ════════════════════════════════════════
-const API_ENDPOINT = 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net';
-const API_KEY      = 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1';
+	<script>
+		// ════════════════════════════════════════
+		// CONFIG
+		// ════════════════════════════════════════
+		const API_ENDPOINT = 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net';
+		const API_KEY = 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1';
 
-const HEADERS = {
-  'Content-Type': 'application/json',
-  'X-API-Key': API_KEY,
-};
+		const HEADERS = {
+			'Content-Type': 'application/json',
+			'X-API-Key': API_KEY,
+		};
 
-// ════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════
-let statsData      = null;
-let sortColD       = 'revenue';
-let sortDirD       = 'desc';
-let sortCol        = 'revenue';
-let sortDir        = 'desc';
-let refreshTimer   = null;
-let _loadAbort     = null;   // AbortController for in-flight loadStats requests
-let chartRevenue   = null;
-let chartConvRate  = null;
-let chartTrend     = null;
+		// ════════════════════════════════════════
+		// STATE
+		// ════════════════════════════════════════
+		let statsData = null;
+		let sortColD = 'revenue';
+		let sortDirD = 'desc';
+		let sortCol = 'revenue';
+		let sortDir = 'desc';
+		let refreshTimer = null;
+		let _loadAbort = null;   // AbortController for in-flight loadStats requests
+		let chartRevenue = null;
+		let chartConvRate = null;
+		let chartTrend = null;
 
-// ════════════════════════════════════════
-// DATE HELPERS
-// ════════════════════════════════════════
-function toISO(date) { return date.toISOString().split('T')[0]; }
+		// ════════════════════════════════════════
+		// DATE HELPERS
+		// ════════════════════════════════════════
+		function toISO(date) { return date.toISOString().split('T')[0]; }
 
-function setPreset(days) {
-  const end   = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - days);
-  document.getElementById('startDate').value = toISO(start);
-  document.getElementById('endDate').value   = toISO(end);
-}
+		function setPreset(days) {
+			const end = new Date();
+			const start = new Date();
+			start.setDate(end.getDate() - days);
+			document.getElementById('startDate').value = toISO(start);
+			document.getElementById('endDate').value = toISO(end);
+		}
 
-function initDates() { setPreset(30); }
+		function initDates() { setPreset(30); }
 
-// ════════════════════════════════════════
-// API CALLS
-// ════════════════════════════════════════
-async function fetchStats(signal) {
-  const start = document.getElementById('startDate').value;
-  const end   = document.getElementById('endDate').value;
-  const slug  = document.getElementById('slugFilter').value.trim();
+		// ════════════════════════════════════════
+		// API CALLS
+		// ════════════════════════════════════════
+		async function fetchStats(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
 
-  const params = new URLSearchParams({ start_date: start, end_date: end });
-  if (slug) params.set('slug', slug);
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			if (slug) params.set('slug', slug);
 
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-async function fetchJourney(userId) {
-  const res = await fetch(`${API_ENDPOINT}/api/journey/${encodeURIComponent(userId)}?limit=200`, { headers: HEADERS });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+		async function fetchJourney(userId) {
+			const res = await fetch(`${API_ENDPOINT}/api/journey/${encodeURIComponent(userId)}?limit=200`, { headers: HEADERS });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-async function fetchTrend(signal) {
-  const start = document.getElementById('startDate').value;
-  const end   = document.getElementById('endDate').value;
-  const slug  = document.getElementById('slugFilter').value.trim();
-  const params = new URLSearchParams({ start_date: start, end_date: end });
-  if (slug) params.set('slug', slug);
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/trend?${params}`, { headers: HEADERS, signal });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+		async function fetchTrend(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			if (slug) params.set('slug', slug);
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/trend?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-async function fetchBreakdown(signal) {
-  const start = document.getElementById('startDate').value;
-  const end   = document.getElementById('endDate').value;
-  const slug  = document.getElementById('slugFilter').value.trim();
-  const params = new URLSearchParams({ start_date: start, end_date: end });
-  if (slug) params.set('slug', slug);
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/breakdown?${params}`, { headers: HEADERS, signal });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+		async function fetchBreakdown(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			if (slug) params.set('slug', slug);
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/breakdown?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-async function fetchRecentConversions(signal) {
-  const slug = document.getElementById('slugFilter').value.trim();
-  const params = new URLSearchParams({ limit: 20 });
-  if (slug) params.set('slug', slug);
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/conversions/recent?${params}`, { headers: HEADERS, signal });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+		async function fetchRecentConversions(signal) {
+			const slug = document.getElementById('slugFilter').value.trim();
+			const params = new URLSearchParams({ limit: 20 });
+			if (slug) params.set('slug', slug);
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/conversions/recent?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-async function fetchDomains(signal) {
-  const start = document.getElementById('startDate').value;
-  const end   = document.getElementById('endDate').value;
-  const params = new URLSearchParams({ start_date: start, end_date: end });
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/domains?${params}`, { headers: HEADERS, signal });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+		async function fetchDomains(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/domains?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-async function fetchCohorts(signal) {
-  const start = document.getElementById('startDate').value;
-  const end   = document.getElementById('endDate').value;
-  const params = new URLSearchParams({ start_date: start, end_date: end, limit: 30 });
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/cohorts?${params}`, { headers: HEADERS, signal });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json();
-}
+		async function fetchCohorts(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ start_date: start, end_date: end, limit: 30 });
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/cohorts?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
 
-// ════════════════════════════════════════
-// FORMAT HELPERS
-// ════════════════════════════════════════
-function fmtNum(n) {
-  if (n === null || n === undefined) return '—';
-  return Number(n).toLocaleString('en-US');
-}
+		// ════════════════════════════════════════
+		// FORMAT HELPERS
+		// ════════════════════════════════════════
+		function fmtNum(n) {
+			if (n === null || n === undefined) return '—';
+			return Number(n).toLocaleString('en-US');
+		}
 
-function fmtEUR(n) {
-  if (n === null || n === undefined) return '—';
-  return '€' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+		function fmtEUR(n) {
+			if (n === null || n === undefined) return '—';
+			return '€' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+		}
 
-function fmtPct(n) {
-  if (n === null || n === undefined) return '—';
-  return Number(n).toFixed(2) + '%';
-}
+		function fmtPct(n) {
+			if (n === null || n === undefined) return '—';
+			return Number(n).toFixed(2) + '%';
+		}
 
-function fmtDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
+		function fmtDate(iso) {
+			if (!iso) return '—';
+			return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+		}
 
-function convRateBadge(rate) {
-  const r = parseFloat(rate) || 0;
-  if (r >= 3)  return `<span class="badge badge-green">${fmtPct(r)}</span>`;
-  if (r >= 1)  return `<span class="badge badge-yellow">${fmtPct(r)}</span>`;
-  return `<span class="badge badge-red">${fmtPct(r)}</span>`;
-}
+		function convRateBadge(rate) {
+			const r = parseFloat(rate) || 0;
+			if (r >= 3) return `<span class="badge badge-green">${fmtPct(r)}</span>`;
+			if (r >= 1) return `<span class="badge badge-yellow">${fmtPct(r)}</span>`;
+			return `<span class="badge badge-red">${fmtPct(r)}</span>`;
+		}
 
-// ════════════════════════════════════════
-// RENDER KPIs
-// ════════════════════════════════════════
-function renderKPIs(data) {
-  const t = data.totals;
-  document.getElementById('kpiUsers').textContent       = fmtNum(t.unique_users);
-  document.getElementById('kpiPageviews').textContent   = fmtNum(t.total_pageviews);
-  document.getElementById('kpiConversions').textContent = fmtNum(t.total_conversions);
-  document.getElementById('kpiConvRate').textContent    = 'rate: ' + fmtPct(t.conversion_rate);
-  document.getElementById('kpiRevenue').textContent     = fmtEUR(t.total_revenue);
+		// ════════════════════════════════════════
+		// RENDER KPIs
+		// ════════════════════════════════════════
+		function renderKPIs(data) {
+			const t = data.totals;
+			document.getElementById('kpiUsers').textContent = fmtNum(t.unique_users);
+			document.getElementById('kpiPageviews').textContent = fmtNum(t.total_pageviews);
+			document.getElementById('kpiConversions').textContent = fmtNum(t.total_conversions);
+			document.getElementById('kpiConvRate').textContent = 'rate: ' + fmtPct(t.conversion_rate);
+			document.getElementById('kpiRevenue').textContent = fmtEUR(t.total_revenue);
 
-  const avgOrder = t.total_conversions > 0 ? (t.total_revenue / t.total_conversions) : 0;
-  document.getElementById('kpiAvgOrder').textContent    = 'avg order: ' + fmtEUR(avgOrder);
-  document.getElementById('kpiCrossDomain').textContent = fmtNum(data.cross_domain_users);
-  document.getElementById('kpiAvgDomains').textContent  = 'avg domains: ' + (data.avg_domains_per_user || '—');
-}
+			const avgOrder = t.total_conversions > 0 ? (t.total_revenue / t.total_conversions) : 0;
+			document.getElementById('kpiAvgOrder').textContent = 'avg order: ' + fmtEUR(avgOrder);
+			document.getElementById('kpiCrossDomain').textContent = fmtNum(data.cross_domain_users);
+			document.getElementById('kpiAvgDomains').textContent = 'avg domains: ' + (data.avg_domains_per_user || '—');
+		}
 
-// ════════════════════════════════════════
-// RENDER TREND CHART
-// ════════════════════════════════════════
-function renderTrendChart(days) {
-  const labels = days.map(d => d.date);
+		// ════════════════════════════════════════
+		// RENDER TREND CHART
+		// ════════════════════════════════════════
+		function renderTrendChart(days) {
+			const labels = days.map(d => d.date);
 
-  if (chartTrend) chartTrend.destroy();
-  chartTrend = new Chart(document.getElementById('chartTrend'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Pageviews',
-          data: days.map(d => d.pageviews),
-          borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34,211,238,0.08)',
-          tension: 0.3,
-          fill: true,
-          pointRadius: 3,
-          yAxisID: 'yLeft',
-        },
-        {
-          label: 'Conversions',
-          data: days.map(d => d.conversions),
-          borderColor: '#22c55e',
-          backgroundColor: 'rgba(34,197,94,0.08)',
-          tension: 0.3,
-          fill: false,
-          pointRadius: 3,
-          yAxisID: 'yLeft',
-        },
-        {
-          label: 'Revenue (€)',
-          data: days.map(d => d.revenue),
-          borderColor: '#f59e0b',
-          backgroundColor: 'rgba(245,158,11,0.08)',
-          tension: 0.3,
-          fill: false,
-          pointRadius: 3,
-          borderDash: [4, 3],
-          yAxisID: 'yRight',
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const v = ctx.raw;
-              if (ctx.dataset.label === 'Revenue (€)') return ' €' + v.toFixed(2);
-              return ' ' + v;
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          grid: { color: '#2e3250' },
-          ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 14 },
-        },
-        yLeft: {
-          position: 'left',
-          grid: { color: '#2e3250' },
-          ticks: { color: '#94a3b8', font: { size: 11 } },
-        },
-        yRight: {
-          position: 'right',
-          grid: { display: false },
-          ticks: { color: '#f59e0b', font: { size: 11 }, callback: v => '€' + v },
-        },
-      },
-    },
-  });
-}
+			if (chartTrend) chartTrend.destroy();
+			chartTrend = new Chart(document.getElementById('chartTrend'), {
+				type: 'line',
+				data: {
+					labels,
+					datasets: [
+						{
+							label: 'Pageviews',
+							data: days.map(d => d.pageviews),
+							borderColor: '#22d3ee',
+							backgroundColor: 'rgba(34,211,238,0.08)',
+							tension: 0.3,
+							fill: true,
+							pointRadius: 3,
+							yAxisID: 'yLeft',
+						},
+						{
+							label: 'Conversions',
+							data: days.map(d => d.conversions),
+							borderColor: '#22c55e',
+							backgroundColor: 'rgba(34,197,94,0.08)',
+							tension: 0.3,
+							fill: false,
+							pointRadius: 3,
+							yAxisID: 'yLeft',
+						},
+						{
+							label: 'Revenue (€)',
+							data: days.map(d => d.revenue),
+							borderColor: '#f59e0b',
+							backgroundColor: 'rgba(245,158,11,0.08)',
+							tension: 0.3,
+							fill: false,
+							pointRadius: 3,
+							borderDash: [4, 3],
+							yAxisID: 'yRight',
+						},
+					],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					interaction: { mode: 'index', intersect: false },
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							callbacks: {
+								label: ctx => {
+									const v = ctx.raw;
+									if (ctx.dataset.label === 'Revenue (€)') return ' €' + v.toFixed(2);
+									return ' ' + v;
+								},
+							},
+						},
+					},
+					scales: {
+						x: {
+							grid: { color: '#2e3250' },
+							ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 14 },
+						},
+						yLeft: {
+							position: 'left',
+							grid: { color: '#2e3250' },
+							ticks: { color: '#94a3b8', font: { size: 11 } },
+						},
+						yRight: {
+							position: 'right',
+							grid: { display: false },
+							ticks: { color: '#f59e0b', font: { size: 11 }, callback: v => '€' + v },
+						},
+					},
+				},
+			});
+		}
 
-// ════════════════════════════════════════
-// RENDER BREAKDOWN
-// ════════════════════════════════════════
-function renderBreakdown(data) {
-  const el = document.getElementById('breakdownBody');
-  if (!data) { el.innerHTML = '<div class="empty">No data.</div>'; return; }
+		// ════════════════════════════════════════
+		// RENDER BREAKDOWN
+		// ════════════════════════════════════════
+		function renderBreakdown(data) {
+			const el = document.getElementById('breakdownBody');
+			if (!data) { el.innerHTML = '<div class="empty">No data.</div>'; return; }
 
-  const deviceIcons = { mobile: '📱', desktop: '🖥', tablet: '📟', unknown: '❓' };
+			const deviceIcons = { mobile: '📱', desktop: '🖥', tablet: '📟', unknown: '❓' };
 
-  const totalDev = (data.by_device || []).reduce((s, r) => s + r.users, 0) || 1;
-  const totalCo  = (data.by_country || []).reduce((s, r) => s + r.users, 0) || 1;
+			const totalDev = (data.by_device || []).reduce((s, r) => s + r.users, 0) || 1;
+			const totalCo = (data.by_country || []).reduce((s, r) => s + r.users, 0) || 1;
 
-  const devHtml = (data.by_device || []).map(r => {
-    const pct = Math.round(r.users / totalDev * 100);
-    const icon = deviceIcons[r.device_type] || '❓';
-    return `
+			const devHtml = (data.by_device || []).map(r => {
+				const pct = Math.round(r.users / totalDev * 100);
+				const icon = deviceIcons[r.device_type] || '❓';
+				return `
       <div style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
           <span>${icon} ${escHtml(r.device_type)}</span>
@@ -1095,11 +1239,11 @@ function renderBreakdown(data) {
         </div>
       </div>
     `;
-  }).join('');
+			}).join('');
 
-  const coHtml = (data.by_country || []).slice(0, 8).map(r => {
-    const pct = Math.round(r.users / totalCo * 100);
-    return `
+			const coHtml = (data.by_country || []).slice(0, 8).map(r => {
+				const pct = Math.round(r.users / totalCo * 100);
+				return `
       <div style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
           <span>${escHtml(r.country || 'unknown')}</span>
@@ -1110,28 +1254,28 @@ function renderBreakdown(data) {
         </div>
       </div>
     `;
-  }).join('');
+			}).join('');
 
-  el.innerHTML = `
+			el.innerHTML = `
     <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">DEVICE</div>
     ${devHtml}
     <div style="font-size:12px;font-weight:600;color:var(--text2);margin:16px 0 10px;">COUNTRY (top 8)</div>
     ${coHtml}
   `;
-}
+		}
 
-// ════════════════════════════════════════
-// RENDER RECENT CONVERSIONS
-// ════════════════════════════════════════
-function renderRecentConversions(convs) {
-  const tbody = document.getElementById('recentConvBody');
-  if (!convs || convs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">No conversions yet.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = convs.map(c => {
-    const shortId = c.user_id ? c.user_id.slice(0, 8) + '…' : '—';
-    return `
+		// ════════════════════════════════════════
+		// RENDER RECENT CONVERSIONS
+		// ════════════════════════════════════════
+		function renderRecentConversions(convs) {
+			const tbody = document.getElementById('recentConvBody');
+			if (!convs || convs.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="6" class="empty">No conversions yet.</td></tr>';
+				return;
+			}
+			tbody.innerHTML = convs.map(c => {
+				const shortId = c.user_id ? c.user_id.slice(0, 8) + '…' : '—';
+				return `
     <tr>
       <td style="font-family:monospace;font-size:11px;color:var(--accent2);">${escHtml(c.order_id || '—')}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(c.product_name || '')}">${escHtml(c.product_name || '—')}</td>
@@ -1141,124 +1285,124 @@ function renderRecentConversions(convs) {
       <td>${c.user_id ? `<button class="btn-user-journey" data-uid="${escHtml(c.user_id)}" title="${escHtml(c.user_id)}">🔍 ${escHtml(shortId)}</button>` : '—'}</td>
     </tr>
   `;
-  }).join('');
+			}).join('');
 
-  // click → scroll to lookup and trigger
-  tbody.querySelectorAll('.btn-user-journey').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const uid = btn.dataset.uid;
-      document.getElementById('userIdInput').value = uid;
-      document.getElementById('userIdInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      lookupUser(uid);
-    });
-  });
-}
+			// click → scroll to lookup and trigger
+			tbody.querySelectorAll('.btn-user-journey').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const uid = btn.dataset.uid;
+					document.getElementById('userIdInput').value = uid;
+					document.getElementById('userIdInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+					lookupUser(uid);
+				});
+			});
+		}
 
-// ════════════════════════════════════════
-// RENDER CHARTS
-// ════════════════════════════════════════
-function renderCharts(slugs) {
-  const top10Rev  = [...slugs].sort((a,b) => b.revenue - a.revenue).slice(0, 10);
-  const top10Rate = [...slugs].sort((a,b) => b.conversion_rate - a.conversion_rate).slice(0, 10);
+		// ════════════════════════════════════════
+		// RENDER CHARTS
+		// ════════════════════════════════════════
+		function renderCharts(slugs) {
+			const top10Rev = [...slugs].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+			const top10Rate = [...slugs].sort((a, b) => b.conversion_rate - a.conversion_rate).slice(0, 10);
 
-  const shortLabel = s => s && s.length > 28 ? s.slice(0, 28) + '…' : (s || '(none)');
+			const shortLabel = s => s && s.length > 28 ? s.slice(0, 28) + '…' : (s || '(none)');
 
-  const chartDefaults = {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: {} },
-    },
-    scales: {
-      x: {
-        grid: { color: '#2e3250' },
-        ticks: { color: '#94a3b8', font: { size: 11 } },
-      },
-      y: {
-        grid: { display: false },
-        ticks: { color: '#94a3b8', font: { size: 11 } },
-      },
-    },
-  };
+			const chartDefaults = {
+				indexAxis: 'y',
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: { display: false },
+					tooltip: { callbacks: {} },
+				},
+				scales: {
+					x: {
+						grid: { color: '#2e3250' },
+						ticks: { color: '#94a3b8', font: { size: 11 } },
+					},
+					y: {
+						grid: { display: false },
+						ticks: { color: '#94a3b8', font: { size: 11 } },
+					},
+				},
+			};
 
-  // Revenue chart
-  if (chartRevenue) chartRevenue.destroy();
-  chartRevenue = new Chart(document.getElementById('chartRevenue'), {
-    type: 'bar',
-    data: {
-      labels: top10Rev.map(s => shortLabel(s.slug)),
-      datasets: [{
-        data: top10Rev.map(s => s.revenue),
-        backgroundColor: 'rgba(34,211,238,0.6)',
-        borderColor: '#22d3ee',
-        borderWidth: 1,
-        borderRadius: 4,
-      }],
-    },
-    options: {
-      ...chartDefaults,
-      plugins: {
-        ...chartDefaults.plugins,
-        tooltip: { callbacks: { label: ctx => ' €' + ctx.raw.toFixed(2) } },
-      },
-    },
-  });
+			// Revenue chart
+			if (chartRevenue) chartRevenue.destroy();
+			chartRevenue = new Chart(document.getElementById('chartRevenue'), {
+				type: 'bar',
+				data: {
+					labels: top10Rev.map(s => shortLabel(s.slug)),
+					datasets: [{
+						data: top10Rev.map(s => s.revenue),
+						backgroundColor: 'rgba(34,211,238,0.6)',
+						borderColor: '#22d3ee',
+						borderWidth: 1,
+						borderRadius: 4,
+					}],
+				},
+				options: {
+					...chartDefaults,
+					plugins: {
+						...chartDefaults.plugins,
+						tooltip: { callbacks: { label: ctx => ' €' + ctx.raw.toFixed(2) } },
+					},
+				},
+			});
 
-  // Conv rate chart
-  if (chartConvRate) chartConvRate.destroy();
-  chartConvRate = new Chart(document.getElementById('chartConvRate'), {
-    type: 'bar',
-    data: {
-      labels: top10Rate.map(s => shortLabel(s.slug)),
-      datasets: [{
-        data: top10Rate.map(s => s.conversion_rate),
-        backgroundColor: 'rgba(99,102,241,0.6)',
-        borderColor: '#6366f1',
-        borderWidth: 1,
-        borderRadius: 4,
-      }],
-    },
-    options: {
-      ...chartDefaults,
-      plugins: {
-        ...chartDefaults.plugins,
-        tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toFixed(2) + '%' } },
-      },
-    },
-  });
-}
+			// Conv rate chart
+			if (chartConvRate) chartConvRate.destroy();
+			chartConvRate = new Chart(document.getElementById('chartConvRate'), {
+				type: 'bar',
+				data: {
+					labels: top10Rate.map(s => shortLabel(s.slug)),
+					datasets: [{
+						data: top10Rate.map(s => s.conversion_rate),
+						backgroundColor: 'rgba(99,102,241,0.6)',
+						borderColor: '#6366f1',
+						borderWidth: 1,
+						borderRadius: 4,
+					}],
+				},
+				options: {
+					...chartDefaults,
+					plugins: {
+						...chartDefaults.plugins,
+						tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toFixed(2) + '%' } },
+					},
+				},
+			});
+		}
 
-// ════════════════════════════════════════
-// RENDER SLUGS TABLE
-// ════════════════════════════════════════
-function renderSlugTable(slugs) {
-  document.getElementById('slugCount').textContent = slugs.length + ' slugs';
+		// ════════════════════════════════════════
+		// RENDER SLUGS TABLE
+		// ════════════════════════════════════════
+		function renderSlugTable(slugs) {
+			document.getElementById('slugCount').textContent = slugs.length + ' slugs';
 
-  const sorted = [...slugs].sort((a, b) => {
-    const av = a[sortCol] ?? 0;
-    const bv = b[sortCol] ?? 0;
-    if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-    return sortDir === 'asc' ? av - bv : bv - av;
-  });
+			const sorted = [...slugs].sort((a, b) => {
+				const av = a[sortCol] ?? 0;
+				const bv = b[sortCol] ?? 0;
+				if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+				return sortDir === 'asc' ? av - bv : bv - av;
+			});
 
-  // Update sort indicators
-  document.querySelectorAll('thead th[data-col]').forEach(th => {
-    th.classList.remove('sort-asc', 'sort-desc');
-    if (th.dataset.col === sortCol) {
-      th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-    }
-  });
+			// Update sort indicators
+			document.querySelectorAll('thead th[data-col]').forEach(th => {
+				th.classList.remove('sort-asc', 'sort-desc');
+				if (th.dataset.col === sortCol) {
+					th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+				}
+			});
 
-  const tbody = document.getElementById('slugTableBody');
+			const tbody = document.getElementById('slugTableBody');
 
-  if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">No data for this period.</td></tr>';
-    return;
-  }
+			if (sorted.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="6" class="empty">No data for this period.</td></tr>';
+				return;
+			}
 
-  tbody.innerHTML = sorted.map(s => `
+			tbody.innerHTML = sorted.map(s => `
     <tr data-slug="${escHtml(s.slug || '')}">
       <td class="td-slug" title="${escHtml(s.slug || '')}">${escHtml(s.slug || '(direct)')}</td>
       <td>${fmtNum(s.users)}</td>
@@ -1268,33 +1412,33 @@ function renderSlugTable(slugs) {
       <td>${convRateBadge(s.conversion_rate)}</td>
     </tr>
   `).join('');
-}
+		}
 
-// ════════════════════════════════════════
-// RENDER DOMAIN TABLE
-// ════════════════════════════════════════
-function renderDomainTable(domains) {
-  document.getElementById('domainCount').textContent = domains.length + ' sites';
+		// ════════════════════════════════════════
+		// RENDER DOMAIN TABLE
+		// ════════════════════════════════════════
+		function renderDomainTable(domains) {
+			document.getElementById('domainCount').textContent = domains.length + ' sites';
 
-  const sorted = [...domains].sort((a, b) => {
-    const av = a[sortColD] ?? 0;
-    const bv = b[sortColD] ?? 0;
-    if (typeof av === 'string') return sortDirD === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-    return sortDirD === 'asc' ? av - bv : bv - av;
-  });
+			const sorted = [...domains].sort((a, b) => {
+				const av = a[sortColD] ?? 0;
+				const bv = b[sortColD] ?? 0;
+				if (typeof av === 'string') return sortDirD === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+				return sortDirD === 'asc' ? av - bv : bv - av;
+			});
 
-  document.querySelectorAll('thead th[data-col-d]').forEach(th => {
-    th.classList.remove('sort-asc', 'sort-desc');
-    if (th.dataset.colD === sortColD) th.classList.add(sortDirD === 'asc' ? 'sort-asc' : 'sort-desc');
-  });
+			document.querySelectorAll('thead th[data-col-d]').forEach(th => {
+				th.classList.remove('sort-asc', 'sort-desc');
+				if (th.dataset.colD === sortColD) th.classList.add(sortDirD === 'asc' ? 'sort-asc' : 'sort-desc');
+			});
 
-  const tbody = document.getElementById('domainTableBody');
-  if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">No data for this period.</td></tr>';
-    return;
-  }
+			const tbody = document.getElementById('domainTableBody');
+			if (sorted.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="6" class="empty">No data for this period.</td></tr>';
+				return;
+			}
 
-  tbody.innerHTML = sorted.map(d => `
+			tbody.innerHTML = sorted.map(d => `
     <tr>
       <td style="font-weight:500;color:var(--accent2);">${escHtml(d.domain)}</td>
       <td>${fmtNum(d.users)}</td>
@@ -1304,24 +1448,24 @@ function renderDomainTable(domains) {
       <td>${convRateBadge(d.conversion_rate)}</td>
     </tr>
   `).join('');
-}
+		}
 
-// ════════════════════════════════════════
-// RENDER COHORTS
-// ════════════════════════════════════════
-function renderCohorts(data) {
-  const summaryEl = document.getElementById('cohortSummary');
-  const tbody     = document.getElementById('cohortTableBody');
+		// ════════════════════════════════════════
+		// RENDER COHORTS
+		// ════════════════════════════════════════
+		function renderCohorts(data) {
+			const summaryEl = document.getElementById('cohortSummary');
+			const tbody = document.getElementById('cohortTableBody');
 
-  if (!data || !data.cohorts) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohort data.</td></tr>';
-    return;
-  }
+			if (!data || !data.cohorts) {
+				tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohort data.</td></tr>';
+				return;
+			}
 
-  const s = data.summary;
-  const covColor = s.coverage_pct >= 80 ? 'var(--green)' : s.coverage_pct >= 50 ? 'var(--yellow)' : 'var(--red, #ef4444)';
+			const s = data.summary;
+			const covColor = s.coverage_pct >= 80 ? 'var(--green)' : s.coverage_pct >= 50 ? 'var(--yellow)' : 'var(--red, #ef4444)';
 
-  summaryEl.innerHTML = `
+			summaryEl.innerHTML = `
     <div class="profile-stat">
       <div class="profile-stat-value">${fmtNum(s.total_cohorts)}</div>
       <div class="profile-stat-label">Unique Cohorts</div>
@@ -1340,17 +1484,17 @@ function renderCohorts(data) {
     </div>
   `;
 
-  const deviceIcons = { mobile: '📱', desktop: '🖥️', tablet: '📟', unknown: '❓' };
+			const deviceIcons = { mobile: '📱', desktop: '🖥️', tablet: '📟', unknown: '❓' };
 
-  if (data.cohorts.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohorts found for the selected period.</td></tr>';
-    return;
-  }
+			if (data.cohorts.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohorts found for the selected period.</td></tr>';
+				return;
+			}
 
-  tbody.innerHTML = data.cohorts.map(c => {
-    const icon = deviceIcons[c.device_type] || '❓';
-    const shortCohort = c.cohort_id ? c.cohort_id.slice(0, 8) + '…' : '—';
-    return `
+			tbody.innerHTML = data.cohorts.map(c => {
+				const icon = deviceIcons[c.device_type] || '❓';
+				const shortCohort = c.cohort_id ? c.cohort_id.slice(0, 8) + '…' : '—';
+				return `
       <tr title="Cohort ID: ${escHtml(c.cohort_id || '')}">
         <td style="color:var(--accent2);">${escHtml(c.utm_source)}</td>
         <td style="color:var(--text2);">${escHtml(c.utm_medium)}</td>
@@ -1364,27 +1508,27 @@ function renderCohorts(data) {
         <td>${convRateBadge(c.conversion_rate)}</td>
       </tr>
     `;
-  }).join('');
-}
+			}).join('');
+		}
 
-// ════════════════════════════════════════
-// RENDER JOURNEYS
-// ════════════════════════════════════════
-function renderJourneys(journeys) {
-  const el = document.getElementById('journeyList');
+		// ════════════════════════════════════════
+		// RENDER JOURNEYS
+		// ════════════════════════════════════════
+		function renderJourneys(journeys) {
+			const el = document.getElementById('journeyList');
 
-  if (!journeys || journeys.length === 0) {
-    el.innerHTML = '<div class="empty">No cross-domain journeys in this period.</div>';
-    return;
-  }
+			if (!journeys || journeys.length === 0) {
+				el.innerHTML = '<div class="empty">No cross-domain journeys in this period.</div>';
+				return;
+			}
 
-  el.innerHTML = '<div class="journey-list">' + journeys.map(j => {
-    const domains = j.domains.map((d, i) =>
-      `<span class="domain-chip">${escHtml(d)}</span>` +
-      (i < j.domains.length - 1 ? '<span class="arrow-sep">→</span>' : '')
-    ).join('');
+			el.innerHTML = '<div class="journey-list">' + journeys.map(j => {
+				const domains = j.domains.map((d, i) =>
+					`<span class="domain-chip">${escHtml(d)}</span>` +
+					(i < j.domains.length - 1 ? '<span class="arrow-sep">→</span>' : '')
+				).join('');
 
-    return `
+				return `
       <div class="journey-item">
         <div class="journey-domains">${domains}</div>
         <div class="journey-meta">
@@ -1394,80 +1538,80 @@ function renderJourneys(journeys) {
         </div>
       </div>
     `;
-  }).join('') + '</div>';
-}
+			}).join('') + '</div>';
+		}
 
-// ════════════════════════════════════════
-// LOAD STATS
-// ════════════════════════════════════════
-async function loadStats() {
-  // Cancel any previous in-flight load
-  if (_loadAbort) { _loadAbort.abort(); }
-  _loadAbort = new AbortController();
-  const signal = _loadAbort.signal;
+		// ════════════════════════════════════════
+		// LOAD STATS
+		// ════════════════════════════════════════
+		async function loadStats() {
+			// Cancel any previous in-flight load
+			if (_loadAbort) { _loadAbort.abort(); }
+			_loadAbort = new AbortController();
+			const signal = _loadAbort.signal;
 
-  const ring   = document.getElementById('refreshRing');
-  const banner = document.getElementById('errorBanner');
-  ring.classList.add('active');
-  banner.style.display = 'none';
+			const ring = document.getElementById('refreshRing');
+			const banner = document.getElementById('errorBanner');
+			ring.classList.add('active');
+			banner.style.display = 'none';
 
-  try {
-    const [stats, trend, breakdown, recentConvs, domains, cohorts] = await Promise.all([
-      fetchStats(signal),
-      fetchTrend(signal),
-      fetchBreakdown(signal),
-      fetchRecentConversions(signal),
-      fetchDomains(signal),
-      fetchCohorts(signal),
-    ]);
+			try {
+				const [stats, trend, breakdown, recentConvs, domains, cohorts] = await Promise.all([
+					fetchStats(signal),
+					fetchTrend(signal),
+					fetchBreakdown(signal),
+					fetchRecentConversions(signal),
+					fetchDomains(signal),
+					fetchCohorts(signal),
+				]);
 
-    statsData = stats;
-    renderKPIs(stats);
-    renderCharts(stats.by_slug || []);
-    renderSlugTable(stats.by_slug || []);
-    renderDomainTable(domains || []);
-    renderCohorts(cohorts);
-    renderJourneys(stats.top_journeys || []);
-    renderTrendChart(trend);
-    renderBreakdown(breakdown);
-    renderRecentConversions(recentConvs);
+				statsData = stats;
+				renderKPIs(stats);
+				renderCharts(stats.by_slug || []);
+				renderSlugTable(stats.by_slug || []);
+				renderDomainTable(domains || []);
+				renderCohorts(cohorts);
+				renderJourneys(stats.top_journeys || []);
+				renderTrendChart(trend);
+				renderBreakdown(breakdown);
+				renderRecentConversions(recentConvs);
 
-    document.getElementById('lastUpdated').textContent =
-      'Updated ' + new Date().toLocaleTimeString('en-GB');
-  } catch (err) {
-    if (err.name === 'AbortError') return; // silently ignore cancelled requests
-    banner.style.display = 'block';
-    banner.textContent = '⚠ Could not load data: ' + err.message;
-  } finally {
-    ring.classList.remove('active');
-  }
-}
+				document.getElementById('lastUpdated').textContent =
+					'Updated ' + new Date().toLocaleTimeString('en-GB');
+			} catch (err) {
+				if (err.name === 'AbortError') return; // silently ignore cancelled requests
+				banner.style.display = 'block';
+				banner.textContent = '⚠ Could not load data: ' + err.message;
+			} finally {
+				ring.classList.remove('active');
+			}
+		}
 
-// ════════════════════════════════════════
-// AUTO REFRESH
-// ════════════════════════════════════════
-function setupAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  const val = parseInt(document.getElementById('autoRefresh').value, 10);
-  if (val > 0) {
-    refreshTimer = setInterval(loadStats, val * 1000);
-  }
-}
+		// ════════════════════════════════════════
+		// AUTO REFRESH
+		// ════════════════════════════════════════
+		function setupAutoRefresh() {
+			if (refreshTimer) clearInterval(refreshTimer);
+			const val = parseInt(document.getElementById('autoRefresh').value, 10);
+			if (val > 0) {
+				refreshTimer = setInterval(loadStats, val * 1000);
+			}
+		}
 
-// ════════════════════════════════════════
-// USER JOURNEY LOOKUP (inline)
-// ════════════════════════════════════════
-async function lookupUser(userId) {
-  const el = document.getElementById('journeyResult');
-  el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading journey…</div>';
+		// ════════════════════════════════════════
+		// USER JOURNEY LOOKUP (inline)
+		// ════════════════════════════════════════
+		async function lookupUser(userId) {
+			const el = document.getElementById('journeyResult');
+			el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading journey…</div>';
 
-  try {
-    const data = await fetchJourney(userId);
-    const p = data.profile;
+			try {
+				const data = await fetchJourney(userId);
+				const p = data.profile;
 
-    const avgOrder = p.total_conversions > 0 ? (p.total_revenue / p.total_conversions) : 0;
+				const avgOrder = p.total_conversions > 0 ? (p.total_revenue / p.total_conversions) : 0;
 
-    el.innerHTML = `
+				el.innerHTML = `
       <div class="profile-grid">
         <div class="profile-stat">
           <div class="profile-stat-value">${fmtNum(p.total_pageviews)}</div>
@@ -1489,131 +1633,132 @@ async function lookupUser(userId) {
       <div style="font-weight:600;font-size:13px;margin-bottom:12px;">Event Timeline</div>
       <div class="journey-timeline">
         ${(data.events || []).map(ev => {
-          const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
-          const icon     = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
-          let detail = ev.domain || '';
-          if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
-          if (ev.event_type === 'custom_event') detail += ` · ${escHtml(ev.event_name || '–')}`;
-          return `
+					const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
+					const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
+					let detail = ev.domain || '';
+					if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
+					if (ev.event_type === 'custom_event') detail += ` · ${escHtml(ev.event_name || '–')}`;
+					return `
             <div class="timeline-item">
               <div class="timeline-dot ${dotClass}">${icon}</div>
               <div class="timeline-content">
-                <div class="timeline-type" style="color:${ev.event_type==='conversion'?'var(--green)':ev.event_type==='pageview'?'var(--accent)':'var(--yellow)'}">${ev.event_type}</div>
+                <div class="timeline-type" style="color:${ev.event_type === 'conversion' ? 'var(--green)' : ev.event_type === 'pageview' ? 'var(--accent)' : 'var(--yellow)'}">${ev.event_type}</div>
                 <div class="timeline-detail">${escHtml(detail)}</div>
                 <div class="timeline-time">${fmtDate(ev.timestamp)}</div>
               </div>
             </div>
           `;
-        }).join('')}
+				}).join('')}
       </div>
     `;
-  } catch (err) {
-    el.innerHTML = `<div class="empty">⚠ ${escHtml(err.message)}</div>`;
-  }
-}
+			} catch (err) {
+				el.innerHTML = `<div class="empty">⚠ ${escHtml(err.message)}</div>`;
+			}
+		}
 
-// ════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+		// ════════════════════════════════════════
+		// UTILS
+		// ════════════════════════════════════════
+		function escHtml(str) {
+			return String(str)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;');
+		}
 
-// ════════════════════════════════════════
-// EVENT LISTENERS
-// ════════════════════════════════════════
-document.getElementById('btnRefresh').addEventListener('click', loadStats);
-document.getElementById('btnApply').addEventListener('click', () => {
-  setupAutoRefresh();
-  loadStats();
-});
+		// ════════════════════════════════════════
+		// EVENT LISTENERS
+		// ════════════════════════════════════════
+		document.getElementById('btnRefresh').addEventListener('click', loadStats);
+		document.getElementById('btnApply').addEventListener('click', () => {
+			setupAutoRefresh();
+			loadStats();
+		});
 
-document.querySelectorAll('[data-preset]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    setPreset(parseInt(btn.dataset.preset, 10));
-    loadStats();
-  });
-});
+		document.querySelectorAll('[data-preset]').forEach(btn => {
+			btn.addEventListener('click', () => {
+				setPreset(parseInt(btn.dataset.preset, 10));
+				loadStats();
+			});
+		});
 
-document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+		document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
 
-// Sort by column
-document.querySelectorAll('thead th[data-col]').forEach(th => {
-  th.addEventListener('click', () => {
-    const col = th.dataset.col;
-    if (sortCol === col) {
-      sortDir = sortDir === 'desc' ? 'asc' : 'desc';
-    } else {
-      sortCol = col;
-      sortDir = col === 'slug' ? 'asc' : 'desc';
-    }
-    if (statsData) renderSlugTable(statsData.by_slug || []);
-  });
-});
+		// Sort by column
+		document.querySelectorAll('thead th[data-col]').forEach(th => {
+			th.addEventListener('click', () => {
+				const col = th.dataset.col;
+				if (sortCol === col) {
+					sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+				} else {
+					sortCol = col;
+					sortDir = col === 'slug' ? 'asc' : 'desc';
+				}
+				if (statsData) renderSlugTable(statsData.by_slug || []);
+			});
+		});
 
-// Sort domain table columns
-document.querySelectorAll('thead th[data-col-d]').forEach(th => {
-  th.addEventListener('click', () => {
-    const col = th.dataset.colD;
-    if (sortColD === col) {
-      sortDirD = sortDirD === 'desc' ? 'asc' : 'desc';
-    } else {
-      sortColD = col;
-      sortDirD = col === 'domain' ? 'asc' : 'desc';
-    }
-    // re-fetch not needed — re-render from cached data
-    const cached = Array.from(document.querySelectorAll('#domainTableBody tr[data-domain]')).map(r => ({
-      domain: r.dataset.domain,
-      users: +r.cells[1].textContent.replace(/,/g,''),
-      pageviews: +r.cells[2].textContent.replace(/,/g,''),
-      conversions: +r.cells[3].textContent.replace(/,/g,''),
-      revenue: parseFloat(r.cells[4].textContent.replace(/[€,]/g,'')),
-      conversion_rate: parseFloat(r.cells[5].textContent),
-    }));
-    // Simpler: just reload
-    loadStats();
-  });
-});
+		// Sort domain table columns
+		document.querySelectorAll('thead th[data-col-d]').forEach(th => {
+			th.addEventListener('click', () => {
+				const col = th.dataset.colD;
+				if (sortColD === col) {
+					sortDirD = sortDirD === 'desc' ? 'asc' : 'desc';
+				} else {
+					sortColD = col;
+					sortDirD = col === 'domain' ? 'asc' : 'desc';
+				}
+				// re-fetch not needed — re-render from cached data
+				const cached = Array.from(document.querySelectorAll('#domainTableBody tr[data-domain]')).map(r => ({
+					domain: r.dataset.domain,
+					users: +r.cells[1].textContent.replace(/,/g, ''),
+					pageviews: +r.cells[2].textContent.replace(/,/g, ''),
+					conversions: +r.cells[3].textContent.replace(/,/g, ''),
+					revenue: parseFloat(r.cells[4].textContent.replace(/[€,]/g, '')),
+					conversion_rate: parseFloat(r.cells[5].textContent),
+				}));
+				// Simpler: just reload
+				loadStats();
+			});
+		});
 
-// Slug row click → filter
-document.getElementById('slugTableBody').addEventListener('click', e => {
-  const row = e.target.closest('tr[data-slug]');
-  if (!row) return;
-  document.getElementById('slugFilter').value = row.dataset.slug;
-  loadStats();
-});
+		// Slug row click → filter
+		document.getElementById('slugTableBody').addEventListener('click', e => {
+			const row = e.target.closest('tr[data-slug]');
+			if (!row) return;
+			document.getElementById('slugFilter').value = row.dataset.slug;
+			loadStats();
+		});
 
-// User journey lookup
-document.getElementById('btnLookup').addEventListener('click', () => {
-  const uid = document.getElementById('userIdInput').value.trim();
-  if (uid) lookupUser(uid);
-});
+		// User journey lookup
+		document.getElementById('btnLookup').addEventListener('click', () => {
+			const uid = document.getElementById('userIdInput').value.trim();
+			if (uid) lookupUser(uid);
+		});
 
-document.getElementById('userIdInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const uid = e.target.value.trim();
-    if (uid) lookupUser(uid);
-  }
-});
+		document.getElementById('userIdInput').addEventListener('keydown', e => {
+			if (e.key === 'Enter') {
+				const uid = e.target.value.trim();
+				if (uid) lookupUser(uid);
+			}
+		});
 
-// Modal close
-document.getElementById('btnCloseModal').addEventListener('click', () => {
-  document.getElementById('overlay').classList.remove('open');
-});
-document.getElementById('overlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
-});
+		// Modal close
+		document.getElementById('btnCloseModal').addEventListener('click', () => {
+			document.getElementById('overlay').classList.remove('open');
+		});
+		document.getElementById('overlay').addEventListener('click', e => {
+			if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+		});
 
-// ════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════
-initDates();
-setupAutoRefresh();
-loadStats();
-</script>
+		// ════════════════════════════════════════
+		// INIT
+		// ════════════════════════════════════════
+		initDates();
+		setupAutoRefresh();
+		loadStats();
+	</script>
 </body>
+
 </html>
