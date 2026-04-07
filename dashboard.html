@@ -850,6 +850,7 @@ let sortDirD       = 'desc';
 let sortCol        = 'revenue';
 let sortDir        = 'desc';
 let refreshTimer   = null;
+let _loadAbort     = null;   // AbortController for in-flight loadStats requests
 let chartRevenue   = null;
 let chartConvRate  = null;
 let chartTrend     = null;
@@ -872,7 +873,7 @@ function initDates() { setPreset(30); }
 // ════════════════════════════════════════
 // API CALLS
 // ════════════════════════════════════════
-async function fetchStats() {
+async function fetchStats(signal) {
   const start = document.getElementById('startDate').value;
   const end   = document.getElementById('endDate').value;
   const slug  = document.getElementById('slugFilter').value.trim();
@@ -880,7 +881,7 @@ async function fetchStats() {
   const params = new URLSearchParams({ start_date: start, end_date: end });
   if (slug) params.set('slug', slug);
 
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -891,51 +892,51 @@ async function fetchJourney(userId) {
   return res.json();
 }
 
-async function fetchTrend() {
+async function fetchTrend(signal) {
   const start = document.getElementById('startDate').value;
   const end   = document.getElementById('endDate').value;
   const slug  = document.getElementById('slugFilter').value.trim();
   const params = new URLSearchParams({ start_date: start, end_date: end });
   if (slug) params.set('slug', slug);
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/trend?${params}`, { headers: HEADERS });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/trend?${params}`, { headers: HEADERS, signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
-async function fetchBreakdown() {
+async function fetchBreakdown(signal) {
   const start = document.getElementById('startDate').value;
   const end   = document.getElementById('endDate').value;
   const slug  = document.getElementById('slugFilter').value.trim();
   const params = new URLSearchParams({ start_date: start, end_date: end });
   if (slug) params.set('slug', slug);
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/breakdown?${params}`, { headers: HEADERS });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/breakdown?${params}`, { headers: HEADERS, signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
-async function fetchRecentConversions() {
+async function fetchRecentConversions(signal) {
   const slug = document.getElementById('slugFilter').value.trim();
   const params = new URLSearchParams({ limit: 20 });
   if (slug) params.set('slug', slug);
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/conversions/recent?${params}`, { headers: HEADERS });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/conversions/recent?${params}`, { headers: HEADERS, signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
-async function fetchDomains() {
+async function fetchDomains(signal) {
   const start = document.getElementById('startDate').value;
   const end   = document.getElementById('endDate').value;
   const params = new URLSearchParams({ start_date: start, end_date: end });
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/domains?${params}`, { headers: HEADERS });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/domains?${params}`, { headers: HEADERS, signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
-async function fetchCohorts() {
+async function fetchCohorts(signal) {
   const start = document.getElementById('startDate').value;
   const end   = document.getElementById('endDate').value;
   const params = new URLSearchParams({ start_date: start, end_date: end, limit: 30 });
-  const res = await fetch(`${API_ENDPOINT}/api/analytics/cohorts?${params}`, { headers: HEADERS });
+  const res = await fetch(`${API_ENDPOINT}/api/analytics/cohorts?${params}`, { headers: HEADERS, signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -1400,6 +1401,11 @@ function renderJourneys(journeys) {
 // LOAD STATS
 // ════════════════════════════════════════
 async function loadStats() {
+  // Cancel any previous in-flight load
+  if (_loadAbort) { _loadAbort.abort(); }
+  _loadAbort = new AbortController();
+  const signal = _loadAbort.signal;
+
   const ring   = document.getElementById('refreshRing');
   const banner = document.getElementById('errorBanner');
   ring.classList.add('active');
@@ -1407,12 +1413,12 @@ async function loadStats() {
 
   try {
     const [stats, trend, breakdown, recentConvs, domains, cohorts] = await Promise.all([
-      fetchStats(),
-      fetchTrend(),
-      fetchBreakdown(),
-      fetchRecentConversions(),
-      fetchDomains(),
-      fetchCohorts(),
+      fetchStats(signal),
+      fetchTrend(signal),
+      fetchBreakdown(signal),
+      fetchRecentConversions(signal),
+      fetchDomains(signal),
+      fetchCohorts(signal),
     ]);
 
     statsData = stats;
@@ -1429,6 +1435,7 @@ async function loadStats() {
     document.getElementById('lastUpdated').textContent =
       'Updated ' + new Date().toLocaleTimeString('en-GB');
   } catch (err) {
+    if (err.name === 'AbortError') return; // silently ignore cancelled requests
     banner.style.display = 'block';
     banner.textContent = '⚠ Could not load data: ' + err.message;
   } finally {
