@@ -1406,21 +1406,18 @@ async function loadStats() {
   banner.style.display = 'none';
 
   try {
-    const [stats, trend, breakdown, recentConvs, domains, cohorts] = await Promise.all([
+    // Core endpoints — must succeed
+    const [stats, trend, breakdown, recentConvs] = await Promise.all([
       fetchStats(),
       fetchTrend(),
       fetchBreakdown(),
       fetchRecentConversions(),
-      fetchDomains(),
-      fetchCohorts(),
     ]);
 
     statsData = stats;
     renderKPIs(stats);
     renderCharts(stats.by_slug || []);
     renderSlugTable(stats.by_slug || []);
-    renderDomainTable(domains || []);
-    renderCohorts(cohorts);
     renderJourneys(stats.top_journeys || []);
     renderTrendChart(trend);
     renderBreakdown(breakdown);
@@ -1434,6 +1431,21 @@ async function loadStats() {
   } finally {
     ring.classList.remove('active');
   }
+
+  // Optional endpoints — degrade gracefully if not yet deployed
+  fetchDomains()
+    .then(domains => renderDomainTable(domains || []))
+    .catch(() => {
+      const tbody = document.getElementById('domainTableBody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="empty">⏳ Pending backend deploy.</td></tr>';
+    });
+
+  fetchCohorts()
+    .then(cohorts => renderCohorts(cohorts))
+    .catch(() => {
+      const tbody = document.getElementById('cohortTableBody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="empty">⏳ Pending backend deploy.</td></tr>';
+    });
 }
 
 // ════════════════════════════════════════
