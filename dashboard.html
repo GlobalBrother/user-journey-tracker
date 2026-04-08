@@ -303,7 +303,8 @@
 
 		/* ── TABLE ── */
 		.table-wrap {
-			overflow-x: auto;
+			overflow: auto;
+    	max-height: 550px;
 		}
 
 		table {
@@ -772,7 +773,7 @@
 			<div class="kpi-card purple">
 				<div class="kpi-label">Unique Users</div>
 				<div class="kpi-value" id="kpiUsers">—</div>
-				<div class="kpi-sub">cross-domain</div>
+				<div class="kpi-sub" id="kpiUsersSub">unique visitors</div>
 				<div class="kpi-delta" id="deltaUsers"><span class="delta-neutral">—</span></div>
 			</div>
 			<div class="kpi-card cyan">
@@ -1244,6 +1245,9 @@
 			const e = data.engagement || {};
 
 			document.getElementById('kpiUsers').textContent = fmtNum(t.unique_users);
+			document.getElementById('kpiUsersSub').textContent = data.cross_domain_users
+				? fmtNum(data.cross_domain_users) + ' cross-domain'
+				: 'unique visitors';
 			document.getElementById('kpiPageviews').textContent = fmtNum(t.total_pageviews);
 			document.getElementById('kpiConversions').textContent = fmtNum(t.total_conversions);
 			document.getElementById('kpiConvRate').textContent = 'rate: ' + fmtPct(t.conversion_rate);
@@ -1871,7 +1875,7 @@
         ${(data.events || []).map(ev => {
 					const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
 					const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
-					let detail = ev.domain || '';
+					let detail = ev.url || ev.domain || '';
 					if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
 					if (ev.event_type === 'custom_event') detail += ` · ${escHtml(ev.event_name || '–')}`;
 					return `
