@@ -501,6 +501,8 @@
 
 		const urlParams = extractUrlParameters();
 		saveTrafficSource(urlParams);
+		// Use first-touch UTMs from localStorage (persist across upsell pages that have no UTMs in URL)
+		const firstTouch = getTrafficSource();
 
 		// Detectează device type
 		const deviceType = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
@@ -513,20 +515,20 @@
 
 		const payload = {
 			user_id: await getUserId(),
-			cohort_id: await calculateCohortId(urlParams, deviceType, navigator.language),
+			cohort_id: await calculateCohortId(firstTouch, deviceType, navigator.language),
 			domain: window.location.hostname,
 			url: window.location.href,
 			slug: urlParams.slug,  // Now contains utm_content (most specific!)
 			referrer: document.referrer || null,
 			timestamp: new Date().toISOString(),
 
-			// UTM parameters (tracking complet pentru Facebook Ads)
-			utm_source: urlParams.utm_source,
-			utm_medium: urlParams.utm_medium,
-			utm_campaign: urlParams.utm_campaign,
-			utm_content: urlParams.utm_content,  // Ad creative specific
-			utm_term: urlParams.utm_term,
-			utm_id: urlParams.utm_id,            // Facebook Ad ID
+			// UTM parameters — first-touch from localStorage (preserved across upsell pages)
+			utm_source: firstTouch.utm_source,
+			utm_medium: firstTouch.utm_medium,
+			utm_campaign: firstTouch.utm_campaign,
+			utm_content: firstTouch.utm_content,  // Ad creative specific
+			utm_term: firstTouch.utm_term,
+			utm_id: firstTouch.utm_id,            // Facebook Ad ID
 
 			// Device/Browser info
 			device_type: deviceType,
@@ -537,7 +539,7 @@
 			language: navigator.language,
 
 			// Facebook specific
-			fbclid: urlParams.fbclid
+			fbclid: firstTouch.fbclid
 		};
 
 		await sendEvent('/api/events', payload);
@@ -586,8 +588,18 @@
 		const urlParams = new URLSearchParams(window.location.search);
 		const deviceType = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
 
+		// Recover the original user_id passed through checkout via ?custom= parameter.
+		// DigiStore24 preserves it as-is; CheckoutChamp may use a different param.
+		// Format set by enhanceCheckoutLinks(): user_id or user_id---extra_data
+		let trackingUserId = null;
+		const customParam = urlParams.get('custom') || urlParams.get('tracking_id') || urlParams.get('tid');
+		if (customParam) {
+			trackingUserId = customParam.split('---')[0].trim() || null;
+		}
+
 		const payload = {
 			user_id: await getUserId(),
+			tracking_user_id: trackingUserId,  // original visitor user_id from landing page
 			cohort_id: await calculateCohortId(trafficSource, deviceType, navigator.language),
 			order_id: conversionData.order_id || null,
 			product_name: conversionData.product_name || null,
