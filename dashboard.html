@@ -525,6 +525,18 @@
 			margin-top: 2px;
 		}
 
+		.time-on-page-badge {
+			display: inline-block;
+			margin-top: 4px;
+			padding: 2px 7px;
+			border-radius: 10px;
+			background: rgba(251,191,36,0.12);
+			color: var(--yellow);
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.02em;
+		}
+
 		/* ── MODAL ── */
 		.overlay {
 			display: none;
@@ -1875,15 +1887,22 @@
         ${(data.events || []).map(ev => {
 					const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
 					const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
+					const isPageExit = ev.event_type === 'custom_event' && ev.event_name === 'page_exit';
 					let detail = ev.url || ev.domain || '';
 					if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
-					if (ev.event_type === 'custom_event') detail += ` · ${escHtml(ev.event_name || '–')}`;
+					if (ev.event_type === 'custom_event' && !isPageExit) detail += ` · ${escHtml(ev.event_name || '–')}`;
+					const typeLabel = isPageExit ? 'time on page' : ev.event_type;
+					const typeColor = ev.event_type === 'conversion' ? 'var(--green)' : ev.event_type === 'pageview' ? 'var(--accent)' : 'var(--yellow)';
+					const timeBadge = isPageExit && ev.time_on_page_seconds != null
+						? `<div class="time-on-page-badge">⏱ ${fmtTime(ev.time_on_page_seconds)}</div>`
+						: '';
 					return `
             <div class="timeline-item">
               <div class="timeline-dot ${dotClass}">${icon}</div>
               <div class="timeline-content">
-                <div class="timeline-type" style="color:${ev.event_type === 'conversion' ? 'var(--green)' : ev.event_type === 'pageview' ? 'var(--accent)' : 'var(--yellow)'}">${ev.event_type}</div>
+                <div class="timeline-type" style="color:${typeColor}">${typeLabel}</div>
                 <div class="timeline-detail">${escHtml(detail)}</div>
+                ${timeBadge}
                 <div class="timeline-time">${fmtDate(ev.timestamp)}</div>
               </div>
             </div>

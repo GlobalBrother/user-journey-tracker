@@ -497,7 +497,6 @@
 		if (pageviewSent) return;
 		pageviewSent = true;
 		pageLoadStartTime = Date.now();
-		window.addEventListener('pagehide', _sendPageExitEvent, { once: true });
 
 		const urlParams = extractUrlParameters();
 		saveTrafficSource(urlParams);
@@ -514,7 +513,7 @@
 		const os = detectOS();
 
 		const payload = {
-			user_id: await getUserId(),
+			user_id: await getUserId(),  // Ensures localStorage is set before pagehide can fire
 			cohort_id: await calculateCohortId(firstTouch, deviceType, navigator.language),
 			domain: window.location.hostname,
 			url: window.location.href,
@@ -543,6 +542,10 @@
 		};
 
 		await sendEvent('/api/events', payload);
+
+		// Register pagehide AFTER getUserId() has set localStorage — avoids race condition
+		// where _sendPageExitEvent fires before the uid is stored
+		window.addEventListener('pagehide', _sendPageExitEvent, { once: true });
 	}
 
 	/**
