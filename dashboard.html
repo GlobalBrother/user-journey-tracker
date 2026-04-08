@@ -946,6 +946,36 @@
 			</div>
 		</div>
 
+		<!-- Identified Users -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Identified Users</span>
+				<span id="usersListCount" style="font-size:12px;color:var(--text3);">—</span>
+			</div>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th>User ID</th>
+							<th>First Seen</th>
+							<th>Last Seen</th>
+							<th>Sites Visited</th>
+							<th>Pageviews</th>
+							<th>Conversions</th>
+							<th>Revenue</th>
+							<th>Country</th>
+							<th>Device</th>
+							<th>First Slug</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody id="usersListBody">
+						<tr><td colspan="11" class="loading"><span class="spinner"></span> Loading…</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
 		<!-- Daily Trend -->
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
@@ -1178,6 +1208,15 @@
 			const end = document.getElementById('endDate').value;
 			const params = new URLSearchParams({ start_date: start, end_date: end, limit: 30 });
 			const res = await fetch(`${API_ENDPOINT}/api/analytics/cohorts?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
+
+		async function fetchUsersList(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ start_date: start, end_date: end, limit: 200 });
+			const res = await fetch(`${API_ENDPOINT}/api/analytics/users?${params}`, { headers: HEADERS, signal });
 			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
 			return res.json();
 		}
@@ -1631,6 +1670,47 @@
 		}
 
 		// ════════════════════════════════════════
+		// RENDER IDENTIFIED USERS
+		// ════════════════════════════════════════
+		function renderUsersList(data) {
+			const tbody = document.getElementById('usersListBody');
+			const countEl = document.getElementById('usersListCount');
+			if (!data || !data.users) {
+				tbody.innerHTML = '<tr><td colspan="11" class="empty">No users found.</td></tr>';
+				return;
+			}
+			const users = data.users;
+			countEl.textContent = `${users.length} identified users`;
+			if (users.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="11" class="empty">No identified users in this period.</td></tr>';
+				return;
+			}
+			const deviceIcons = { mobile: '📱', desktop: '🖥️', tablet: '📟' };
+			tbody.innerHTML = users.map(u => {
+				const shortId = u.user_id ? u.user_id.slice(0, 12) + '…' : '—';
+				const domainsHtml = (u.domains_visited || []).map(d =>
+					`<span class="domain-chip">${escHtml(d)}</span>`
+				).join(' ');
+				const devIcon = deviceIcons[u.device_type] || '❓';
+				const hasConv = u.total_conversions > 0;
+				return `
+				<tr>
+					<td style="font-family:monospace;font-size:11px;" title="${escHtml(u.user_id)}">${escHtml(shortId)}</td>
+					<td style="font-size:11px;color:var(--text3);">${fmtDate(u.first_seen)}</td>
+					<td style="font-size:11px;color:var(--text2);">${fmtDate(u.last_seen)}</td>
+					<td>${domainsHtml || '<span style="color:var(--text3)">—</span>'}</td>
+					<td>${fmtNum(u.total_pageviews)}</td>
+					<td style="color:${hasConv ? 'var(--green)' : 'var(--text3)'};font-weight:${hasConv ? '600' : '400'};">${fmtNum(u.total_conversions)}</td>
+					<td style="color:${hasConv ? 'var(--green)' : 'var(--text3)'};font-weight:${hasConv ? '600' : '400'};">${u.total_revenue > 0 ? fmtEUR(u.total_revenue) : '—'}</td>
+					<td style="font-size:12px;">${escHtml(u.country || '—')}</td>
+					<td style="font-size:12px;">${devIcon} ${escHtml(u.device_type || '—')}</td>
+					<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(u.first_touch_slug || '')}">${escHtml(u.first_touch_slug || '—')}</td>
+					<td><button class="btn btn-secondary btn-sm" onclick="lookupUser(${JSON.stringify(u.user_id)})">Journey →</button></td>
+				</tr>`;
+			}).join('');
+		}
+
+		// ════════════════════════════════════════
 		// RENDER COHORTS
 		// ════════════════════════════════════════
 		function renderCohorts(data) {
@@ -1748,13 +1828,14 @@
 					.then(r => r.ok ? r.json() : null)
 					.catch(() => null);
 
-				const [stats, trend, breakdown, recentConvs, domains, cohorts, prevStats] = await Promise.all([
+				const [stats, trend, breakdown, recentConvs, domains, cohorts, usersList, prevStats] = await Promise.all([
 					fetchStats(signal),
 					fetchTrend(signal),
 					fetchBreakdown(signal),
 					fetchRecentConversions(signal),
 					fetchDomains(signal),
 					fetchCohorts(signal),
+					fetchUsersList(signal),
 					prevStatsPromise,
 				]);
 
@@ -1765,6 +1846,7 @@
 				renderSlugTable(stats.by_slug || []);
 				renderDomainTable(domains || []);
 				renderCohorts(cohorts);
+				renderUsersList(usersList);
 				renderJourneys(stats.top_journeys || []);
 				renderTrendChart(trend);
 				renderBreakdown(breakdown);
@@ -1858,7 +1940,11 @@
 		// USER JOURNEY LOOKUP (inline)
 		// ════════════════════════════════════════
 		async function lookupUser(userId) {
+			// Populate the input and scroll to the lookup panel
+			const input = document.getElementById('userIdInput');
+			if (input) input.value = userId;
 			const el = document.getElementById('journeyResult');
+			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading journey…</div>';
 
 			try {
