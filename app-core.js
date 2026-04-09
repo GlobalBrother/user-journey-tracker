@@ -596,7 +596,10 @@
 		let trackingUserId = null;
 		const customParam = urlParams.get('custom') || urlParams.get('tracking_id') || urlParams.get('tid');
 		if (customParam) {
-			trackingUserId = customParam.split('---')[0].trim() || null;
+			// Skip Digistore24-encrypted params (they start with 'ds24' and are unreadable)
+			if (!customParam.startsWith('ds24')) {
+				trackingUserId = customParam.split('---')[0].trim() || null;
+			}
 		}
 
 		const payload = {
