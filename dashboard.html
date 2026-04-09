@@ -2166,19 +2166,30 @@
       </div>
       <div style="font-weight:600;font-size:13px;margin-bottom:12px;">Event Timeline</div>
       <div class="journey-timeline">
-        ${(data.events || []).map(ev => {
-					const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
-					const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
-					const isPageExit = ev.event_type === 'custom_event' && ev.event_name === 'page_exit';
-					let detail = ev.url || ev.domain || '';
-					if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
-					if (ev.event_type === 'custom_event' && !isPageExit) detail += ` · ${escHtml(ev.event_name || '–')}`;
-					const typeLabel = isPageExit ? 'time on page' : ev.event_type;
-					const typeColor = ev.event_type === 'conversion' ? 'var(--green)' : ev.event_type === 'pageview' ? 'var(--accent)' : 'var(--yellow)';
-					const timeBadge = isPageExit && ev.time_on_page_seconds != null
-						? `<div class="time-on-page-badge">⏱ ${fmtTime(ev.time_on_page_seconds)}</div>`
-						: '';
-					return `
+        ${(() => {
+					// Merge page_exit time into the preceding pageview for the same URL
+					const events = data.events || [];
+					const timeOnPage = {}; // url -> time_on_page_seconds
+					events.forEach(ev => {
+						if (ev.event_type === 'custom_event' && ev.event_name === 'page_exit' && ev.time_on_page_seconds != null) {
+							timeOnPage[ev.url] = ev.time_on_page_seconds;
+						}
+					});
+					return events
+						.filter(ev => !(ev.event_type === 'custom_event' && ev.event_name === 'page_exit'))
+						.map(ev => {
+							const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
+							const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
+							let detail = ev.url || ev.domain || '';
+							if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
+							if (ev.event_type === 'custom_event') detail += ` · ${escHtml(ev.event_name || '–')}`;
+							const typeLabel = ev.event_type;
+							const typeColor = ev.event_type === 'conversion' ? 'var(--green)' : ev.event_type === 'pageview' ? 'var(--accent)' : 'var(--yellow)';
+							const secs = ev.event_type === 'pageview' ? timeOnPage[ev.url] : null;
+							const timeBadge = secs != null
+								? `<div class="time-on-page-badge">⏱ ${fmtTime(secs)}</div>`
+								: '';
+							return `
             <div class="timeline-item">
               <div class="timeline-dot ${dotClass}">${icon}</div>
               <div class="timeline-content">
@@ -2189,7 +2200,8 @@
               </div>
             </div>
           `;
-				}).join('')}
+						}).join('');
+				})()}
       </div>
     `;
 			} catch (err) {
