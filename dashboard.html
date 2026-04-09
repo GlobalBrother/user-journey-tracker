@@ -1973,7 +1973,7 @@
 				).join('');
 
 				const userChips = (j.sample_user_ids || []).map(uid =>
-					`<span class="journey-uid-chip" title="Click to look up this user's journey" onclick="lookupUser(${JSON.stringify(uid)})">${escHtml(uid.slice(0, 12))}…</span>`
+					`<span class="journey-uid-chip" title="Click to look up this user's journey" onclick="lookupUser('${escHtml(uid)}')">${escHtml(uid.slice(0, 12))}…</span>`
 				).join('');
 				const moreLabel = j.users > (j.sample_user_ids || []).length
 					? `<span style="font-size:10px;color:var(--text3);">+${j.users - (j.sample_user_ids || []).length} more</span>`
