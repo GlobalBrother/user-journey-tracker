@@ -240,13 +240,12 @@
 		return {
 			// FB Ad slug - PRIORITIZEAZĂ utm_content (cel mai specific)
 			// Fallback: source, slug, ad, sau 'direct'
-			slug: utmContent ||
-			      urlParams.get('source') ||
-			      urlParams.get('slug') ||
-			      urlParams.get('ad') ||
-			      'direct',
-
-			// UTM parameters (salvează toate pentru tracking detaliat)
+		// Trunchiat la 490 chars pentru a evita erori de truncation în DB (coloana NVARCHAR(500))
+		slug: (utmContent ||
+		      urlParams.get('source') ||
+		      urlParams.get('slug') ||
+		      urlParams.get('ad') ||
+		      'direct').substring(0, 490),
 			utm_source: urlParams.get('utm_source') || null,
 			utm_medium: urlParams.get('utm_medium') || null,
 			utm_campaign: urlParams.get('utm_campaign') || null,
