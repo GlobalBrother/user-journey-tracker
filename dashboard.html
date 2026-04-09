@@ -996,6 +996,7 @@
 					</tbody>
 				</table>
 			</div>
+			<div id="cohortInsights" style="padding:16px 20px 20px;border-top:1px solid var(--border);display:none;"></div>
 		</div>
 
 		<!-- Daily Trend -->
@@ -1074,9 +1075,9 @@
 			</div>
 			<div class="panel-body">
 				<div style="font-size:12px;color:var(--text2);margin-bottom:14px;">
-					Introdu domenii (ex: <code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">mysite.com</code>) sau
-					<code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">conversion</code> ca ultimul pas pentru comenzi.
-					Numărăm userii care au parcurs <strong>toți</strong> pașii anteriori.
+					Enter domains (e.g. <code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">mysite.com</code>) or
+					<code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">conversion</code> as the last step for orders.
+					We count users who completed <strong>all</strong> previous steps.
 				</div>
 				<div class="funnel-builder" id="funnelBuilder"></div>
 				<div style="display:flex;gap:8px;margin-bottom:0;">
@@ -1782,7 +1783,7 @@
     </div>
     <div style="font-size:11px;color:var(--text3);align-self:center;max-width:320px;line-height:1.5;">
       ℹ️ Users that cannot be individually identified (e.g. Safari ITP) are grouped into cohorts
-      based on traffic source + device, ensuring no visit is lost from reporting.
+      based on traffic source + device, so no visit is lost from reporting.
     </div>
   `;
 
@@ -1811,6 +1812,117 @@
       </tr>
     `;
 			}).join('');
+
+			// ── INSIGHTS ──
+			renderCohortInsights(data.cohorts);
+		}
+
+		// ════════════════════════════════════════
+		// RENDER COHORT INSIGHTS
+		// ════════════════════════════════════════
+		function renderCohortInsights(cohorts) {
+			const el = document.getElementById('cohortInsights');
+			if (!cohorts || cohorts.length === 0) { el.style.display = 'none'; return; }
+
+			const insights = [];
+
+			// Sort helpers
+			const withTraffic = cohorts.filter(c => c.users >= 3);
+			const converting  = withTraffic.filter(c => c.conversion_rate > 0).sort((a, b) => b.conversion_rate - a.conversion_rate);
+			const nonConverting = withTraffic.filter(c => c.conversion_rate === 0).sort((a, b) => b.users - a.users);
+			const noUtm = cohorts.filter(c => c.utm_source === '—' || !c.utm_source || c.utm_source === 'null');
+			const totalRevenue = cohorts.reduce((s, c) => s + (c.revenue || 0), 0);
+			const totalUsers   = cohorts.reduce((s, c) => s + c.users, 0);
+
+			const label = c => {
+				if (c.utm_source === '—' || !c.utm_source || c.utm_source === 'null') return `direct/no UTM (${c.device_type})`;
+				const camp = c.utm_campaign && c.utm_campaign !== '—' ? ` · <em>${escHtml(c.utm_campaign.length > 35 ? c.utm_campaign.slice(0, 35) + '…' : c.utm_campaign)}</em>` : '';
+				return `${escHtml(c.utm_source)}/${escHtml(c.utm_medium)}${camp} (${c.device_type})`;
+			};
+
+			// 1. Best converting cohort
+			if (converting.length > 0) {
+				const best = converting[0];
+				insights.push({
+					icon: '🏆',
+					color: 'var(--green)',
+					title: 'Top Performing Segment',
+					text: `<strong>${label(best)}</strong> has the highest conversion rate: <strong style="color:var(--green)">${best.conversion_rate}%</strong> (${best.conversions} conversions from ${best.users} users, ${fmtEUR(best.revenue)} revenue). This is the segment that deserves the most budget.`
+				});
+			}
+
+			// 2. No-UTM converting traffic
+			const noUtmConverting = noUtm.filter(c => c.conversion_rate > 0);
+			if (noUtmConverting.length > 0) {
+				const totalNoUtmConv = noUtmConverting.reduce((s, c) => s + c.conversions, 0);
+				const totalNoUtmRev  = noUtmConverting.reduce((s, c) => s + c.revenue, 0);
+				const avgRate = (noUtmConverting.reduce((s, c) => s + c.conversion_rate, 0) / noUtmConverting.length).toFixed(1);
+				insights.push({
+					icon: '🔍',
+					color: 'var(--yellow)',
+					title: 'No-UTM Traffic — Unattributed Conversions',
+					text: `${noUtmConverting.length} cohort${noUtmConverting.length > 1 ? 's' : ''} without UTM parameters generated <strong>${totalNoUtmConv} conversions</strong> (${fmtEUR(totalNoUtmRev)}) with an average rate of <strong>${avgRate}%</strong>. These users likely come from email, bookmarks, or an A/B variant without a tracking script on the LP. If you know the source, add UTM tags to attribute them correctly.`
+				});
+			}
+
+			// 3. Top wasted budget (non-converting with most users)
+			if (nonConverting.length > 0) {
+				const worst = nonConverting[0];
+				const wastedUsers = nonConverting.slice(0, 3).reduce((s, c) => s + c.users, 0);
+				insights.push({
+					icon: '⚠️',
+					color: 'var(--red, #ef4444)',
+					title: 'Zero-Conversion Segments',
+					text: `<strong>${nonConverting.length} cohort${nonConverting.length > 1 ? 's' : ''}</strong> with significant traffic generated zero conversions. The largest is <strong>${label(worst)}</strong> with <strong>${worst.users} users and €0</strong>. In total, ${fmtNum(wastedUsers)} users across the top 3 underperforming segments. Consider pausing or optimizing these campaigns.`
+				});
+			}
+
+			// 4. Revenue concentration
+			if (converting.length > 1 && totalRevenue > 0) {
+				const top1Rev = converting[0].revenue;
+				const top1Pct = Math.round(top1Rev / totalRevenue * 100);
+				if (top1Pct >= 50) {
+					insights.push({
+						icon: '📊',
+						color: 'var(--accent)',
+						title: 'Revenue Concentration',
+						text: `<strong>${top1Pct}% of total revenue</strong> comes from a single cohort: ${label(converting[0])}. Relying on one segment is a risk — if this campaign stops, sales will drop significantly.`
+					});
+				}
+			}
+
+			// 5. Mobile vs Desktop
+			const mobile  = cohorts.filter(c => c.device_type === 'mobile');
+			const desktop = cohorts.filter(c => c.device_type === 'desktop');
+			const mobileUsers  = mobile.reduce((s, c) => s + c.users, 0);
+			const desktopUsers = desktop.reduce((s, c) => s + c.users, 0);
+			const mobileConv   = mobile.reduce((s, c) => s + c.conversions, 0);
+			const desktopConv  = desktop.reduce((s, c) => s + c.conversions, 0);
+			if (mobileUsers > 0 && desktopUsers > 0) {
+				const mRate = (mobileConv / mobileUsers * 100).toFixed(1);
+				const dRate = (desktopConv / desktopUsers * 100).toFixed(1);
+				const winner = parseFloat(mRate) >= parseFloat(dRate) ? 'Mobile' : 'Desktop';
+				const diff = Math.abs(parseFloat(mRate) - parseFloat(dRate)).toFixed(1);
+				insights.push({
+					icon: '📱',
+					color: 'var(--accent2)',
+					title: 'Mobile vs Desktop',
+					text: `<strong>${winner}</strong> converts better by <strong>${diff}pp</strong> (Mobile: ${mRate}% from ${fmtNum(mobileUsers)} users · Desktop: ${dRate}% from ${fmtNum(desktopUsers)} users). ${parseFloat(mRate) > parseFloat(dRate) ? 'Optimize the mobile experience to scale results further.' : 'Desktop traffic is more valuable — make sure your LP looks perfect on desktop.'}`
+				});
+			}
+
+			el.style.display = 'block';
+			el.innerHTML = `
+				<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">💡 Automated Insights</div>
+				<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;">
+					${insights.map(ins => `
+						<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ${ins.color};border-radius:8px;padding:12px 14px;">
+							<div style="font-size:12px;font-weight:600;color:${ins.color};margin-bottom:6px;">${ins.icon} ${ins.title}</div>
+							<div style="font-size:12px;color:var(--text2);line-height:1.6;">${ins.text}</div>
+						</div>
+					`).join('')}
+				</div>
+			`;
 		}
 
 		// ════════════════════════════════════════
@@ -2160,12 +2272,12 @@
 		document.getElementById('btnCalcFunnel').addEventListener('click', async () => {
 			const steps = funnelSteps.filter(s => s.trim());
 			if (steps.length < 2) {
-				document.getElementById('funnelResult').innerHTML = '<div class="empty">Adaugă cel puțin 2 pași.</div>';
+				document.getElementById('funnelResult').innerHTML = '<div class="empty">Add at least 2 steps.</div>';
 				return;
 			}
 			if (funnelAbort) funnelAbort.abort();
 			funnelAbort = new AbortController();
-			document.getElementById('funnelResult').innerHTML = '<div class="loading"><span class="spinner"></span> Se calculează…</div>';
+			document.getElementById('funnelResult').innerHTML = '<div class="loading"><span class="spinner"></span> Calculating…</div>';
 			try {
 				const data = await fetchFunnel(steps, funnelAbort.signal);
 				renderFunnel(data);

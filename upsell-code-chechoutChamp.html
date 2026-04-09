@@ -5,7 +5,7 @@
 </script>
 <script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js" defer></script>
 <script>
-  (function() {
+  document.addEventListener('DOMContentLoaded', function() {
     // Datele comenzii din Checkout Champ
     var orderId   = window.globalOrderData && window.globalOrderData.orderId;
     var orderData = JSON.parse(sessionStorage.getItem('orderData') || '{}');
@@ -22,7 +22,7 @@
       product_name: 'Main Product',   // ← schimbă cu numele real
       product_id:   productId   || '193',
       value:        value,
-      currency:     'EUR'       // ← sau moneda ta
+      currency:     'USD'       // ← sau moneda ta
     });
-  })();
+  });
 </script>

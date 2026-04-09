@@ -5,7 +5,7 @@
 </script>
 <script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js" defer></script>
 <script>
-  (function() {
+  document.addEventListener('DOMContentLoaded', function() {
     var params = new URLSearchParams(window.location.search);
 
     // Singurii parametri necriptați de Digistore
@@ -16,9 +16,9 @@
     AppCore.trackConversion({
       order_id:     orderId   || 'unknown',
       product_id:   productId || '594082',
-      product_name: 'Numele produsului tau',  // ← hardcodat, nu vine din URL
-      value:        47.00,                    // ← hardcodat, prețul real al produsului
-      currency:     'EUR'
+      product_name: 'Bug-In Guide',  // ← hardcodat, nu vine din URL
+      value:        24.00,           // ← hardcodat, prețul real al produsului
+      currency:     'USD'
     });
-  })();
+  });
 </script>
