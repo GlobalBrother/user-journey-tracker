@@ -417,14 +417,44 @@
 			display: flex;
 			align-items: center;
 			gap: 12px;
+			flex-wrap: wrap;
 		}
 
 		.journey-domains {
 			flex: 1;
+			min-width: 200px;
 			display: flex;
 			align-items: center;
 			gap: 6px;
 			flex-wrap: wrap;
+		}
+
+		.journey-uid-row {
+			width: 100%;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-wrap: wrap;
+			padding-top: 6px;
+			border-top: 1px solid var(--border);
+			margin-top: 2px;
+		}
+
+		.journey-uid-chip {
+			background: rgba(16, 185, 129, 0.1);
+			color: var(--green);
+			border: 1px solid rgba(16, 185, 129, 0.3);
+			font-size: 10px;
+			padding: 2px 8px;
+			border-radius: 4px;
+			font-family: monospace;
+			cursor: pointer;
+			transition: background .15s, color .15s;
+		}
+
+		.journey-uid-chip:hover {
+			background: rgba(16, 185, 129, 0.25);
+			color: #fff;
 		}
 
 		.domain-chip {
@@ -1942,6 +1972,13 @@
 					(i < j.domains.length - 1 ? '<span class="arrow-sep">→</span>' : '')
 				).join('');
 
+				const userChips = (j.sample_user_ids || []).map(uid =>
+					`<span class="journey-uid-chip" title="Click to look up this user's journey" onclick="lookupUser(${JSON.stringify(uid)})">${escHtml(uid.slice(0, 12))}…</span>`
+				).join('');
+				const moreLabel = j.users > (j.sample_user_ids || []).length
+					? `<span style="font-size:10px;color:var(--text3);">+${j.users - (j.sample_user_ids || []).length} more</span>`
+					: '';
+
 				return `
       <div class="journey-item">
         <div class="journey-domains">${domains}</div>
@@ -1950,6 +1987,7 @@
           <span>${fmtNum(j.conversions)} conv.</span>
           <span>${convRateBadge(j.conversion_rate)}</span>
         </div>
+        ${userChips || moreLabel ? `<div class="journey-uid-row">${userChips}${moreLabel}</div>` : ''}
       </div>
     `;
 			}).join('') + '</div>';
