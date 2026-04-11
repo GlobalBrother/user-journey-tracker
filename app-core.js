@@ -27,7 +27,7 @@
 		API_KEY: (window.AppCoreConfig && window.AppCoreConfig.API_KEY) || '',
 
 		// Domenii de checkout unde să adaugi user_id în URL
-		CHECKOUT_DOMAINS: ['digistore24.com', 'thrivecart.com'],
+		CHECKOUT_DOMAINS: ['digistore24.com', 'checkout-ds24.com', 'thrivecart.com'],
 
 		// Debug mode (activează console.logs)
 		DEBUG_MODE: false
@@ -516,7 +516,9 @@
 			cohort_id: await calculateCohortId(firstTouch, deviceType, navigator.language),
 			domain: window.location.hostname,
 			url: window.location.href,
-			slug: urlParams.slug,  // Now contains utm_content (most specific!)
+			// Folosește firstTouch.slug (din localStorage) nu urlParams.slug (din URL curent)
+			// Pagina de upsell nu are UTM-uri în URL, deci urlParams.slug ar fi 'direct'
+			slug: firstTouch.slug,
 			referrer: document.referrer || null,
 			timestamp: new Date().toISOString(),
 
@@ -590,14 +592,40 @@
 		const urlParams = new URLSearchParams(window.location.search);
 		const deviceType = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
 
-		// Recover the original user_id passed through checkout via ?custom= parameter.
-		// DigiStore24 preserves it as-is; CheckoutChamp may use a different param.
-		// Format set by enhanceCheckoutLinks(): user_id or user_id---extra_data
+		// ── Recover original user_id ──────────────────────────────────
+		// Strategy A: localStorage lookup via product_id (robust, nu depinde de ?custom=)
+		// Digistore24 pasează ?digistore_initial_product_id= necriptat pe upsell/TY page.
+		// La click pe butonul de checkout de pe LP, am salvat {user_id, slug} în
+		// localStorage['ac_checkout_{productId}']. Îl citim acum.
 		let trackingUserId = null;
-		const customParam = urlParams.get('custom') || urlParams.get('tracking_id') || urlParams.get('tid');
-		if (customParam) {
-			// Skip Digistore24-encrypted params (they start with 'ds24' and are unreadable)
-			if (!customParam.startsWith('ds24')) {
+		let recoveredSlug = null;
+
+		const dsProductId = urlParams.get('digistore_initial_product_id')
+			|| urlParams.get('product_id')
+			|| conversionData.product_id
+			|| null;
+
+		if (dsProductId) {
+			try {
+				const stored = localStorage.getItem('ac_checkout_' + dsProductId);
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					trackingUserId = parsed.user_id || null;
+					recoveredSlug  = parsed.slug   || null;
+					debugLog('✅ Recovered user_id from localStorage checkout lookup:', trackingUserId, 'slug:', recoveredSlug);
+					// Curăță după folosire — un order_id = o singură conversie
+					localStorage.removeItem('ac_checkout_' + dsProductId);
+				}
+			} catch (e) {
+				debugLog('⚠️ Failed to read checkout lookup from localStorage:', e);
+			}
+		}
+
+		// Strategy B: ?custom= parameter (funcționează la CheckoutChamp, nu la Digistore24)
+		// Digistore24 criptează ?custom= în forma ds24xxx..., deci îl ignorăm.
+		if (!trackingUserId) {
+			const customParam = urlParams.get('custom') || urlParams.get('tracking_id') || urlParams.get('tid');
+			if (customParam && !customParam.startsWith('ds24')) {
 				trackingUserId = customParam.split('---')[0].trim() || null;
 			}
 		}
@@ -608,13 +636,15 @@
 			cohort_id: await calculateCohortId(trafficSource, deviceType, navigator.language),
 			order_id: conversionData.order_id || null,
 			product_name: conversionData.product_name || null,
-			product_id: conversionData.product_id || null,
+			product_id: conversionData.product_id || dsProductId || null,
 			value: conversionData.value || 0,
 			currency: conversionData.currency || 'EUR',
 			domain: window.location.hostname,
 			conversion_page: window.location.href,
 			timestamp: new Date().toISOString(),
-			attribution_slug: trafficSource.slug,
+			// Folosește slug-ul recuperat din localStorage (cel mai precis),
+			// sau first-touch din ac_source, sau 'direct' ca ultim fallback
+			attribution_slug: recoveredSlug || trafficSource.slug,
 			time_to_conversion_minutes: null // Backend poate calcula
 		};
 
@@ -680,10 +710,19 @@
 
 					// Adaugă user_id în 'custom' parameter (Digistore24 format)
 					// Format: user_id---existing_custom_data
+					// Dacă ?custom= există deja și începe cu user_id-ul curent, nu îl mai prefixăm
+					// (evită dublarea la MutationObserver sau re-run)
 					const existingCustom = url.searchParams.get('custom') || '';
-					const customValue = existingCustom
-						? `${currentUserId}---${existingCustom}`
-						: currentUserId;
+					let customValue;
+					if (existingCustom.startsWith(currentUserId)) {
+						// Deja setat corect — nu modifica
+						customValue = existingCustom;
+					} else if (existingCustom) {
+						// Există alt custom (ex: hardcodat în pagină) — prefixează cu user_id
+						customValue = `${currentUserId}---${existingCustom}`;
+					} else {
+						customValue = currentUserId;
+					}
 					url.searchParams.set('custom', customValue);
 
 					// Update link/button cu URL-ul modificat
@@ -694,6 +733,23 @@
 					element.addEventListener('click', async function(e) {
 						// Nu prevenim default - lăsăm user-ul să meargă la checkout
 						try {
+							// ── Salvează în localStorage perechea product_id → user_id ──
+							// Digistore24 criptează ?custom= pe upsell, deci nu putem
+							// recupera user_id-ul din URL. În schimb, citim din localStorage
+							// pe upsell folosind product_id (care vine necriptat ca
+							// ?digistore_initial_product_id=...).
+							if (productId) {
+								localStorage.setItem(
+									'ac_checkout_' + productId,
+									JSON.stringify({
+										user_id: currentUserId,
+										slug: getTrafficSource().slug,
+										ts: Date.now()
+									})
+								);
+								debugLog('✅ Checkout lookup saved for product_id:', productId);
+							}
+
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
 								checkout_url: url.toString(),
