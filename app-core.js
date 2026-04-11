@@ -643,8 +643,10 @@
 			conversion_page: window.location.href,
 			timestamp: new Date().toISOString(),
 			// Folosește slug-ul recuperat din localStorage (cel mai precis),
-			// sau first-touch din ac_source, sau 'direct' ca ultim fallback
-			attribution_slug: recoveredSlug || trafficSource.slug,
+			// sau first-touch din ac_source dacă nu e 'direct'.
+			// Dacă ambele lipsesc / sunt 'direct', trimitem null → backend face attribution
+			// prin Strategy 2 (checkout_initiated event) sau Strategy 3 (pageview slug match).
+			attribution_slug: recoveredSlug || (trafficSource.slug !== 'direct' ? trafficSource.slug : null),
 			time_to_conversion_minutes: null // Backend poate calcula
 		};
 
