@@ -2119,17 +2119,16 @@
 				// Effective sub-path: first `sel` domains
 				const activeDomains = j.domains.slice(0, sel);
 
-				// ── Domain chips with timing separators ──
-				const timingPerGap = j.avg_hours_between_domains != null
-					? j.avg_hours_between_domains
-					: null;
+				// ── Domain chips with per-gap timing separators ──
+				// gap_hours[i] = avg hours from domain[i] → domain[i+1]
+				const gapHours = Array.isArray(j.gap_hours) ? j.gap_hours : [];
 
 				let domainsHtml = j.domains.map((d, i) => {
 					const isSelected = i < sel;
 					const cls = isSelected ? 'selected' : 'unselected';
 					let sep = '';
 					if (i < j.domains.length - 1) {
-						const timing = timingPerGap !== null ? fmtHours(timingPerGap) : null;
+						const timing = gapHours[i] != null ? fmtHours(gapHours[i]) : null;
 						sep = `<span class="timing-sep">
 							<span class="arrow-line">→</span>
 							${timing ? `<span class="timing-label">~${timing}</span>` : ''}
@@ -2246,9 +2245,8 @@
 			const sel = journeySelState[idx] !== undefined ? journeySelState[idx] : totalDomains;
 			const j = journeys[idx];
 			const activeDomains = j.domains.slice(0, sel);
-			const timingPerGap = j.avg_hours_between_domains != null ? j.avg_hours_between_domains : null;
 
-			// Update domain chips
+			// Update domain chips (only class + title change on click — timing labels stay as-is)
 			existing.querySelectorAll('.domain-chip[data-journey]').forEach(chip => {
 				const di = parseInt(chip.dataset.di, 10);
 				chip.className = 'domain-chip ' + (di < sel ? 'selected' : 'unselected');
