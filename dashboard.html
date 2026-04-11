@@ -407,37 +407,129 @@
 		.journey-list {
 			display: flex;
 			flex-direction: column;
-			gap: 8px;
+			gap: 10px;
 		}
 
 		.journey-item {
 			background: var(--surface2);
-			border-radius: 8px;
-			padding: 12px 16px;
+			border-radius: 10px;
+			padding: 14px 16px;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		/* row 1: domain chips + meta stats */
+		.journey-top-row {
 			display: flex;
 			align-items: center;
-			gap: 12px;
+			gap: 10px;
 			flex-wrap: wrap;
 		}
 
 		.journey-domains {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			flex-wrap: wrap;
 			flex: 1;
 			min-width: 200px;
+		}
+
+		/* Each domain in the path — clickable, accumulates selection */
+		.domain-chip {
+			background: rgba(99, 102, 241, 0.15);
+			color: var(--accent);
+			font-size: 11px;
+			padding: 3px 10px;
+			border-radius: 5px;
+			font-family: monospace;
+			cursor: pointer;
+			border: 1.5px solid transparent;
+			transition: background .15s, border-color .15s, color .15s;
+			user-select: none;
+		}
+		.domain-chip:hover {
+			background: rgba(99, 102, 241, 0.28);
+		}
+		.domain-chip.selected {
+			border-color: var(--accent);
+			background: rgba(99, 102, 241, 0.30);
+			color: #fff;
+		}
+		.domain-chip.unselected {
+			opacity: 0.38;
+		}
+
+		.arrow-sep {
+			color: var(--text3);
+			font-size: 11px;
+			padding: 0 1px;
+		}
+		/* timing label between arrows */
+		.timing-sep {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 1px;
+			padding: 0 2px;
+		}
+		.timing-sep .arrow-line {
+			color: var(--text3);
+			font-size: 11px;
+		}
+		.timing-sep .timing-label {
+			font-size: 9px;
+			color: var(--text3);
+			white-space: nowrap;
+		}
+
+		.journey-meta {
+			display: flex;
+			gap: 14px;
+			font-size: 12px;
+			color: var(--text2);
+			white-space: nowrap;
+			flex-shrink: 0;
+		}
+
+		/* row 2: per-domain conv badges */
+		.journey-conv-row {
 			display: flex;
 			align-items: center;
 			gap: 6px;
 			flex-wrap: wrap;
+			font-size: 11px;
+		}
+		.domain-conv-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			background: rgba(16, 185, 129, 0.08);
+			border: 1px solid rgba(16, 185, 129, 0.2);
+			border-radius: 4px;
+			padding: 2px 8px;
+			font-size: 10px;
+			color: var(--text2);
+			font-family: monospace;
+		}
+		.domain-conv-badge .dc-name {
+			color: var(--text3);
+		}
+		.domain-conv-badge .dc-val {
+			color: var(--green);
+			font-weight: 600;
 		}
 
+		/* row 3: uid chips */
 		.journey-uid-row {
 			width: 100%;
 			display: flex;
 			align-items: center;
 			gap: 6px;
 			flex-wrap: wrap;
-			padding-top: 6px;
+			padding-top: 8px;
 			border-top: 1px solid var(--border);
-			margin-top: 2px;
 		}
 
 		.journey-uid-chip {
@@ -456,28 +548,21 @@
 			background: rgba(16, 185, 129, 0.25);
 			color: #fff;
 		}
-
-		.domain-chip {
-			background: rgba(99, 102, 241, 0.15);
-			color: var(--accent);
-			font-size: 11px;
-			padding: 2px 8px;
-			border-radius: 4px;
-			font-family: monospace;
-		}
-
-		.arrow-sep {
+		.journey-more-label {
+			font-size: 10px;
 			color: var(--text3);
-			font-size: 12px;
+			margin-left: 2px;
 		}
 
-		.journey-meta {
-			display: flex;
-			gap: 16px;
-			font-size: 12px;
-			color: var(--text2);
-			white-space: nowrap;
+		/* filtered-view indicator */
+		.journey-filter-hint {
+			font-size: 10px;
+			color: var(--accent);
+			margin-left: auto;
+			cursor: pointer;
+			opacity: 0.75;
 		}
+		.journey-filter-hint:hover { opacity: 1; }
 
 		/* ── SEARCH / JOURNEY MODAL ── */
 		.search-bar {
@@ -1347,6 +1432,19 @@
 			return m === 0 ? `${s}s` : `${m}m ${s}s`;
 		}
 
+		// Format hours into human-readable: "2h", "3d 4h", "45m"
+		function fmtHours(hours) {
+			if (hours === null || hours === undefined || hours < 0) return null;
+			if (hours < 1) {
+				const mins = Math.round(hours * 60);
+				return mins <= 1 ? '1m' : `${mins}m`;
+			}
+			if (hours < 24) return `${Math.round(hours)}h`;
+			const days = Math.floor(hours / 24);
+			const remH = Math.round(hours % 24);
+			return remH > 0 ? `${days}d ${remH}h` : `${days}d`;
+		}
+
 		// invertColors=true means lower is better (e.g. bounce rate)
 		function fmtDelta(current, previous, invertColors) {
 			if (previous === null || previous === undefined || previous === 0) {
@@ -2000,39 +2098,206 @@
 		// ════════════════════════════════════════
 		// RENDER JOURNEYS
 		// ════════════════════════════════════════
+		// RENDER JOURNEYS
+		// ════════════════════════════════════════
+
+		// Per-journey selection state: journeySelState[idx] = number of domains selected (1..N)
+		const journeySelState = {};
+
 		function renderJourneys(journeys) {
 			const el = document.getElementById('journeyList');
-
 			if (!journeys || journeys.length === 0) {
 				el.innerHTML = '<div class="empty">No cross-domain journeys in this period.</div>';
 				return;
 			}
 
-			el.innerHTML = '<div class="journey-list">' + journeys.map(j => {
-				const domains = j.domains.map((d, i) =>
-					`<span class="domain-chip">${escHtml(d)}</span>` +
-					(i < j.domains.length - 1 ? '<span class="arrow-sep">→</span>' : '')
-				).join('');
+			// Build HTML for each journey item
+			function buildItem(j, idx) {
+				const totalDomains = j.domains.length;
+				// How many domains are currently "selected" (highlighted) — default = all
+				const sel = journeySelState[idx] !== undefined ? journeySelState[idx] : totalDomains;
+				// Effective sub-path: first `sel` domains
+				const activeDomains = j.domains.slice(0, sel);
 
-				const userChips = (j.sample_user_ids || []).map(uid =>
-					`<span class="journey-uid-chip" title="Click to look up this user's journey" onclick="lookupUser('${escHtml(uid)}')">${escHtml(uid.slice(0, 12))}…</span>`
-				).join('');
-				const moreLabel = j.users > (j.sample_user_ids || []).length
-					? `<span style="font-size:10px;color:var(--text3);">+${j.users - (j.sample_user_ids || []).length} more</span>`
+				// ── Domain chips with timing separators ──
+				const timingPerGap = j.avg_hours_between_domains != null
+					? j.avg_hours_between_domains
+					: null;
+
+				let domainsHtml = j.domains.map((d, i) => {
+					const isSelected = i < sel;
+					const cls = isSelected ? 'selected' : 'unselected';
+					let sep = '';
+					if (i < j.domains.length - 1) {
+						const timing = timingPerGap !== null ? fmtHours(timingPerGap) : null;
+						sep = `<span class="timing-sep">
+							<span class="arrow-line">→</span>
+							${timing ? `<span class="timing-label">~${timing}</span>` : ''}
+						</span>`;
+					}
+					return `<span class="domain-chip ${cls}" data-journey="${idx}" data-di="${i}"
+						title="${i < sel - 1 ? 'Click to narrow to first ' + (i+1) + ' domain(s)' : i === sel - 1 && sel < totalDomains ? 'Click to expand' : i === sel - 1 ? 'Last selected — click to deselect' : 'Click to include up to here'}"
+					>${escHtml(d)}</span>${sep}`;
+				}).join('');
+
+				// Filter hint when not all domains selected
+				const filterHint = sel < totalDomains
+					? `<span class="journey-filter-hint" data-journey="${idx}" data-reset="1" title="Reset to full journey">↺ showing ${sel}/${totalDomains}</span>`
 					: '';
 
-				return `
-      <div class="journey-item">
-        <div class="journey-domains">${domains}</div>
-        <div class="journey-meta">
-          <span>${fmtNum(j.users)} users</span>
-          <span>${fmtNum(j.conversions)} conv.</span>
-          <span>${convRateBadge(j.conversion_rate)}</span>
-        </div>
-        ${userChips || moreLabel ? `<div class="journey-uid-row">${userChips}${moreLabel}</div>` : ''}
-      </div>
-    `;
-			}).join('') + '</div>';
+				// ── Meta stats for the active sub-path ──
+				// For the filtered view we show full-journey stats (backend doesn't split by sub-path)
+				// but we highlight which domains are active
+				const metaHtml = `
+					<span>${fmtNum(j.users)} users</span>
+					<span>${fmtNum(j.conversions)} conv.</span>
+					<span>${convRateBadge(j.conversion_rate)}</span>`;
+
+				// ── Conv per domain badges ── (only for selected domains)
+				const convByDomain = j.conv_by_domain || {};
+				const convBadges = activeDomains.map(d => {
+					const c = convByDomain[d];
+					if (!c) return '';
+					const shortD = d.replace(/^www\./, '');
+					return `<span class="domain-conv-badge">
+						<span class="dc-name">${escHtml(shortD)}</span>
+						<span class="dc-val">${fmtNum(c)} conv</span>
+					</span>`;
+				}).filter(Boolean).join('');
+
+				// ── UID chips — always show 6 + "+N more" ──
+				const chips = j.sample_user_ids || [];
+				const SHOW = 6;
+				const shown = chips.slice(0, SHOW);
+				const extra = j.users - shown.length;
+				const userChips = shown.map(uid =>
+					`<span class="journey-uid-chip" title="${escHtml(uid)}" onclick="lookupUser('${escHtml(uid)}')">${escHtml(uid.slice(0, 12))}…</span>`
+				).join('');
+				const moreLabel = extra > 0
+					? `<span class="journey-more-label">+${fmtNum(extra)} more</span>`
+					: '';
+
+				return `<div class="journey-item" id="ji-${idx}">
+					<div class="journey-top-row">
+						<div class="journey-domains">${domainsHtml}</div>
+						<div class="journey-meta">${metaHtml}</div>
+						${filterHint}
+					</div>
+					${convBadges ? `<div class="journey-conv-row">${convBadges}</div>` : ''}
+					${userChips || moreLabel ? `<div class="journey-uid-row">${userChips}${moreLabel}</div>` : ''}
+				</div>`;
+			}
+
+			el.innerHTML = '<div class="journey-list">' +
+				journeys.map((j, idx) => buildItem(j, idx)).join('') +
+			'</div>';
+
+			// ── Event delegation for domain chip clicks ──
+			el.onclick = (e) => {
+				// Reset button
+				const resetBtn = e.target.closest('[data-reset]');
+				if (resetBtn) {
+					const idx = parseInt(resetBtn.dataset.journey, 10);
+					delete journeySelState[idx];
+					_rebuildJourneyItem(journeys, idx);
+					return;
+				}
+				// Domain chip click
+				const chip = e.target.closest('.domain-chip[data-journey]');
+				if (!chip) return;
+				const idx = parseInt(chip.dataset.journey, 10);
+				const di  = parseInt(chip.dataset.di, 10);
+				const j   = journeys[idx];
+				const totalDomains = j.domains.length;
+				const curSel = journeySelState[idx] !== undefined ? journeySelState[idx] : totalDomains;
+
+				// Click logic:
+				// • click on last selected chip → deselect (shrink by 1, min 1)
+				// • click on unselected chip → expand selection to include it (di+1)
+				// • click on any selected chip before last → shrink to di+1
+				let newSel;
+				if (di < curSel - 1) {
+					// Narrow to first di+1 domains
+					newSel = di + 1;
+				} else if (di === curSel - 1) {
+					// Toggle: collapse one step or expand if possible
+					newSel = curSel < totalDomains ? curSel + 1 : (curSel > 1 ? curSel - 1 : 1);
+				} else {
+					// Expand to include this domain
+					newSel = di + 1;
+				}
+				if (newSel === totalDomains) {
+					delete journeySelState[idx];
+				} else {
+					journeySelState[idx] = newSel;
+				}
+				_rebuildJourneyItem(journeys, idx);
+			};
+		}
+
+		function _rebuildJourneyItem(journeys, idx) {
+			// Re-render only the specific journey item without touching others
+			const el = document.getElementById('journeyList');
+			if (!el) return;
+			const existing = document.getElementById(`ji-${idx}`);
+			if (!existing) return;
+
+			const totalDomains = journeys[idx].domains.length;
+			const sel = journeySelState[idx] !== undefined ? journeySelState[idx] : totalDomains;
+			const j = journeys[idx];
+			const activeDomains = j.domains.slice(0, sel);
+			const timingPerGap = j.avg_hours_between_domains != null ? j.avg_hours_between_domains : null;
+
+			// Update domain chips
+			existing.querySelectorAll('.domain-chip[data-journey]').forEach(chip => {
+				const di = parseInt(chip.dataset.di, 10);
+				chip.className = 'domain-chip ' + (di < sel ? 'selected' : 'unselected');
+				chip.title = di < sel - 1 ? `Click to narrow to first ${di+1} domain(s)`
+					: di === sel - 1 && sel < totalDomains ? 'Click to expand'
+					: di === sel - 1 ? 'Last selected — click to deselect'
+					: 'Click to include up to here';
+			});
+
+			// Update filter hint
+			const topRow = existing.querySelector('.journey-top-row');
+			let hint = topRow.querySelector('.journey-filter-hint');
+			if (sel < totalDomains) {
+				if (!hint) {
+					hint = document.createElement('span');
+					hint.className = 'journey-filter-hint';
+					hint.dataset.journey = idx;
+					hint.dataset.reset = '1';
+					topRow.appendChild(hint);
+				}
+				hint.textContent = `↺ showing ${sel}/${totalDomains}`;
+				hint.title = 'Reset to full journey';
+			} else if (hint) {
+				hint.remove();
+			}
+
+			// Update conv badges
+			const convByDomain = j.conv_by_domain || {};
+			const newBadges = activeDomains.map(d => {
+				const c = convByDomain[d];
+				if (!c) return '';
+				const shortD = d.replace(/^www\./, '');
+				return `<span class="domain-conv-badge">
+					<span class="dc-name">${escHtml(shortD)}</span>
+					<span class="dc-val">${fmtNum(c)} conv</span>
+				</span>`;
+			}).filter(Boolean).join('');
+
+			let convRow = existing.querySelector('.journey-conv-row');
+			if (newBadges) {
+				if (!convRow) {
+					convRow = document.createElement('div');
+					convRow.className = 'journey-conv-row';
+					existing.insertBefore(convRow, existing.querySelector('.journey-uid-row'));
+				}
+				convRow.innerHTML = newBadges;
+			} else if (convRow) {
+				convRow.remove();
+			}
 		}
 
 		// ════════════════════════════════════════
@@ -2069,6 +2334,8 @@
 				renderSlugTable(stats.by_slug || []);
 				renderTrendChart(trend);
 				renderRecentConversions(recentConvs);
+				// Reset journey selection state when data refreshes
+				Object.keys(journeySelState).forEach(k => delete journeySelState[k]);
 				renderJourneys(stats.top_journeys || []);
 
 				document.getElementById('lastUpdated').textContent =
