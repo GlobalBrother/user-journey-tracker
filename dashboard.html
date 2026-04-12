@@ -1097,21 +1097,28 @@
 				<table>
 					<thead>
 						<tr>
+							<th>Persona</th>
 							<th>Source</th>
 							<th>Medium</th>
 							<th>Campaign</th>
 							<th>Device</th>
-							<th>Language</th>
+							<th>Top Pages</th>
+							<th>First Ad</th>
 							<th>Users</th>
-							<th>Pageviews</th>
+							<th>Bounce</th>
 							<th>Conversions</th>
 							<th>Revenue</th>
-							<th>Conv. Rate</th>
+							<th>RPU</th>
+							<th>AOV</th>
+							<th>Conv.%</th>
+							<th title="Avg days from first visit to first conversion">Days→Conv</th>
+							<th title="% users visiting more than 1 site">Multi-Site</th>
+							<th title="Peak hour UTC (0-23)">Peak HR</th>
 						</tr>
 					</thead>
 					<tbody id="cohortTableBody">
 						<tr>
-							<td colspan="10" class="loading"><span class="spinner"></span> Loading…</td>
+							<td colspan="17" class="loading"><span class="spinner"></span> Loading…</td>
 						</tr>
 					</tbody>
 				</table>
@@ -1932,12 +1939,12 @@
 			const tbody = document.getElementById('cohortTableBody');
 
 			if (!data || !data.cohorts) {
-				tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohort data.</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="17" class="empty">No cohort data.</td></tr>';
 				return;
 			}
 
 			const s = data.summary;
-			const covColor = s.coverage_pct >= 80 ? 'var(--green)' : s.coverage_pct >= 50 ? 'var(--yellow)' : 'var(--red, #ef4444)';
+			const covColor = s.coverage_pct >= 80 ? 'var(--green)' : s.coverage_pct >= 50 ? 'var(--yellow)' : 'var(--red)';
 
 			summaryEl.innerHTML = `
     <div class="profile-stat">
@@ -1952,7 +1959,11 @@
       <div class="profile-stat-value">${fmtNum(s.users_with_cohort)}</div>
       <div class="profile-stat-label">of ${fmtNum(s.total_users)} total</div>
     </div>
-    <div style="font-size:11px;color:var(--text3);align-self:center;max-width:320px;line-height:1.5;">
+    <div class="profile-stat">
+      <div class="profile-stat-value" style="color:var(--accent2);">${fmtEUR(s.avg_rpu || 0)}</div>
+      <div class="profile-stat-label">Avg RPU</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);align-self:center;max-width:280px;line-height:1.5;">
       ℹ️ Users that cannot be individually identified (e.g. Safari ITP) are grouped into cohorts
       based on traffic source + device, so no visit is lost from reporting.
     </div>
@@ -1961,25 +1972,69 @@
 			const deviceIcons = { mobile: '📱', desktop: '🖥️', tablet: '📟', unknown: '❓' };
 
 			if (data.cohorts.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="10" class="empty">No cohorts found for the selected period.</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="17" class="empty">No cohorts found for the selected period.</td></tr>';
 				return;
 			}
 
 			tbody.innerHTML = data.cohorts.map(c => {
 				const icon = deviceIcons[c.device_type] || '❓';
-				const shortCohort = c.cohort_id ? c.cohort_id.slice(0, 8) + '…' : '—';
+
+				// Persona label pill colour
+				const labelColors = {
+					'💎': '#a78bfa', '🔥': '#f97316', '⚡': '#facc15',
+					'🧐': '#38bdf8', '🔍': '#34d399', '❌': '#ef4444',
+					'🌀': '#94a3b8', '✅': '#22c55e', '👁': '#64748b'
+				};
+				const labelEmoji = (c.label || '').slice(0, 2);
+				const labelColor = labelColors[labelEmoji] || 'var(--text2)';
+
+				// Top domains pills
+				const domainPills = (c.top_domains || []).slice(0, 3).map(d =>
+					`<span style="background:var(--surface2);border-radius:4px;padding:1px 5px;font-size:10px;white-space:nowrap;">${escHtml(d)}</span>`
+				).join(' ');
+
+				// First ad slug
+				const firstSlug = c.first_touch_slug
+					? `<span title="${escHtml(c.first_touch_slug)}" style="color:var(--accent2);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;display:inline-block;white-space:nowrap;">${escHtml(c.first_touch_slug.length > 18 ? c.first_touch_slug.slice(0, 18) + '…' : c.first_touch_slug)}</span>`
+					: '<span style="color:var(--text3)">—</span>';
+
+				// Bounce colour
+				const bounceColor = c.bounce_rate > 70 ? 'var(--red)' : c.bounce_rate > 40 ? 'var(--yellow)' : 'var(--green)';
+
+				// Days to convert
+				const dtc = c.days_to_convert != null
+					? `${c.days_to_convert}d`
+					: '<span style="color:var(--text3)">—</span>';
+
+				// Multi-domain rate colour
+				const multiColor = c.multi_domain_rate > 50 ? 'var(--accent2)' : 'var(--text2)';
+
+				// Peak hour badge
+				const peakHour = c.peak_hour_utc != null
+					? `${String(c.peak_hour_utc).padStart(2, '0')}:00`
+					: '—';
+
 				return `
-      <tr title="Cohort ID: ${escHtml(c.cohort_id || '')}">
-        <td style="color:var(--accent2);">${escHtml(c.utm_source)}</td>
+      <tr title="Cohort: ${escHtml(c.cohort_id || '')} · Lang: ${escHtml(c.language || '—')}">
+        <td style="font-size:12px;white-space:nowrap;">
+          <span style="background:${labelColor}22;color:${labelColor};border:1px solid ${labelColor}55;border-radius:6px;padding:2px 7px;font-weight:600;">${escHtml(c.label || '—')}</span>
+        </td>
+        <td style="color:var(--accent2);font-weight:600;">${escHtml(c.utm_source)}</td>
         <td style="color:var(--text2);">${escHtml(c.utm_medium)}</td>
-        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;" title="${escHtml(c.utm_campaign)}">${escHtml(c.utm_campaign)}</td>
-        <td>${icon} ${escHtml(c.device_type)}</td>
-        <td style="color:var(--text3);">${escHtml(c.language)}</td>
-        <td>${fmtNum(c.users)}</td>
-        <td>${fmtNum(c.pageviews)}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;" title="${escHtml(c.utm_campaign)}">${escHtml(c.utm_campaign)}</td>
+        <td>${icon} <span style="font-size:11px;">${escHtml(c.device_type)}</span></td>
+        <td style="font-size:11px;">${domainPills || '<span style="color:var(--text3)">—</span>'}</td>
+        <td>${firstSlug}</td>
+        <td style="font-weight:600;">${fmtNum(c.users)}</td>
+        <td style="color:${bounceColor};font-weight:600;">${c.bounce_rate}%</td>
         <td>${fmtNum(c.conversions)}</td>
         <td style="color:var(--green);font-weight:600;">${fmtEUR(c.revenue)}</td>
+        <td style="color:var(--accent2);">${fmtEUR(c.rpu)}</td>
+        <td style="color:var(--text2);">${fmtEUR(c.aov)}</td>
         <td>${convRateBadge(c.conversion_rate)}</td>
+        <td style="color:var(--text2);font-size:12px;">${dtc}</td>
+        <td style="color:${multiColor};font-size:12px;">${c.multi_domain_rate}%</td>
+        <td style="color:var(--text3);font-size:11px;">${peakHour}</td>
       </tr>
     `;
 			}).join('');
@@ -2003,9 +2058,9 @@
 			const nonConverting = withTraffic.filter(c => c.conversion_rate === 0).sort((a, b) => b.users - a.users);
 			const noUtm = cohorts.filter(c => c.utm_source === '—' || !c.utm_source || c.utm_source === 'null');
 			const totalRevenue = cohorts.reduce((s, c) => s + (c.revenue || 0), 0);
-			const totalUsers   = cohorts.reduce((s, c) => s + c.users, 0);
 
-			const label = c => {
+			// Segment label helper (short readable identifier)
+			const segLabel = c => {
 				if (c.utm_source === '—' || !c.utm_source || c.utm_source === 'null') return `direct/no UTM (${c.device_type})`;
 				const camp = c.utm_campaign && c.utm_campaign !== '—' ? ` · <em>${escHtml(c.utm_campaign.length > 35 ? c.utm_campaign.slice(0, 35) + '…' : c.utm_campaign)}</em>` : '';
 				return `${escHtml(c.utm_source)}/${escHtml(c.utm_medium)}${camp} (${c.device_type})`;
@@ -2014,41 +2069,98 @@
 			// 1. Best converting cohort
 			if (converting.length > 0) {
 				const best = converting[0];
+				const rpuNote = best.rpu > 0 ? ` · RPU: <strong style="color:var(--accent2)">${fmtEUR(best.rpu)}</strong>` : '';
+				const dtcNote = best.days_to_convert != null ? ` · Converts in avg <strong>${best.days_to_convert}d</strong>` : '';
 				insights.push({
 					icon: '🏆',
 					color: 'var(--green)',
 					title: 'Top Performing Segment',
-					text: `<strong>${label(best)}</strong> has the highest conversion rate: <strong style="color:var(--green)">${best.conversion_rate}%</strong> (${best.conversions} conversions from ${best.users} users, ${fmtEUR(best.revenue)} revenue). This is the segment that deserves the most budget.`
+					text: `<strong>${segLabel(best)}</strong> — persona: ${escHtml(best.label || '—')}<br>Conv rate: <strong style="color:var(--green)">${best.conversion_rate}%</strong> · ${best.conversions} conversions from ${best.users} users · ${fmtEUR(best.revenue)} revenue${rpuNote}${dtcNote}. Scale this segment.`
 				});
 			}
 
-			// 2. No-UTM converting traffic
+			// 2. Highest RPU cohort (best revenue per user — even if conv rate is low)
+			const byRpu = withTraffic.filter(c => c.rpu > 0).sort((a, b) => b.rpu - a.rpu);
+			if (byRpu.length > 0 && converting.length > 0 && byRpu[0].cohort_id !== converting[0].cohort_id) {
+				const best = byRpu[0];
+				insights.push({
+					icon: '💰',
+					color: 'var(--accent2)',
+					title: 'Highest Revenue Per User',
+					text: `<strong>${segLabel(best)}</strong> earns <strong style="color:var(--accent2)">${fmtEUR(best.rpu)} RPU</strong> (AOV: ${fmtEUR(best.aov)}) — higher than the top conv-rate segment. Even small budget increases here yield outsized revenue.`
+				});
+			}
+
+			// 3. Impulse buyers / Deliberate shoppers — timing insight
+			const fastConverters = withTraffic.filter(c => c.days_to_convert != null && c.days_to_convert < 0.5 && c.conversions > 0).sort((a, b) => b.conversion_rate - a.conversion_rate);
+			const slowConverters = withTraffic.filter(c => c.days_to_convert != null && c.days_to_convert > 7 && c.conversions > 0).sort((a, b) => b.revenue - a.revenue);
+			if (fastConverters.length > 0) {
+				const c = fastConverters[0];
+				insights.push({
+					icon: '⚡',
+					color: 'var(--yellow)',
+					title: 'Impulse Buyers — Act Fast',
+					text: `<strong>${segLabel(c)}</strong> converts in under 12 hours on average (<strong>${c.days_to_convert}d</strong>). Use urgency tactics (countdown timers, limited spots) to maximise this segment.`
+				});
+			}
+			if (slowConverters.length > 0) {
+				const c = slowConverters[0];
+				insights.push({
+					icon: '🧐',
+					color: '#38bdf8',
+					title: 'Deliberate Shoppers — Retarget',
+					text: `<strong>${segLabel(c)}</strong> takes <strong>${c.days_to_convert} days</strong> to convert. These users research before buying — make sure your retargeting sequences are active and the sales page has strong social proof.`
+				});
+			}
+
+			// 4. High bounce — wasted traffic
+			const highBounce = withTraffic.filter(c => c.bounce_rate > 70 && c.conversions === 0).sort((a, b) => b.users - a.users);
+			if (highBounce.length > 0) {
+				const worst = highBounce[0];
+				insights.push({
+					icon: '⚠️',
+					color: 'var(--red)',
+					title: 'High-Bounce Zero-Conversion Segments',
+					text: `<strong>${highBounce.length} cohort${highBounce.length > 1 ? 's' : ''}</strong> show bounce rate > 70% with zero conversions. Largest: <strong>${segLabel(worst)}</strong> (${worst.users} users, ${worst.bounce_rate}% bounce). The landing page likely doesn't match the ad creative — review the offer-audience fit.`
+				});
+			} else if (nonConverting.length > 0) {
+				const worst = nonConverting[0];
+				const wastedUsers = nonConverting.slice(0, 3).reduce((s, c) => s + c.users, 0);
+				insights.push({
+					icon: '⚠️',
+					color: 'var(--red)',
+					title: 'Zero-Conversion Segments',
+					text: `<strong>${nonConverting.length} cohort${nonConverting.length > 1 ? 's' : ''}</strong> with significant traffic generated zero conversions. Largest: <strong>${segLabel(worst)}</strong> (${worst.users} users, €0). Top 3 segments together: ${fmtNum(wastedUsers)} users. Consider pausing or A/B testing the landing page.`
+				});
+			}
+
+			// 5. Comparison shoppers — multi-domain
+			const multiShoppers = withTraffic.filter(c => c.multi_domain_rate > 50).sort((a, b) => b.multi_domain_rate - a.multi_domain_rate);
+			if (multiShoppers.length > 0) {
+				const c = multiShoppers[0];
+				insights.push({
+					icon: '🔍',
+					color: '#34d399',
+					title: 'Comparison Shoppers',
+					text: `<strong>${segLabel(c)}</strong> has <strong>${c.multi_domain_rate}% of users visiting multiple sites</strong> before converting. These users compare offers — make sure your unique selling proposition is prominent and the checkout is frictionless.`
+				});
+			}
+
+			// 6. No-UTM converting traffic
 			const noUtmConverting = noUtm.filter(c => c.conversion_rate > 0);
 			if (noUtmConverting.length > 0) {
 				const totalNoUtmConv = noUtmConverting.reduce((s, c) => s + c.conversions, 0);
 				const totalNoUtmRev  = noUtmConverting.reduce((s, c) => s + c.revenue, 0);
 				const avgRate = (noUtmConverting.reduce((s, c) => s + c.conversion_rate, 0) / noUtmConverting.length).toFixed(1);
 				insights.push({
-					icon: '🔍',
+					icon: '🔎',
 					color: 'var(--yellow)',
-					title: 'No-UTM Traffic — Unattributed Conversions',
-					text: `${noUtmConverting.length} cohort${noUtmConverting.length > 1 ? 's' : ''} without UTM parameters generated <strong>${totalNoUtmConv} conversions</strong> (${fmtEUR(totalNoUtmRev)}) with an average rate of <strong>${avgRate}%</strong>. These users likely come from email, bookmarks, or an A/B variant without a tracking script on the LP. If you know the source, add UTM tags to attribute them correctly.`
+					title: 'Unattributed Conversions (No UTM)',
+					text: `${noUtmConverting.length} cohort${noUtmConverting.length > 1 ? 's' : ''} without UTM tags generated <strong>${totalNoUtmConv} conversions</strong> (${fmtEUR(totalNoUtmRev)}, avg ${avgRate}%). Likely email, bookmarks or missing tracking scripts. Add UTM tags to attribute correctly.`
 				});
 			}
 
-			// 3. Top wasted budget (non-converting with most users)
-			if (nonConverting.length > 0) {
-				const worst = nonConverting[0];
-				const wastedUsers = nonConverting.slice(0, 3).reduce((s, c) => s + c.users, 0);
-				insights.push({
-					icon: '⚠️',
-					color: 'var(--red, #ef4444)',
-					title: 'Zero-Conversion Segments',
-					text: `<strong>${nonConverting.length} cohort${nonConverting.length > 1 ? 's' : ''}</strong> with significant traffic generated zero conversions. The largest is <strong>${label(worst)}</strong> with <strong>${worst.users} users and €0</strong>. In total, ${fmtNum(wastedUsers)} users across the top 3 underperforming segments. Consider pausing or optimizing these campaigns.`
-				});
-			}
-
-			// 4. Revenue concentration
+			// 7. Revenue concentration
 			if (converting.length > 1 && totalRevenue > 0) {
 				const top1Rev = converting[0].revenue;
 				const top1Pct = Math.round(top1Rev / totalRevenue * 100);
@@ -2056,29 +2168,33 @@
 					insights.push({
 						icon: '📊',
 						color: 'var(--accent)',
-						title: 'Revenue Concentration',
-						text: `<strong>${top1Pct}% of total revenue</strong> comes from a single cohort: ${label(converting[0])}. Relying on one segment is a risk — if this campaign stops, sales will drop significantly.`
+						title: 'Revenue Concentration Risk',
+						text: `<strong>${top1Pct}% of revenue</strong> comes from one cohort (${segLabel(converting[0])}). If this campaign stops, sales will drop sharply. Diversify traffic sources and test similar audiences.`
 					});
 				}
 			}
 
-			// 5. Mobile vs Desktop
+			// 8. Mobile vs Desktop
 			const mobile  = cohorts.filter(c => c.device_type === 'mobile');
 			const desktop = cohorts.filter(c => c.device_type === 'desktop');
 			const mobileUsers  = mobile.reduce((s, c) => s + c.users, 0);
 			const desktopUsers = desktop.reduce((s, c) => s + c.users, 0);
 			const mobileConv   = mobile.reduce((s, c) => s + c.conversions, 0);
 			const desktopConv  = desktop.reduce((s, c) => s + c.conversions, 0);
+			const mobileRev    = mobile.reduce((s, c) => s + c.revenue, 0);
+			const desktopRev   = desktop.reduce((s, c) => s + c.revenue, 0);
 			if (mobileUsers > 0 && desktopUsers > 0) {
 				const mRate = (mobileConv / mobileUsers * 100).toFixed(1);
 				const dRate = (desktopConv / desktopUsers * 100).toFixed(1);
+				const mRpu  = mobileUsers  ? (mobileRev  / mobileUsers).toFixed(2)  : '0.00';
+				const dRpu  = desktopUsers ? (desktopRev / desktopUsers).toFixed(2) : '0.00';
 				const winner = parseFloat(mRate) >= parseFloat(dRate) ? 'Mobile' : 'Desktop';
 				const diff = Math.abs(parseFloat(mRate) - parseFloat(dRate)).toFixed(1);
 				insights.push({
 					icon: '📱',
 					color: 'var(--accent2)',
 					title: 'Mobile vs Desktop',
-					text: `<strong>${winner}</strong> converts better by <strong>${diff}pp</strong> (Mobile: ${mRate}% from ${fmtNum(mobileUsers)} users · Desktop: ${dRate}% from ${fmtNum(desktopUsers)} users). ${parseFloat(mRate) > parseFloat(dRate) ? 'Optimize the mobile experience to scale results further.' : 'Desktop traffic is more valuable — make sure your LP looks perfect on desktop.'}`
+					text: `<strong>${winner}</strong> converts better by <strong>${diff}pp</strong> (Mobile: ${mRate}% · RPU €${mRpu} · ${fmtNum(mobileUsers)} users — Desktop: ${dRate}% · RPU €${dRpu} · ${fmtNum(desktopUsers)} users). ${parseFloat(mRate) > parseFloat(dRate) ? 'Optimise the mobile experience to scale further.' : 'Desktop is more valuable — ensure your LP looks perfect on desktop.'}`
 				});
 			}
 
