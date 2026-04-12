@@ -689,6 +689,9 @@
 		const elements = document.querySelectorAll('a[href], .lp-button-react[data-widget-link]');
 
 		elements.forEach(element => {
+			// ── Evită re-procesarea elementelor deja enhanced ──────────
+			if (element.dataset.acEnhanced === '1') return;
+
 			// Extrage URL-ul din href sau data-widget-link
 			const href = element.getAttribute('href') || element.getAttribute('data-widget-link');
 			if (!href) return;
@@ -729,6 +732,8 @@
 
 					// Update link/button cu URL-ul modificat
 					element.setAttribute(urlAttribute, url.toString());
+					// ── Marchează elementul ca enhanced (evită re-procesare) ──
+					element.dataset.acEnhanced = '1';
 
 					// CHECKOUT TRACKING REDUNDANCY:
 					// Track click event înainte ca user-ul să plece

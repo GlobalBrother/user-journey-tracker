@@ -623,90 +623,193 @@
 			flex-wrap: wrap;
 		}
 
+		/* ── JOURNEY TIMELINE v2 ── */
 		.journey-timeline {
 			display: flex;
 			flex-direction: column;
 			gap: 0;
-			overflow: auto;
+		}
+
+		/* Session separator */
+		.timeline-session {
+			margin: 20px 0 8px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+		.timeline-session-line {
+			flex: 1;
+			height: 1px;
+			background: var(--border);
+		}
+		.timeline-session-label {
+			font-size: 10px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .08em;
+			color: var(--text3);
+			white-space: nowrap;
+			padding: 2px 8px;
+			background: var(--surface2);
+			border-radius: 10px;
+			border: 1px solid var(--border);
 		}
 
 		.timeline-item {
 			display: flex;
-			gap: 16px;
-			padding: 10px 0;
+			gap: 14px;
+			padding: 8px 0;
 			position: relative;
 		}
-
-		.timeline-item:not(:last-child)::after {
+		.timeline-item:not(:last-child):not(.timeline-item-collapsed)::after {
 			content: '';
 			position: absolute;
-			left: 12px;
-			top: 32px;
+			left: 13px;
+			top: 30px;
 			bottom: -2px;
-			width: 1px;
+			width: 2px;
 			background: var(--border);
+			border-radius: 1px;
 		}
 
 		.timeline-dot {
-			width: 24px;
-			height: 24px;
+			width: 28px;
+			height: 28px;
 			border-radius: 50%;
 			flex-shrink: 0;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			font-size: 12px;
-			margin-top: 2px;
+			font-size: 13px;
+			margin-top: 1px;
+			border: 2px solid transparent;
 		}
+		.dot-pageview  { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.35); }
+		.dot-conversion { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.5); box-shadow: 0 0 8px rgba(34,197,94,0.25); }
+		.dot-custom    { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.35); }
+		.dot-collapsed { background: var(--surface2); border-color: var(--border); cursor: pointer; }
+		.dot-collapsed:hover { border-color: var(--accent2); }
 
-		.dot-pageview {
-			background: rgba(99, 102, 241, 0.2);
-			color: var(--accent);
+		.timeline-content { flex: 1; min-width: 0; }
+
+		.timeline-header {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
 		}
-
-		.dot-conversion {
-			background: rgba(34, 197, 94, 0.2);
-			color: var(--green);
-		}
-
-		.dot-custom {
-			background: rgba(245, 158, 11, 0.2);
-			color: var(--yellow);
-		}
-
-		.timeline-content {
-			flex: 1;
-		}
-
-		.timeline-type {
-			font-size: 11px;
+		.timeline-type-badge {
+			font-size: 10px;
+			font-weight: 700;
 			text-transform: uppercase;
-			letter-spacing: 0.05em;
-			font-weight: 600;
-			margin-bottom: 2px;
+			letter-spacing: .06em;
+			padding: 1px 6px;
+			border-radius: 4px;
+		}
+		.badge-pageview   { background: rgba(99,102,241,0.15); color: var(--accent); }
+		.badge-conversion { background: rgba(34,197,94,0.15); color: var(--green); }
+		.badge-custom     { background: rgba(245,158,11,0.15); color: var(--yellow); }
+
+		.timeline-time { font-size: 11px; color: var(--text3); }
+		.timeline-gap-badge {
+			font-size: 10px; color: var(--text3);
+			padding: 1px 6px; border-radius: 4px;
+			background: var(--surface2);
+			border: 1px solid var(--border);
 		}
 
-		.timeline-detail {
-			font-size: 12px;
+		/* Domain + page path row */
+		.timeline-domain-row {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			margin: 4px 0 2px;
+			flex-wrap: wrap;
+		}
+		.timeline-domain-chip {
+			font-size: 11px; font-weight: 600;
+			padding: 2px 7px;
+			border-radius: 5px;
+			background: rgba(34,211,238,0.1);
+			color: var(--accent2);
+			border: 1px solid rgba(34,211,238,0.2);
+			white-space: nowrap;
+		}
+		.timeline-path {
+			font-size: 11px;
+			color: var(--text2);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			max-width: 340px;
+		}
+		.timeline-url-link {
+			font-size: 10px; color: var(--text3);
+			text-decoration: none;
+			border-bottom: 1px dotted var(--text3);
+		}
+		.timeline-url-link:hover { color: var(--accent2); border-color: var(--accent2); }
+
+		/* UTM tags row */
+		.timeline-utm-row {
+			display: flex; gap: 5px; flex-wrap: wrap; margin-top: 3px;
+		}
+		.utm-tag {
+			font-size: 10px;
+			padding: 1px 6px;
+			border-radius: 4px;
+			background: var(--surface2);
+			border: 1px solid var(--border);
+			color: var(--text2);
+			white-space: nowrap;
+			max-width: 260px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.utm-tag strong { color: var(--text); }
+
+		/* Conversion detail card */
+		.timeline-conv-card {
+			margin-top: 5px;
+			padding: 8px 12px;
+			background: rgba(34,197,94,0.07);
+			border: 1px solid rgba(34,197,94,0.25);
+			border-radius: 7px;
+			display: flex; gap: 20px; flex-wrap: wrap;
+		}
+		.conv-card-stat { display: flex; flex-direction: column; gap: 1px; }
+		.conv-card-val { font-size: 13px; font-weight: 700; color: var(--green); }
+		.conv-card-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing:.05em; }
+
+		/* Collapsed duplicate events */
+		.timeline-collapsed-toggle {
+			display: flex; align-items: center; gap: 8px;
+			padding: 4px 0 4px 42px;
+			cursor: pointer;
+			font-size: 11px; color: var(--text3);
+			user-select: none;
+		}
+		.timeline-collapsed-toggle:hover { color: var(--accent2); }
+		.timeline-collapsed-badge {
+			background: var(--surface2);
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			padding: 1px 8px;
+			font-size: 11px; font-weight: 600;
 			color: var(--text2);
 		}
-
-		.timeline-time {
-			font-size: 11px;
-			color: var(--text3);
-			margin-top: 2px;
-		}
+		.timeline-collapsed-inner { display: none; padding-left: 42px; }
+		.timeline-collapsed-inner.open { display: block; }
 
 		.time-on-page-badge {
 			display: inline-block;
-			margin-top: 4px;
-			padding: 2px 7px;
+			margin-top: 3px;
+			padding: 1px 7px;
 			border-radius: 10px;
-			background: rgba(251,191,36,0.12);
+			background: rgba(251,191,36,0.1);
 			color: var(--yellow);
-			font-size: 11px;
+			font-size: 10px;
 			font-weight: 600;
-			letter-spacing: 0.02em;
 		}
 
 		/* ── MODAL ── */
@@ -2577,8 +2680,142 @@
 		// ════════════════════════════════════════
 		// USER JOURNEY LOOKUP (inline)
 		// ════════════════════════════════════════
+
+		// ── helpers ──────────────────────────────
+		function parseUtmFromUrl(rawUrl) {
+			if (!rawUrl) return {};
+			try {
+				const u = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
+				const r = {};
+				['utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id','fbclid'].forEach(k => {
+					const v = u.searchParams.get(k);
+					if (v) r[k] = decodeURIComponent(v.replace(/\+/g, ' '));
+				});
+				return r;
+			} catch { return {}; }
+		}
+
+		function cleanPath(rawUrl) {
+			if (!rawUrl) return '';
+			try {
+				const u = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
+				return u.pathname.replace(/\/+$/, '') || '/';
+			} catch { return rawUrl.slice(0, 60); }
+		}
+
+		function domainFromUrl(rawUrl) {
+			if (!rawUrl) return '';
+			try {
+				const u = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
+				return u.hostname.replace(/^www\./, '');
+			} catch { return rawUrl.split('/')[0]; }
+		}
+
+		function timeDiffLabel(prev, curr) {
+			if (!prev || !curr) return null;
+			const diffMs = new Date(curr) - new Date(prev);
+			if (diffMs <= 0) return null;
+			const mins = Math.floor(diffMs / 60000);
+			if (mins < 1)   return `${Math.floor(diffMs/1000)}s`;
+			if (mins < 60)  return `${mins}m`;
+			const hrs = Math.floor(mins / 60);
+			if (hrs < 24)   return `${hrs}h ${mins % 60}m`;
+			return `${Math.floor(hrs/24)}d ${hrs%24}h`;
+		}
+
+		function sessionGapMins(prev, curr) {
+			if (!prev || !curr) return 0;
+			return (new Date(curr) - new Date(prev)) / 60000;
+		}
+
+		// Build UTM tags HTML
+		function utmTagsHtml(utm) {
+			const tags = [];
+			if (utm.utm_source)   tags.push(`<span class="utm-tag"><strong>src</strong> ${escHtml(utm.utm_source)}</span>`);
+			if (utm.utm_medium)   tags.push(`<span class="utm-tag"><strong>med</strong> ${escHtml(utm.utm_medium)}</span>`);
+			if (utm.utm_campaign) tags.push(`<span class="utm-tag" title="${escHtml(utm.utm_campaign)}"><strong>cmp</strong> ${escHtml(utm.utm_campaign.length > 40 ? utm.utm_campaign.slice(0,40)+'…' : utm.utm_campaign)}</span>`);
+			if (utm.utm_content)  tags.push(`<span class="utm-tag" title="${escHtml(utm.utm_content)}"><strong>ad</strong> ${escHtml(utm.utm_content.length > 45 ? utm.utm_content.slice(0,45)+'…' : utm.utm_content)}</span>`);
+			if (utm.fbclid)       tags.push(`<span class="utm-tag" style="color:var(--accent2);border-color:rgba(34,211,238,.25)">📘 FB Click</span>`);
+			return tags.length ? `<div class="timeline-utm-row">${tags.join('')}</div>` : '';
+		}
+
+		// Render one timeline event card
+		function renderTimelineEvent(ev, prevTimestamp, isLast, timeOnPage) {
+			const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
+			const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
+			const badgeClass = ev.event_type === 'conversion' ? 'badge-conversion' : ev.event_type === 'pageview' ? 'badge-pageview' : 'badge-custom';
+
+			const gap = timeDiffLabel(prevTimestamp, ev.timestamp);
+			const gapHtml = gap ? `<span class="timeline-gap-badge">+${gap}</span>` : '';
+
+			const domain = domainFromUrl(ev.url || ev.domain || '');
+			const path   = cleanPath(ev.url || ev.domain || '');
+			const utm    = parseUtmFromUrl(ev.url || '');
+
+			// Domain + path row
+			let domainRow = '';
+			if (domain) {
+				const fullUrl = ev.url || '';
+				const linkHtml = fullUrl
+					? `<a class="timeline-url-link" href="${escHtml(fullUrl)}" target="_blank" rel="noopener" title="${escHtml(fullUrl)}">open ↗</a>`
+					: '';
+				domainRow = `
+					<div class="timeline-domain-row">
+						<span class="timeline-domain-chip">${escHtml(domain)}</span>
+						<span class="timeline-path">${escHtml(path)}</span>
+						${linkHtml}
+					</div>`;
+			}
+
+			// UTM row (only for pageviews)
+			const utmHtml = ev.event_type === 'pageview' ? utmTagsHtml(utm) : '';
+
+			// Conversion card
+			let convCard = '';
+			if (ev.event_type === 'conversion') {
+				convCard = `
+				<div class="timeline-conv-card">
+					<div class="conv-card-stat"><div class="conv-card-val">${fmtEUR(ev.value || 0)}</div><div class="conv-card-lbl">Revenue</div></div>
+					<div class="conv-card-stat"><div class="conv-card-val">${escHtml(ev.order_id || '—')}</div><div class="conv-card-lbl">Order ID</div></div>
+				</div>`;
+				// also show domain row for conversion page
+				if (!domainRow && ev.conversion_page) {
+					const cd = domainFromUrl(ev.conversion_page);
+					const cp = cleanPath(ev.conversion_page);
+					domainRow = `<div class="timeline-domain-row"><span class="timeline-domain-chip">${escHtml(cd)}</span><span class="timeline-path">${escHtml(cp)}</span></div>`;
+				}
+			}
+
+			// Custom event name badge
+			let customDetail = '';
+			if (ev.event_type === 'custom_event' && ev.event_name) {
+				const nameColor = ev.event_name === 'checkout_initiated' ? 'var(--yellow)' : 'var(--text2)';
+				customDetail = `<div style="margin-top:4px;font-size:12px;font-weight:600;color:${nameColor}">⚡ ${escHtml(ev.event_name)}</div>`;
+			}
+
+			// Time on page badge
+			const secs = ev.event_type === 'pageview' && timeOnPage ? timeOnPage[ev.url] : null;
+			const topBadge = secs != null ? `<span class="time-on-page-badge">⏱ ${fmtTime(secs)}</span>` : '';
+
+			return `
+			<div class="timeline-item">
+				<div class="timeline-dot ${dotClass}">${icon}</div>
+				<div class="timeline-content">
+					<div class="timeline-header">
+						<span class="timeline-type-badge ${badgeClass}">${ev.event_type === 'custom_event' ? 'event' : ev.event_type}</span>
+						<span class="timeline-time">${fmtDate(ev.timestamp)}</span>
+						${gapHtml}
+						${topBadge}
+					</div>
+					${domainRow}
+					${utmHtml}
+					${customDetail}
+					${convCard}
+				</div>
+			</div>`;
+		}
+
 		async function lookupUser(userId) {
-			// Populate the input and scroll to the lookup panel
 			const input = document.getElementById('userIdInput');
 			if (input) input.value = userId;
 			const el = document.getElementById('journeyResult');
@@ -2588,68 +2825,183 @@
 			try {
 				const data = await fetchJourney(userId);
 				const p = data.profile;
+				const events = (data.events || []);
 
-				const avgOrder = p.total_conversions > 0 ? (p.total_revenue / p.total_conversions) : 0;
+				// ── Collect time_on_page from page_exit events ────────────────
+				const timeOnPage = {};
+				events.forEach(ev => {
+					if (ev.event_type === 'custom_event' && ev.event_name === 'page_exit' && ev.time_on_page_seconds != null) {
+						timeOnPage[ev.url] = ev.time_on_page_seconds;
+					}
+				});
+
+				// ── Filter out page_exit (already merged above) ──────────────
+				const filtered = events.filter(ev => !(ev.event_type === 'custom_event' && ev.event_name === 'page_exit'));
+
+				// ── Count event types for summary bar ────────────────────────
+				const countByType = {};
+				const countByName = {};
+				filtered.forEach(ev => {
+					countByType[ev.event_type] = (countByType[ev.event_type] || 0) + 1;
+					if (ev.event_type === 'custom_event' && ev.event_name) {
+						countByName[ev.event_name] = (countByName[ev.event_name] || 0) + 1;
+					}
+				});
+
+				// ── Group into sessions (gap > 30 min = new session) ─────────
+				// Also deduplicate consecutive identical custom events
+				const SESSION_GAP_MINS = 30;
+				const sessions = [];
+				let curSession = [];
+				let prevTs = null;
+				let prevEventKey = null;
+
+				for (let i = 0; i < filtered.length; i++) {
+					const ev = filtered[i];
+					// Deduplicate: same event_type + event_name + url within 5 min
+					const evKey = `${ev.event_type}|${ev.event_name || ''}|${domainFromUrl(ev.url || ev.domain || '')}`;
+					const sameAsPrev = evKey === prevEventKey && ev.event_type === 'custom_event';
+					const withinSecs = prevTs && ((new Date(ev.timestamp) - new Date(prevTs)) / 1000 < 300);
+
+					if (sameAsPrev && withinSecs) {
+						// attach as duplicate to last event
+						const last = curSession[curSession.length - 1];
+						if (!last._dupes) last._dupes = [];
+						last._dupes.push(ev);
+						prevTs = ev.timestamp;
+						continue;
+					}
+
+					// Session split?
+					if (prevTs && sessionGapMins(prevTs, ev.timestamp) >= SESSION_GAP_MINS) {
+						sessions.push(curSession);
+						curSession = [];
+					}
+					curSession.push({ ...ev, _dupes: [] });
+					prevTs = ev.timestamp;
+					prevEventKey = evKey;
+				}
+				if (curSession.length) sessions.push(curSession);
+
+				// ── Build duplicate events summary (for info bar) ────────────
+				const dupeWarnings = [];
+				if ((countByName['checkout_initiated'] || 0) > 3) {
+					dupeWarnings.push(`${countByName['checkout_initiated']}× checkout_initiated — deduplicated below (button likely fires multiple events per click)`);
+				}
+				Object.entries(countByName).forEach(([name, cnt]) => {
+					if (name !== 'checkout_initiated' && cnt > 5) {
+						dupeWarnings.push(`${cnt}× ${name}`);
+					}
+				});
+
+				// ── Profile summary ──────────────────────────────────────────
+				const firstTouchUtm = parseUtmFromUrl(filtered.find(e => e.event_type === 'pageview')?.url || '');
 
 				el.innerHTML = `
-      <div class="profile-grid">
-        <div class="profile-stat">
-          <div class="profile-stat-value">${fmtNum(p.total_pageviews)}</div>
-          <div class="profile-stat-label">Pageviews</div>
-        </div>
-        <div class="profile-stat">
-          <div class="profile-stat-value">${fmtNum(p.total_conversions)}</div>
-          <div class="profile-stat-label">Conversions</div>
-        </div>
-        <div class="profile-stat">
-          <div class="profile-stat-value">${fmtEUR(p.total_revenue)}</div>
-          <div class="profile-stat-label">Revenue</div>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">
-        First seen: ${fmtDate(p.first_seen)} &nbsp;·&nbsp; Last seen: ${fmtDate(p.last_seen)}
-        &nbsp;·&nbsp; Domains: ${(p.domains_visited || []).map(d => `<span class="domain-chip">${escHtml(d)}</span>`).join(' ')}
-      </div>
-      <div style="font-weight:600;font-size:13px;margin-bottom:12px;">Event Timeline</div>
-      <div class="journey-timeline">
-        ${(() => {
-					// Merge page_exit time into the preceding pageview for the same URL
-					const events = data.events || [];
-					const timeOnPage = {}; // url -> time_on_page_seconds
-					events.forEach(ev => {
-						if (ev.event_type === 'custom_event' && ev.event_name === 'page_exit' && ev.time_on_page_seconds != null) {
-							timeOnPage[ev.url] = ev.time_on_page_seconds;
+				<div class="profile-grid" style="margin-bottom:12px;">
+					<div class="profile-stat">
+						<div class="profile-stat-value">${fmtNum(p.total_pageviews)}</div>
+						<div class="profile-stat-label">Pageviews</div>
+					</div>
+					<div class="profile-stat">
+						<div class="profile-stat-value">${fmtNum(p.total_conversions)}</div>
+						<div class="profile-stat-label">Conversions</div>
+					</div>
+					<div class="profile-stat">
+						<div class="profile-stat-value" style="color:var(--green)">${fmtEUR(p.total_revenue)}</div>
+						<div class="profile-stat-label">Revenue</div>
+					</div>
+					<div class="profile-stat">
+						<div class="profile-stat-value">${sessions.length}</div>
+						<div class="profile-stat-label">Sessions</div>
+					</div>
+				</div>
+
+				<div style="font-size:12px;color:var(--text3);margin-bottom:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+					<span>⏱ First: ${fmtDate(p.first_seen)}</span>
+					<span>⏱ Last: ${fmtDate(p.last_seen)}</span>
+					<span>🌐 ${(p.domains_visited || []).map(d => `<span class="domain-chip">${escHtml(d)}</span>`).join(' ')}</span>
+				</div>
+
+				${firstTouchUtm.utm_source ? `
+				<div style="margin-bottom:12px;padding:8px 12px;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:7px;">
+					<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">🎯 First Touch Attribution</div>
+					<div class="timeline-utm-row">${utmTagsHtml(firstTouchUtm)}</div>
+				</div>` : ''}
+
+				${dupeWarnings.length ? `
+				<div style="margin-bottom:12px;padding:8px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:7px;font-size:12px;color:var(--yellow);">
+					⚠️ <strong>Duplicate events detected and collapsed:</strong> ${dupeWarnings.map(w => escHtml(w)).join(' · ')}
+				</div>` : ''}
+
+				<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+					${Object.entries(countByType).map(([t,c]) => `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);">${t === 'pageview' ? '👁' : t === 'conversion' ? '💰' : '⚡'} ${c} ${t}</span>`).join('')}
+					${Object.entries(countByName).filter(([,c]) => c > 0).map(([n,c]) => `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--yellow);">⚡ ${c}× ${escHtml(n)}</span>`).join('')}
+				</div>
+
+				<div style="font-weight:700;font-size:13px;margin-bottom:4px;color:var(--text);">🗺 Journey Timeline</div>
+				<div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Grouped into ${sessions.length} session${sessions.length !== 1 ? 's' : ''} (gap > 30 min). Duplicate events collapsed.</div>
+
+				<div class="journey-timeline" id="journeyTimelineEl"></div>`;
+
+				// ── Render sessions ──────────────────────────────────────────
+				const tlEl = document.getElementById('journeyTimelineEl');
+				let globalPrevTs = null;
+
+				sessions.forEach((sess, si) => {
+					// Session header
+					const sessStart = sess[0]?.timestamp;
+					const sessEnd   = sess[sess.length - 1]?.timestamp;
+					const sessDur   = timeDiffLabel(sessStart, sessEnd);
+					const sessGap   = si > 0 ? timeDiffLabel(sessions[si-1][sessions[si-1].length-1]?.timestamp, sessStart) : null;
+					const gapNote   = sessGap ? ` · <span style="color:var(--text3)">↳ ${sessGap} since last session</span>` : '';
+
+					const sessDiv = document.createElement('div');
+					sessDiv.className = 'timeline-session';
+					sessDiv.innerHTML = `
+						<div class="timeline-session-line"></div>
+						<div class="timeline-session-label">Session ${si + 1} · ${fmtDate(sessStart)}${sessDur ? ' · ' + sessDur : ''}${gapNote}</div>
+						<div class="timeline-session-line"></div>`;
+					tlEl.appendChild(sessDiv);
+
+					sess.forEach((ev, ei) => {
+						const prevTs = ei === 0 ? null : sess[ei - 1].timestamp;
+						const isLast = ei === sess.length - 1;
+
+						// Main event
+						const itemHtml = renderTimelineEvent(ev, prevTs, isLast, timeOnPage);
+						const wrap = document.createElement('div');
+						wrap.innerHTML = itemHtml;
+						tlEl.appendChild(wrap.firstElementChild);
+
+						// Collapsed duplicates
+						if (ev._dupes && ev._dupes.length > 0) {
+							const total = ev._dupes.length + 1;
+							const collapseId = `collapse-${si}-${ei}`;
+							const toggleEl = document.createElement('div');
+							toggleEl.className = 'timeline-collapsed-toggle';
+							toggleEl.innerHTML = `
+								<span class="timeline-collapsed-badge">+${ev._dupes.length} more identical</span>
+								<span style="color:var(--text3)">▸ click to expand</span>`;
+							const innerEl = document.createElement('div');
+							innerEl.className = 'timeline-collapsed-inner';
+							innerEl.id = collapseId;
+							ev._dupes.forEach((d, di) => {
+								innerEl.innerHTML += renderTimelineEvent(d, ev._dupes[di - 1]?.timestamp || ev.timestamp, false, null);
+							});
+							toggleEl.addEventListener('click', () => {
+								innerEl.classList.toggle('open');
+								const isOpen = innerEl.classList.contains('open');
+								toggleEl.querySelector('span:last-child').textContent = isOpen ? '▾ collapse' : '▸ click to expand';
+							});
+							tlEl.appendChild(toggleEl);
+							tlEl.appendChild(innerEl);
 						}
+
+						globalPrevTs = ev.timestamp;
 					});
-					return events
-						.filter(ev => !(ev.event_type === 'custom_event' && ev.event_name === 'page_exit'))
-						.map(ev => {
-							const dotClass = ev.event_type === 'conversion' ? 'dot-conversion' : ev.event_type === 'pageview' ? 'dot-pageview' : 'dot-custom';
-							const icon = ev.event_type === 'conversion' ? '💰' : ev.event_type === 'pageview' ? '👁' : '⚡';
-							let detail = ev.url || ev.domain || '';
-							if (ev.event_type === 'conversion') detail += ` · Order: ${escHtml(ev.order_id || '–')} · ${fmtEUR(ev.value)}`;
-							if (ev.event_type === 'custom_event') detail += ` · ${escHtml(ev.event_name || '–')}`;
-							const typeLabel = ev.event_type;
-							const typeColor = ev.event_type === 'conversion' ? 'var(--green)' : ev.event_type === 'pageview' ? 'var(--accent)' : 'var(--yellow)';
-							const secs = ev.event_type === 'pageview' ? timeOnPage[ev.url] : null;
-							const timeBadge = secs != null
-								? `<div class="time-on-page-badge">⏱ ${fmtTime(secs)}</div>`
-								: '';
-							return `
-            <div class="timeline-item">
-              <div class="timeline-dot ${dotClass}">${icon}</div>
-              <div class="timeline-content">
-                <div class="timeline-type" style="color:${typeColor}">${typeLabel}</div>
-                <div class="timeline-detail">${escHtml(detail)}</div>
-                ${timeBadge}
-                <div class="timeline-time">${fmtDate(ev.timestamp)}</div>
-              </div>
-            </div>
-          `;
-						}).join('');
-				})()}
-      </div>
-    `;
+				});
+
 			} catch (err) {
 				el.innerHTML = `<div class="empty">⚠ ${escHtml(err.message)}</div>`;
 			}
