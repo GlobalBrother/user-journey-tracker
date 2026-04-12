@@ -2567,9 +2567,12 @@
 		}
 
 		// ════════════════════════════════════════
-		// LOAD STATS  —  2-phase progressive loading
-		// Faza 1 (fast): KPIs + Slugs + Trend  → apar primele
-		// Faza 2 (heavy): Cohorts + Domains + Breakdown + Journeys + Prev period delta
+		// LOAD STATS  —  fully parallel + progressive render
+		//
+		// Toate 7 cereri HTTP pornesc SIMULTAN din browser.
+		// Fiecare cerere = sesiune SQLAlchemy separată pe backend (sigur).
+		// Render progresiv: KPIs/Trend apar când vin primele, Cohorts când vin ultimele.
+		// Faza 2 din cache client-side (TTL 60s) dacă filtrii nu s-au schimbat.
 		// ════════════════════════════════════════
 		async function loadStats() {
 			// Cancel any previous in-flight load
@@ -2587,12 +2590,42 @@
 			const slug  = document.getElementById('slugFilter').value.trim();
 
 			try {
-				// ── FAZA 1: cereri rapide în paralel ──
+				// ── Verifică cache Faza 2 client-side (TTL 60s) ──
+				const cached = _phase2CacheGet();
+
+				// ── Pregătim promisele pentru Faza 2 (din cache sau fetch) ──
+				let p2Promise;
+				if (cached) {
+					// Faza 2 instant din cache — nu mai trimitem cereri
+					p2Promise = Promise.resolve(cached);
+				} else {
+					const prev = getPreviousPeriod(start, end);
+					const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
+					if (slug) prevParams.set('slug', slug);
+
+					// Pornim toate 4 cereri Faza 2 simultan cu cele din Faza 1
+					p2Promise = Promise.all([
+						fetchBreakdown(signal),
+						fetchDomains(signal),
+						fetchCohorts(signal),
+						fetch(`${API_ENDPOINT}/api/analytics/stats?${prevParams}`, { headers: HEADERS, signal })
+							.then(r => r.ok ? r.json() : null)
+							.catch(() => null),
+					]).then(([breakdown, domains, cohorts, prevStats]) => {
+						_phase2CacheSet({ breakdown, domains, cohorts, prevStats });
+						return { breakdown, domains, cohorts, prevStats };
+					});
+				}
+
+				// ── Faza 1: KPIs + Trend + RecentConvs — render imediat la sosire ──
+				// p2Promise a pornit deja în paralel ↑
 				const [stats, trend, recentConvs] = await Promise.all([
 					fetchStats(signal),
 					fetchTrend(signal),
 					fetchRecentConversions(signal),
 				]);
+
+				if (signal.aborted) return;
 
 				statsData = stats;
 				renderKPIs(stats, prevStatsData);   // afișează imediat cu delta din run anterior
@@ -2600,40 +2633,14 @@
 				renderSlugTable(stats.by_slug || []);
 				renderTrendChart(trend);
 				renderRecentConversions(recentConvs);
-				// Reset journey selection state when data refreshes
 				Object.keys(journeySelState).forEach(k => delete journeySelState[k]);
 				renderJourneys(stats.top_journeys || []);
 
 				document.getElementById('lastUpdated').textContent =
 					'Updated ' + new Date().toLocaleTimeString('en-GB');
 
-				// ── FAZA 2: cereri mai grele în paralel (nu blochează KPI-urile) ──
-				// Verifică cache client-side (TTL 60s) — evită re-fetch dacă filtrii nu s-au schimbat
-				const cached = _phase2CacheGet();
-				let breakdown, domains, cohorts, prevStats;
-
-				if (cached) {
-					// Faza 2 din cache — instant, fara nicio cerere
-					({ breakdown, domains, cohorts, prevStats } = cached);
-				} else {
-					const prev = getPreviousPeriod(start, end);
-					const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
-					if (slug) prevParams.set('slug', slug);
-
-					[breakdown, domains, cohorts, prevStats] = await Promise.all([
-						fetchBreakdown(signal),
-						fetchDomains(signal),
-						fetchCohorts(signal),
-						fetch(`${API_ENDPOINT}/api/analytics/stats?${prevParams}`, { headers: HEADERS, signal })
-							.then(r => r.ok ? r.json() : null)
-							.catch(() => null),
-					]);
-
-					if (signal.aborted) return;
-
-					// Salvează în cache
-					_phase2CacheSet({ breakdown, domains, cohorts, prevStats });
-				}
+				// ── Faza 2: așteptăm rezultatele (pot fi deja gata dacă backend-ul era rapid) ──
+				const { breakdown, domains, cohorts, prevStats } = await p2Promise;
 
 				if (signal.aborted) return;
 
