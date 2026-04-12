@@ -994,6 +994,43 @@
 			font-size: 18px; padding: 0 4px; line-height: 1;
 		}
 		.funnel-step-remove:hover { color: var(--red); }
+
+		/* ── Custom th tooltip ── */
+		[data-tip] { position: relative; cursor: default; }
+		[data-tip]::after {
+			content: attr(data-tip);
+			position: absolute;
+			bottom: calc(100% + 6px);
+			left: 50%;
+			transform: translateX(-50%);
+			background: #1e293b;
+			color: #e2e8f0;
+			font-size: 11px;
+			font-weight: 400;
+			line-height: 1.4;
+			white-space: nowrap;
+			padding: 5px 9px;
+			border-radius: 6px;
+			box-shadow: 0 4px 12px rgba(0,0,0,.45);
+			pointer-events: none;
+			opacity: 0;
+			transition: opacity .15s ease;
+			z-index: 9999;
+		}
+		[data-tip]::before {
+			content: '';
+			position: absolute;
+			bottom: calc(100% + 1px);
+			left: 50%; transform: translateX(-50%);
+			border: 5px solid transparent;
+			border-top-color: #1e293b;
+			pointer-events: none;
+			opacity: 0;
+			transition: opacity .15s ease;
+			z-index: 9999;
+		}
+		[data-tip]:hover::after,
+		[data-tip]:hover::before { opacity: 1; }
 	</style>
 </head>
 
@@ -1211,12 +1248,12 @@
 							<th>Bounce</th>
 							<th>Conversions</th>
 							<th>Revenue</th>
-							<th>RPU</th>
-							<th>AOV</th>
+							<th data-tip="Revenue Per User — total revenue ÷ users in segment">Rev/User</th>
+							<th data-tip="Average Order Value — revenue ÷ conversions">AOV</th>
 							<th>Conv.%</th>
-							<th title="Avg days from first visit to first conversion">Days→Conv</th>
-							<th title="% users visiting more than 1 site">Multi-Site</th>
-							<th title="Peak hour UTC (0-23)">Peak HR</th>
+							<th data-tip="Avg time from first visit to first conversion (hours if &lt;1 day, else days)">Time→Conv</th>
+							<th data-tip="% of users in this segment who visited more than one tracked domain">Multi-Site</th>
+							<th data-tip="Peak activity hour in UTC (24h clock) — when this segment is most active">Peak Hour</th>
 						</tr>
 					</thead>
 					<tbody id="cohortTableBody">
@@ -1541,6 +1578,16 @@
 			const m = Math.floor(secs / 60);
 			const s = Math.round(secs % 60);
 			return m === 0 ? `${s}s` : `${m}m ${s}s`;
+		}
+
+		// Days-to-convert: < 1 day → show hours, else show days
+		function fmtDTC(days) {
+			if (days === null || days === undefined) return '<span style="color:var(--text3)">—</span>';
+			if (days < 1) {
+				const hrs = (days * 24).toFixed(1);
+				return `<span title="${days}d">${hrs}h</span>`;
+			}
+			return `${Number(days).toFixed(1)}d`;
 		}
 
 		// Format hours into human-readable: "2h", "3d 4h", "45m"
@@ -2104,17 +2151,15 @@
 				// Bounce colour
 				const bounceColor = c.bounce_rate > 70 ? 'var(--red)' : c.bounce_rate > 40 ? 'var(--yellow)' : 'var(--green)';
 
-				// Days to convert
-				const dtc = c.days_to_convert != null
-					? `${c.days_to_convert}d`
-					: '<span style="color:var(--text3)">—</span>';
+				// Days to convert — hours if < 1 day, else days
+				const dtc = fmtDTC(c.days_to_convert);
 
 				// Multi-domain rate colour
 				const multiColor = c.multi_domain_rate > 50 ? 'var(--accent2)' : 'var(--text2)';
 
-				// Peak hour badge
+				// Peak hour badge — show as HH:00 UTC with tooltip
 				const peakHour = c.peak_hour_utc != null
-					? `${String(c.peak_hour_utc).padStart(2, '0')}:00`
+					? `<span title="${c.peak_hour_utc}:00 UTC">${String(c.peak_hour_utc).padStart(2, '0')}:00 UTC</span>`
 					: '—';
 
 				return `
@@ -2173,7 +2218,7 @@
 			if (converting.length > 0) {
 				const best = converting[0];
 				const rpuNote = best.rpu > 0 ? ` · RPU: <strong style="color:var(--accent2)">${fmtEUR(best.rpu)}</strong>` : '';
-				const dtcNote = best.days_to_convert != null ? ` · Converts in avg <strong>${best.days_to_convert}d</strong>` : '';
+				const dtcNote = best.days_to_convert != null ? ` · Converts in avg <strong>${fmtDTC(best.days_to_convert)}</strong>` : '';
 				insights.push({
 					icon: '🏆',
 					color: 'var(--green)',
@@ -2203,7 +2248,7 @@
 					icon: '⚡',
 					color: 'var(--yellow)',
 					title: 'Impulse Buyers — Act Fast',
-					text: `<strong>${segLabel(c)}</strong> converts in under 12 hours on average (<strong>${c.days_to_convert}d</strong>). Use urgency tactics (countdown timers, limited spots) to maximise this segment.`
+					text: `<strong>${segLabel(c)}</strong> converts in under 12 hours on average (<strong>${fmtDTC(c.days_to_convert)}</strong>). Use urgency tactics (countdown timers, limited spots) to maximise this segment.`
 				});
 			}
 			if (slowConverters.length > 0) {
@@ -2212,7 +2257,7 @@
 					icon: '🧐',
 					color: '#38bdf8',
 					title: 'Deliberate Shoppers — Retarget',
-					text: `<strong>${segLabel(c)}</strong> takes <strong>${c.days_to_convert} days</strong> to convert. These users research before buying — make sure your retargeting sequences are active and the sales page has strong social proof.`
+					text: `<strong>${segLabel(c)}</strong> takes <strong>${fmtDTC(c.days_to_convert)}</strong> to convert. These users research before buying — make sure your retargeting sequences are active and the sales page has strong social proof.`
 				});
 			}
 
