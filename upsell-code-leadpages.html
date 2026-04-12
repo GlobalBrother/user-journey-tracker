@@ -5,18 +5,45 @@
 </script>
 <script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js"></script>
 <script>
+  // ── Așteaptă AppCore să fie gata (apărat față de CDN lent) ──
+  // Dacă AppCore nu e disponibil în 8s → log warning și sare
+  function _waitForAppCore(cb, attempts) {
+    attempts = attempts || 0;
+    if (window.AppCore && window.AppCore.trackConversion) {
+      cb();
+    } else if (attempts < 40) { // 40 × 200ms = 8 secunde max
+      setTimeout(function() { _waitForAppCore(cb, attempts + 1); }, 200);
+    } else {
+      console.warn('[AppCore] trackConversion skipped — AppCore not ready after 8s (CDN timeout?)');
+    }
+  }
+
   var params = new URLSearchParams(window.location.search);
 
   // Singurii parametri necriptați de Digistore
   var orderId   = params.get('order_id');                       // ex: 'WH7YT23H'
   var productId = params.get('digistore_initial_product_id');   // ex: '594082'
 
-  // amount și product_name sunt criptate — le punem hardcodat
-  AppCore.trackConversion({
-    order_id:     orderId   || 'unknown',
-    product_id:   productId || '',
-    product_name: 'Bug-In Guide',  // ← hardcodat, nu vine din URL
-    value:        24.00,           // ← hardcodat, prețul real al produsului
-    currency:     'USD'
-  });
+  // ── Dacă order_id lipsește din URL, nu trimite conversia ──
+  // order_id = 'unknown' ar cauza pierderea tuturor conversiilor ulterioare
+  // din cauza UNIQUE constraint în DB (doar prima ar fi salvată, restul respinse silențios)
+  if (!orderId) {
+    console.warn('[AppCore] trackConversion skipped — order_id missing from URL');
+    // Încearcă din nou după 2s (uneori Digistore adaugă params cu întârziere)
+    setTimeout(function() {
+      var retryOrderId = new URLSearchParams(window.location.search).get('order_id');
+      if (retryOrderId) window.location.reload();
+    }, 2000);
+  } else {
+    _waitForAppCore(function() {
+      // amount și product_name sunt criptate — le punem hardcodat
+      AppCore.trackConversion({
+        order_id:     orderId,
+        product_id:   productId || '',
+        product_name: 'Bug-In Guide',  // ← hardcodat, nu vine din URL
+        value:        24.00,           // ← hardcodat, prețul real al produsului
+        currency:     'USD'
+      });
+    });
+  }
 </script>

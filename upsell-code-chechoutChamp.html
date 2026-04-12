@@ -5,22 +5,41 @@
 </script>
 <script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js"></script>
 <script>
-  // Datele comenzii din Checkout Champ
-  var orderId   = window.globalOrderData && window.globalOrderData.orderId;
-  var orderData = JSON.parse(sessionStorage.getItem('orderData') || '{}');
-  var totals    = JSON.parse(sessionStorage.getItem('totals')    || '{}');
+  // ── Așteaptă AppCore să fie gata (apărat față de CDN lent) ──
+  function _waitForAppCore(cb, attempts) {
+    attempts = attempts || 0;
+    if (window.AppCore && window.AppCore.trackConversion) {
+      cb();
+    } else if (attempts < 40) {
+      setTimeout(function() { _waitForAppCore(cb, attempts + 1); }, 200);
+    } else {
+      console.warn('[AppCore] trackConversion skipped — AppCore not ready after 8s');
+    }
+  }
 
-  // Valoarea comenzii - din totals sau orderData
-  var value = parseFloat(totals.itemTotal || orderData.total || 0);
+  _waitForAppCore(function() {
+    // Datele comenzii din Checkout Champ
+    var orderId   = window.globalOrderData && window.globalOrderData.orderId;
+    var orderData = JSON.parse(sessionStorage.getItem('orderData') || '{}');
+    var totals    = JSON.parse(sessionStorage.getItem('totals')    || '{}');
 
-  // Product ID din array-ul CC
-  var productId = window.productOrderArray && window.productOrderArray[0];
+    // Valoarea comenzii - din totals sau orderData
+    var value = parseFloat(totals.itemTotal || orderData.total || 0);
 
-  AppCore.trackConversion({
-    order_id:     orderId     || 'unknown',
-    product_name: 'Main Product',   // ← schimbă cu numele real
-    product_id:   productId   || '193',
-    value:        value,
-    currency:     'USD'       // ← sau moneda ta
+    // Product ID din array-ul CC
+    var productId = window.productOrderArray && window.productOrderArray[0];
+
+    if (!orderId) {
+      console.warn('[AppCore] trackConversion skipped — orderId missing from CheckoutChamp data');
+      return;
+    }
+
+    AppCore.trackConversion({
+      order_id:     orderId,
+      product_name: 'Main Product',   // ← schimbă cu numele real
+      product_id:   productId   || '193',
+      value:        value,
+      currency:     'USD'       // ← sau moneda ta
+    });
   });
 </script>
