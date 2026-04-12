@@ -2099,6 +2099,18 @@
 			const s = data.summary;
 			const covColor = s.coverage_pct >= 80 ? 'var(--green)' : s.coverage_pct >= 50 ? 'var(--yellow)' : 'var(--red)';
 
+			// Cache provenance badge
+			let cacheBadge = '';
+			if (data._from_sql_cache && data._cached_at) {
+				const cachedAt = new Date(data._cached_at + 'Z');
+				const minsAgo = Math.round((Date.now() - cachedAt) / 60000);
+				const minsAgoStr = minsAgo <= 1 ? 'just now' : `${minsAgo}m ago`;
+				const computeSec = data._compute_ms ? (data._compute_ms / 1000).toFixed(1) + 's compute' : '';
+				cacheBadge = `<span title="Pre-calculated ${minsAgoStr}. Refreshes every 10 min. ${computeSec}" style="background:#22c55e22;color:#22c55e;border:1px solid #22c55e55;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;cursor:default;">⚡ Cached · ${minsAgoStr}</span>`;
+			} else {
+				cacheBadge = `<span title="Live computation — cache not yet available. Will be ready in ~10 min." style="background:#f9731622;color:#f97316;border:1px solid #f9731655;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;cursor:default;">🔄 Live</span>`;
+			}
+
 			summaryEl.innerHTML = `
     <div class="profile-stat">
       <div class="profile-stat-value">${fmtNum(s.total_cohorts)}</div>
@@ -2116,9 +2128,12 @@
       <div class="profile-stat-value" style="color:var(--accent2);">${fmtEUR(s.avg_rpu || 0)}</div>
       <div class="profile-stat-label">Avg RPU</div>
     </div>
-    <div style="font-size:11px;color:var(--text3);align-self:center;max-width:280px;line-height:1.5;">
-      ℹ️ Users that cannot be individually identified (e.g. Safari ITP) are grouped into cohorts
-      based on traffic source + device, so no visit is lost from reporting.
+    <div style="display:flex;flex-direction:column;gap:6px;align-self:center;">
+      ${cacheBadge}
+      <span style="font-size:11px;color:var(--text3);max-width:280px;line-height:1.5;">
+        ℹ️ Users that cannot be individually identified (e.g. Safari ITP) are grouped into cohorts
+        based on traffic source + device, so no visit is lost from reporting.
+      </span>
     </div>
   `;
 
