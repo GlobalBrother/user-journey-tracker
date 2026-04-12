@@ -678,6 +678,15 @@
 	// CHECKOUT LINK ENHANCEMENT
 	// ═══════════════════════════════════════════════════════════════
 
+	// ── Deduplicare globală checkout_initiated ──────────────────
+	// Cheie: product_id (sau URL dacă nu există product_id)
+	// Valoare: timestamp-ul ultimului event trimis
+	// Scop: Leadpages/SPA recreează nodurile DOM → acEnhanced se pierde
+	// → fără această gardă, fiecare recreare adaugă un nou click listener
+	// → user dă 1 click real → se declanșează N listeners în paralel
+	const _checkoutEventSentAt = {}; // { productKey: timestamp_ms }
+	const CHECKOUT_DEDUP_MS = 5000;  // 5 secunde — ignoră orice al doilea fire în fereastra asta
+
 	/**
 	 * Adaugă user_id în toate link-urile către checkout
 	 * Suportă și link-uri standard (<a href="">) și butoane Leadpages (.lp-button-react[data-widget-link])
@@ -690,6 +699,9 @@
 
 		elements.forEach(element => {
 			// ── Evită re-procesarea elementelor deja enhanced ──────────
+			// NOTĂ: dataset.acEnhanced e insuficient singur — Leadpages distruge
+			// și recreează nodurile DOM (SPA re-render), deci noul nod nu are atributul.
+			// Protecția reală împotriva duplicate events e _checkoutEventSentAt de mai jos.
 			if (element.dataset.acEnhanced === '1') return;
 
 			// Extrage URL-ul din href sau data-widget-link
@@ -737,14 +749,19 @@
 
 					// CHECKOUT TRACKING REDUNDANCY:
 					// Track click event înainte ca user-ul să plece
-					element.addEventListener('click', async function(e) {
-						// Nu prevenim default - lăsăm user-ul să meargă la checkout
+					element.addEventListener('click', async function() {
+						// ── Deduplicare globală: max 1 event per produs la 5 secunde ──
+						// Aceasta e singura gardă de încredere — funcționează chiar și când
+						// Leadpages recreează nodul DOM și dataset.acEnhanced se pierde.
+						const dedupeKey = productId || url.toString();
+						const lastSent = _checkoutEventSentAt[dedupeKey] || 0;
+						if (Date.now() - lastSent < CHECKOUT_DEDUP_MS) {
+							debugLog('⏭️ checkout_initiated deduped (fired too recently):', dedupeKey);
+							return;
+						}
+						_checkoutEventSentAt[dedupeKey] = Date.now();
+
 						try {
-							// ── Salvează în localStorage perechea product_id → user_id ──
-							// Digistore24 criptează ?custom= pe upsell, deci nu putem
-							// recupera user_id-ul din URL. În schimb, citim din localStorage
-							// pe upsell folosind product_id (care vine necriptat ca
-							// ?digistore_initial_product_id=...).
 							if (productId) {
 								localStorage.setItem(
 									'ac_checkout_' + productId,
@@ -767,7 +784,7 @@
 						} catch (err) {
 							debugLog('⚠️ Failed to track checkout initiated:', err);
 						}
-					}, { once: true }); // once: true = rulează o singură dată
+					});
 
 					debugLog(`Enhanced ${isLeadpagesButton ? 'Leadpages button' : 'checkout link'}:`, url.toString());
 				} catch (e) {
