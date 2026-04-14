@@ -1617,6 +1617,11 @@
 		function fmtDTC(days) {
 			if (days === null || days === undefined) return '<span style="color:var(--text3)">—</span>';
 			if (days < 1) {
+				const totalMins = days * 24 * 60;
+				if (totalMins < 60) {
+					const mins = Math.round(totalMins);
+					return `<span title="${days}d">${mins <= 1 ? '1m' : mins + 'm'}</span>`;
+				}
 				const hrs = (days * 24).toFixed(1);
 				return `<span title="${days}d">${hrs}h</span>`;
 			}
