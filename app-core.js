@@ -264,14 +264,28 @@
 	}
 
 	/**
-	 * Salvează parametri în localStorage pentru persistență pe domeniu
+	 * Salvează parametri în localStorage pentru persistență pe domeniu.
+	 * First-touch attribution — nu suprascrie dacă există deja un slug real.
+	 * Excepție: dacă e stocat 'direct' și acum avem un slug real (UTM/fbclid),
+	 * suprascrie — userul a vizitat înainte fără ad, acum vine prin ad.
 	 */
 	function saveTrafficSource(params) {
 		const TRAFFIC_SOURCE_KEY = 'ac_source';
+		const existing = localStorage.getItem(TRAFFIC_SOURCE_KEY);
 
-		// Nu suprascrie dacă există deja (first-touch attribution)
-		if (!localStorage.getItem(TRAFFIC_SOURCE_KEY)) {
+		if (!existing) {
 			localStorage.setItem(TRAFFIC_SOURCE_KEY, JSON.stringify(params));
+			return;
+		}
+
+		// Suprascrie doar dacă: stored = 'direct' AND current = ceva real
+		if (params.slug && params.slug !== 'direct') {
+			try {
+				const stored = JSON.parse(existing);
+				if (stored.slug === 'direct') {
+					localStorage.setItem(TRAFFIC_SOURCE_KEY, JSON.stringify(params));
+				}
+			} catch (e) {}
 		}
 	}
 
