@@ -696,11 +696,27 @@
 	const _checkoutEventSentAt = {}; // { productKey: timestamp_ms }
 	const CHECKOUT_DEDUP_MS = 5000;  // 5 secunde — ignoră orice al doilea fire în fereastra asta
 
+	// ── Guard împotriva execuției concurente a enhanceCheckoutLinks ──
+	// MutationObserver poate declanșa zeci de apeluri async simultan;
+	// toate trec de `dataset.acEnhanced` înainte ca primul să îl seteze.
+	let _enhancingCheckout = false;
+
 	/**
 	 * Adaugă user_id în toate link-urile către checkout
 	 * Suportă și link-uri standard (<a href="">) și butoane Leadpages (.lp-button-react[data-widget-link])
 	 */
 	async function enhanceCheckoutLinks() {
+		// Previne execuții concurente — a doua invocare returnează imediat
+		if (_enhancingCheckout) return;
+		_enhancingCheckout = true;
+		try {
+		return await _enhanceCheckoutLinksInner();
+		} finally {
+			_enhancingCheckout = false;
+		}
+	}
+
+	async function _enhanceCheckoutLinksInner() {
 		const currentUserId = await getUserId();
 
 		// Găsește toate link-urile și butoanele Leadpages
@@ -806,14 +822,16 @@
 
 	/**
 	 * Observer pentru link-uri adăugate dinamic
+	 * Debounced: apelează enhanceCheckoutLinks() o singură dată după ce mutațiile DOM se stabilizează.
+	 * Fără debounce, Leadpages SPA poate genera zeci de mutații în rafală → zeci de listeneri duplicați.
 	 */
 	function observeNewLinks() {
-		const observer = new MutationObserver(async (mutations) => {
-			for (const mutation of mutations) {
-				if (mutation.addedNodes.length) {
-					await enhanceCheckoutLinks();
-				}
-			}
+		let _debounceTimer = null;
+		const observer = new MutationObserver((mutations) => {
+			const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
+			if (!hasAddedNodes) return;
+			clearTimeout(_debounceTimer);
+			_debounceTimer = setTimeout(() => enhanceCheckoutLinks(), 200);
 		});
 
 		observer.observe(document.body, {
