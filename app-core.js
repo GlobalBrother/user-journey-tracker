@@ -693,13 +693,13 @@
 	// Scop: Leadpages/SPA recreează nodurile DOM → acEnhanced se pierde
 	// → fără această gardă, fiecare recreare adaugă un nou click listener
 	// → user dă 1 click real → se declanșează N listeners în paralel
-	const _checkoutEventSentAt = {}; // { productKey: timestamp_ms }
-	const CHECKOUT_DEDUP_MS = 5000;  // 5 secunde — ignoră orice al doilea fire în fereastra asta
+	// NOTĂ: _acCheckoutDone e un Set pe window — shared când scriptul e încărcat de mai multe ori.
+	// Odată checkout_initiated capturat pentru un produs în această sesiune, nu se mai trimite.
+	if (!window._acCheckoutDone) window._acCheckoutDone = new Set();
 
 	// ── Guard împotriva execuției concurente a enhanceCheckoutLinks ──
-	// MutationObserver poate declanșa zeci de apeluri async simultan;
-	// toate trec de `dataset.acEnhanced` înainte ca primul să îl seteze.
-	let _enhancingCheckout = false;
+	// Pus pe window — shared între toate instanțele scriptului.
+	if (window._acEnhancingCheckout === undefined) window._acEnhancingCheckout = false;
 
 	/**
 	 * Adaugă user_id în toate link-urile către checkout
@@ -707,12 +707,12 @@
 	 */
 	async function enhanceCheckoutLinks() {
 		// Previne execuții concurente — a doua invocare returnează imediat
-		if (_enhancingCheckout) return;
-		_enhancingCheckout = true;
+		if (window._acEnhancingCheckout) return;
+		window._acEnhancingCheckout = true;
 		try {
 		return await _enhanceCheckoutLinksInner();
 		} finally {
-			_enhancingCheckout = false;
+			window._acEnhancingCheckout = false;
 		}
 	}
 
@@ -775,16 +775,14 @@
 					// CHECKOUT TRACKING REDUNDANCY:
 					// Track click event înainte ca user-ul să plece
 					element.addEventListener('click', async function() {
-						// ── Deduplicare globală: max 1 event per produs la 5 secunde ──
-						// Aceasta e singura gardă de încredere — funcționează chiar și când
-						// Leadpages recreează nodul DOM și dataset.acEnhanced se pierde.
+						// ── Deduplicare per sesiune: odată capturat pentru acest produs, nu se mai trimite ──
+						// window._acCheckoutDone e shared între toate instanțele scriptului (multiple <script>).
 						const dedupeKey = productId || url.toString();
-						const lastSent = _checkoutEventSentAt[dedupeKey] || 0;
-						if (Date.now() - lastSent < CHECKOUT_DEDUP_MS) {
-							debugLog('⏭️ checkout_initiated deduped (fired too recently):', dedupeKey);
+						if (window._acCheckoutDone.has(dedupeKey)) {
+							debugLog('⏭️ checkout_initiated deja capturat în această sesiune:', dedupeKey);
 							return;
 						}
-						_checkoutEventSentAt[dedupeKey] = Date.now();
+						window._acCheckoutDone.add(dedupeKey);
 
 						try {
 							if (productId) {
