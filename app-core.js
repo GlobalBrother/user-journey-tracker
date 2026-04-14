@@ -647,7 +647,16 @@
 			// Dacă ambele lipsesc / sunt 'direct', trimitem null → backend face attribution
 			// prin Strategy 2 (checkout_initiated event) sau Strategy 3 (pageview slug match).
 			attribution_slug: recoveredSlug || (trafficSource.slug !== 'direct' ? trafficSource.slug : null),
-			time_to_conversion_minutes: null // Backend poate calcula
+			time_to_conversion_minutes: (function() {
+				try {
+					const firstSeenIso = localStorage.getItem('ac_first');
+					if (firstSeenIso) {
+						const elapsedMs = Date.now() - new Date(firstSeenIso).getTime();
+						if (elapsedMs > 0) return Math.round(elapsedMs / 60000);
+					}
+				} catch (e) {}
+				return null;
+			})()
 		};
 
 		await sendEvent('/api/conversions', payload);
