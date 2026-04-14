@@ -1080,15 +1080,6 @@
 			<input type="text" id="domainFilter" placeholder="e.g. www.buginguide.com" style="width:220px" />
 		</div>
 		<button class="btn btn-primary btn-sm" id="btnApply">Apply</button>
-		<div class="separator"></div>
-		<div class="control-group">
-			<label>Auto-refresh</label>
-			<select id="autoRefresh">
-				<option value="0" selected>Off</option>
-				<option value="1800">30 min</option>
-				<option value="3600">1 oră</option>
-			</select>
-		</div>
 	</div>
 
 	<!-- ════════════════════════════════════════
@@ -2716,17 +2707,6 @@
 		}
 
 		// ════════════════════════════════════════
-		// AUTO REFRESH
-		// ════════════════════════════════════════
-		function setupAutoRefresh() {
-			if (refreshTimer) clearInterval(refreshTimer);
-			const val = parseInt(document.getElementById('autoRefresh').value, 10);
-			if (val > 0) {
-				refreshTimer = setInterval(loadStats, val * 1000);
-			}
-		}
-
-		// ════════════════════════════════════════
 		// RENDER FUNNEL
 		// ════════════════════════════════════════
 		const FUNNEL_COLORS = ['#6366f1','#22d3ee','#22c55e','#f59e0b','#a78bfa','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9'];
@@ -3135,7 +3115,6 @@
 		document.getElementById('btnRefresh').addEventListener('click', loadStats);
 		document.getElementById('btnApply').addEventListener('click', () => {
 			_phase2CacheInvalidate();  // filtrii s-au schimbat → forțează re-fetch Faza 2
-			setupAutoRefresh();
 			loadStats();
 		});
 
@@ -3146,8 +3125,6 @@
 				loadStats();
 			});
 		});
-
-		document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
 
 		// Sort by column
 		document.querySelectorAll('thead th[data-col]').forEach(th => {
@@ -3220,7 +3197,6 @@
 		// INIT
 		// ════════════════════════════════════════
 		initDates();
-		setupAutoRefresh();
 		renderFunnelBuilder();
 		initFingerprintSearch();
 		loadStats();
