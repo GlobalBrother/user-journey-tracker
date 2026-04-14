@@ -241,10 +241,12 @@
 			// FB Ad slug - PRIORITIZEAZĂ utm_content (cel mai specific)
 			// Fallback: source, slug, ad, sau 'direct'
 		// Trunchiat la 490 chars pentru a evita erori de truncation în DB (coloana NVARCHAR(500))
+		// fbclid prezent fără UTM-uri → trafic Facebook Ads fără tracking params → 'facebook'
 		slug: (utmContent ||
 		      urlParams.get('source') ||
 		      urlParams.get('slug') ||
 		      urlParams.get('ad') ||
+		      (urlParams.get('fbclid') ? 'facebook' : null) ||
 		      'direct').substring(0, 490),
 			utm_source: urlParams.get('utm_source') || null,
 			utm_medium: urlParams.get('utm_medium') || null,
