@@ -2474,10 +2474,19 @@
 				// ── Meta stats for the active sub-path ──
 				// For the filtered view we show full-journey stats (backend doesn't split by sub-path)
 				// but we highlight which domains are active
+				const postConv = j.post_journey_conversions ?? null;
+				const postRate = j.post_journey_conv_rate ?? null;
+				const postHtml = postConv !== null
+					? `<span title="Conversions that happened after user visited all domains in this journey">
+							${fmtNum(postConv)} post-journey conv.
+							<span style="opacity:.7">(${postRate}%)</span>
+						</span>`
+					: '';
 				const metaHtml = `
 					<span>${fmtNum(j.users)} users</span>
-					<span>${fmtNum(j.conversions)} conv.</span>
-					<span>${convRateBadge(j.conversion_rate)}</span>`;
+					<span title="All conversions in the period for these users">${fmtNum(j.conversions)} conv. total</span>
+					<span>${convRateBadge(j.conversion_rate)}</span>
+					${postHtml}`;
 
 				// ── Conv per domain badges ── (only for selected domains)
 				const convByDomain = j.conv_by_domain || {};
