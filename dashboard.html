@@ -1491,9 +1491,18 @@
 			if (slug) params.set('slug', slug);
 			if (domain) params.set('domain', domain);
 
-			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal });
-			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-			return res.json();
+			// Stats can be slow on first load (no cache) — allow up to 90s, no retry
+			const statsAbort = new AbortController();
+			const statsTimeout = setTimeout(() => statsAbort.abort(), 90000);
+			const combinedSignal = signal;
+			if (signal) signal.addEventListener('abort', () => statsAbort.abort(), { once: true });
+			try {
+				const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal: statsAbort.signal });
+				if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+				return res.json();
+			} finally {
+				clearTimeout(statsTimeout);
+			}
 		}
 
 		async function fetchJourney(userId) {
