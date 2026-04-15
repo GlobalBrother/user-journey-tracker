@@ -2649,24 +2649,33 @@
 				if (cached) {
 					// Faza 2 instant din cache — nu mai trimitem cereri
 					p2Promise = Promise.resolve(cached);
+					// Cohorts rulează întotdeauna independent (nu e în cache)
+					fetchCohorts(signal)
+						.then(cohorts => { if (!signal.aborted) renderCohorts(cohorts); })
+						.catch(() => null);
 				} else {
 					const prev = getPreviousPeriod(start, end);
 					const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
 					if (slug) prevParams.set('slug', slug);
 					if (domain) prevParams.set('domain', domain);
 
-					// Pornim toate 4 cereri Faza 2 simultan cu cele din Faza 1
+					// Pornim cele 3 cereri Faza 2 simultan (fără cohorts — poate fi lent)
 					p2Promise = Promise.all([
 						fetchBreakdown(signal),
 						fetchDomains(signal),
-						fetchCohorts(signal),
 						fetchWithRetry(`${API_ENDPOINT}/api/analytics/stats?${prevParams}`, { headers: HEADERS, signal })
 							.then(r => r.ok ? r.json() : null)
 							.catch(() => null),
-					]).then(([breakdown, domains, cohorts, prevStats]) => {
-						_phase2CacheSet({ breakdown, domains, cohorts, prevStats });
-						return { breakdown, domains, cohorts, prevStats };
+					]).then(([breakdown, domains, prevStats]) => {
+						_phase2CacheSet({ breakdown, domains, prevStats });
+						return { breakdown, domains, prevStats };
 					});
+					// Cohorts rulează independent — nu blochează restul dashboard-ului
+					fetchCohorts(signal)
+						.then(cohorts => {
+							if (!signal.aborted) renderCohorts(cohorts);
+						})
+						.catch(() => null);
 				}
 
 				// ── Faza 1: KPIs + Trend + RecentConvs — render imediat la sosire ──
@@ -2691,15 +2700,14 @@
 				document.getElementById('lastUpdated').textContent =
 					'Updated ' + new Date().toLocaleTimeString('en-GB');
 
-				// ── Faza 2: așteptăm rezultatele (pot fi deja gata dacă backend-ul era rapid) ──
-				const { breakdown, domains, cohorts, prevStats } = await p2Promise;
+				// ── Faza 2: așteptăm breakdown/domains/prevStats (cohorts vine independent) ──
+				const { breakdown, domains, prevStats } = await p2Promise;
 
 				if (signal.aborted) return;
 
 				prevStatsData = prevStats;
 				renderKPIs(stats, prevStats);    // re-render KPIs cu delta calculat corect
 				renderDomainTable(domains || []);
-				renderCohorts(cohorts);
 				renderBreakdown(breakdown);
 
 			} catch (err) {
