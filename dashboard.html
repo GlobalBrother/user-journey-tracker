@@ -198,7 +198,7 @@
 		/* ── MAIN LAYOUT ── */
 		main {
 			padding: 24px;
-			max-width: 1600px;
+			max-width: 1700px;
 			margin: 0 auto;
 		}
 
@@ -1173,6 +1173,7 @@
 					<thead>
 						<tr>
 							<th data-col="slug">Slug / utm_content</th>
+							<th data-col="top_domain">Domain</th>
 							<th data-col="users">Users</th>
 							<th data-col="pageviews">Pageviews</th>
 							<th data-col="conversions">Conversions</th>
@@ -1182,7 +1183,7 @@
 					</thead>
 					<tbody id="slugTableBody">
 						<tr>
-							<td colspan="6" class="loading"><span class="spinner"></span> Loading…</td>
+							<td colspan="7" class="loading"><span class="spinner"></span> Loading…</td>
 						</tr>
 					</tbody>
 				</table>
@@ -1236,7 +1237,7 @@
 							<th>Campaign</th>
 							<th>Device</th>
 							<th>Top Pages</th>
-							<th>First Ad</th>
+							<th>Top Ad</th>
 							<th>Users</th>
 							<th>Bounce</th>
 							<th>Conversions</th>
@@ -2007,13 +2008,14 @@
 			const tbody = document.getElementById('slugTableBody');
 
 			if (sorted.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="6" class="empty">No data for this period.</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="7" class="empty">No data for this period.</td></tr>';
 				return;
 			}
 
 			tbody.innerHTML = sorted.map(s => `
     <tr data-slug="${escHtml(s.slug || '')}">
       <td class="td-slug" title="${escHtml(s.slug || '')}">${escHtml(s.slug || '(direct)')}</td>
+      <td style="font-size:11px;color:var(--text2);">${escHtml(s.top_domain || '—')}</td>
       <td>${fmtNum(s.users)}</td>
       <td>${fmtNum(s.pageviews)}</td>
       <td>${fmtNum(s.conversions)}</td>
@@ -2205,7 +2207,7 @@
 					`<span style="background:var(--surface2);border-radius:4px;padding:1px 5px;font-size:10px;white-space:nowrap;">${escHtml(d)}</span>`
 				).join(' ');
 
-				// First ad slug
+				// Top ad slug (most visited real slug, excludes 'direct')
 				const firstSlug = c.first_touch_slug
 					? `<span title="${escHtml(c.first_touch_slug)}" style="color:var(--accent2);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;display:inline-block;white-space:nowrap;">${escHtml(c.first_touch_slug.length > 18 ? c.first_touch_slug.slice(0, 18) + '…' : c.first_touch_slug)}</span>`
 					: '<span style="color:var(--text3)">—</span>';
