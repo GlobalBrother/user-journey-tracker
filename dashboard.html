@@ -1889,7 +1889,7 @@
       <td style="font-family:monospace;font-size:11px;color:var(--accent2);">${escHtml(c.order_id || '—')}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(c.product_name || '')}">${escHtml(c.product_name || '—')}</td>
       <td style="color:var(--green);font-weight:600;">${fmtEUR(c.value)}</td>
-      <td class="td-slug" style="max-width:100px;" title="${escHtml(c.attribution_slug || '')}">${escHtml(c.attribution_slug || 'direct')}</td>
+      <td class="td-slug" style="max-width:100px;" title="${escHtml(c.attribution_slug || '')}">${escHtml(c.attribution_slug || 'unidentified')}</td>
       <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${fmtDate(c.timestamp)}</td>
       <td>${c.user_id ? `<button class="btn-user-journey" data-uid="${escHtml(c.user_id)}" title="${escHtml(c.user_id)}">🔍 ${escHtml(shortId)}</button>` : '—'}</td>
     </tr>
