@@ -21,7 +21,7 @@
 
 	const CONFIG = {
 		// URL-ul backend-ului (fără trailing slash)
-		API_ENDPOINT: 'https://app-usertrackingapi-prod-5wzg9g.azurewebsites.net',
+		API_ENDPOINT: 'https://analytics-api-usertrack-prod-naikzx.azurewebsites.net',
 
 		// API Key injectat din pagină via window.AppCoreConfig.API_KEY
 		API_KEY: (window.AppCoreConfig && window.AppCoreConfig.API_KEY) || '',
