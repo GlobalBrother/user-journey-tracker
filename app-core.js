@@ -221,6 +221,36 @@
 	}
 
 	// ═══════════════════════════════════════════════════════════════
+	// FACEBOOK COOKIES (_fbp / _fbc)
+	// ═══════════════════════════════════════════════════════════════
+
+	/**
+	 * Citește un cookie după nume.
+	 * Returnează valoarea sau null dacă nu există / e blocat.
+	 */
+	function getCookie(name) {
+		try {
+			const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+			return match ? decodeURIComponent(match[1]) : null;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Citește _fbp și _fbc — cookies setate de Facebook Pixel.
+	 * _fbp: stabil per browser/domeniu (identificator de browser, supraviețuiește sesiunilor)
+	 * _fbc: per click publicitar (prezent doar dacă userul a venit printr-un ad cu fbclid)
+	 * Ambele pot lipsi dacă sunt blocate de browser, ad blocker sau iOS ITP.
+	 */
+	function getFbCookies() {
+		return {
+			fbp: getCookie('_fbp') || null,
+			fbc: getCookie('_fbc') || null,
+		};
+	}
+
+	// ═══════════════════════════════════════════════════════════════
 	// URL PARAMETER DETECTION (FB Ads slug, UTM, etc)
 	// ═══════════════════════════════════════════════════════════════
 
@@ -249,7 +279,7 @@
 		      urlParams.get('source') ||
 		      urlParams.get('slug') ||
 		      urlParams.get('ad') ||
-		      (urlParams.get('fbclid') ? 'fbclid' : null) ||
+		      (urlParams.get('fbclid') ? ('fb-noutm-' + urlParams.get('fbclid').substring(0, 8)) : null) ||
 		      'direct').substring(0, 490),
 			utm_source: urlParams.get('utm_source') || null,
 			utm_medium: urlParams.get('utm_medium') || null,
@@ -558,7 +588,11 @@
 			language: navigator.language,
 
 			// Facebook specific
-			fbclid: firstTouch.fbclid
+			fbclid: firstTouch.fbclid,
+
+			// Facebook cookies — fallback de identificare când ac_uid lipsește
+			// Pot fi null dacă sunt blocate de browser / ad blocker / iOS ITP
+			...getFbCookies()
 		};
 
 		await sendEvent('/api/events', payload);
