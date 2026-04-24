@@ -1390,6 +1390,7 @@
 		// ════════════════════════════════════════
 		const API_ENDPOINT = 'https://analytics-api-usertrack-prod-naikzx.azurewebsites.net';
 		const API_KEY = 'gb_s0Ea8YHciukYsTeijYYoLDFy2tfEHVwGgWrUUKQrRdYGN1j1';
+		const ADS_API = 'https://gb-reports-api-prod.azurewebsites.net';
 
 		const HEADERS = {
 			'Content-Type': 'application/json',
@@ -1401,6 +1402,7 @@
 		// ════════════════════════════════════════
 		let statsData = null;
 		let prevStatsData = null;
+		let _adsMap = new Map(); // slug_lower → {preview_shareable_link, ad_format, adset_name, campaign_name}
 		let sortColD = 'revenue';
 		let sortDirD = 'desc';
 		let sortCol = 'revenue';
@@ -1987,6 +1989,40 @@
 		// ════════════════════════════════════════
 		// RENDER SLUGS TABLE
 		// ════════════════════════════════════════
+		// ════════════════════════════════════════
+		// ADS PREVIEW MAP — fetches ad metadata per slug
+		// ════════════════════════════════════════
+		async function fetchAdsMap(slugs) {
+			// Only fetch slugs that look like real ad names (not generated fb-noutm- ones)
+			const candidates = slugs
+				.map(s => s.slug)
+				.filter(sl => sl && !sl.startsWith('fb-noutm-') && sl !== '(direct)');
+
+			if (candidates.length === 0) return;
+
+			const results = await Promise.allSettled(
+				candidates.map(slug =>
+					fetch(`${ADS_API}/api/ads/preview?ad_name=${encodeURIComponent(slug)}`)
+						.then(r => r.ok ? r.json() : null)
+						.catch(() => null)
+				)
+			);
+
+			const newMap = new Map();
+			results.forEach((res, i) => {
+				if (res.status === 'fulfilled' && res.value?.data) {
+					const d = res.value.data;
+					newMap.set(candidates[i].toLowerCase(), {
+						preview_url: d.preview_shareable_link,
+						format: d.ad_format,
+						adset: d.adset_name,
+						campaign: d.campaign_name,
+					});
+				}
+			});
+			_adsMap = newMap;
+		}
+
 		function renderSlugTable(slugs) {
 			document.getElementById('slugCount').textContent = slugs.length + ' slugs';
 
@@ -2012,9 +2048,21 @@
 				return;
 			}
 
-			tbody.innerHTML = sorted.map(s => `
+			tbody.innerHTML = sorted.map(s => {
+				const adInfo = _adsMap.get((s.slug || '').toLowerCase());
+				const slugLabel = escHtml(s.slug || '(direct)');
+				const slugTitle = adInfo
+					? `${s.slug || ''}&#10;Format: ${adInfo.format || '—'}&#10;Adset: ${adInfo.adset || '—'}&#10;Campaign: ${adInfo.campaign || '—'}`
+					: escHtml(s.slug || '');
+				const formatBadge = adInfo?.format
+					? ` <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text3);vertical-align:middle;">${escHtml(adInfo.format)}</span>`
+					: '';
+				const slugCell = adInfo?.preview_url
+					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${slugTitle}">${slugLabel}${formatBadge} <span style="font-size:11px;">↗</span></a>`
+					: `<span title="${slugTitle}">${slugLabel}</span>`;
+				return `
     <tr data-slug="${escHtml(s.slug || '')}">
-      <td class="td-slug" title="${escHtml(s.slug || '')}">${escHtml(s.slug || '(direct)')}</td>
+      <td class="td-slug">${slugCell}</td>
       <td style="font-size:11px;color:var(--text2);">${escHtml(s.top_domain || '—')}</td>
       <td>${fmtNum(s.users)}</td>
       <td>${fmtNum(s.pageviews)}</td>
@@ -2022,7 +2070,8 @@
       <td>${fmtEUR(s.revenue)}</td>
       <td>${convRateBadge(s.conversion_rate)}</td>
     </tr>
-  `).join('');
+  `;
+			}).join('');
 		}
 
 		// ════════════════════════════════════════
@@ -2719,6 +2768,11 @@
 
 				document.getElementById('lastUpdated').textContent =
 					'Updated ' + new Date().toLocaleTimeString('en-GB');
+
+				// ── Ads map — fetch in parallel with Faza 2, re-render slug table when ready ──
+				fetchAdsMap(stats.by_slug || []).then(() => {
+					if (!signal.aborted && statsData) renderSlugTable(statsData.by_slug || []);
+				}).catch(() => null);
 
 				// ── Faza 2: așteptăm breakdown/domains/prevStats (cohorts vine independent) ──
 				const { breakdown, domains, prevStats } = await p2Promise;
