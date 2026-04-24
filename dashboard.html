@@ -2050,6 +2050,7 @@
 						format: d.ad_format,
 						adset: d.adset_name,
 						campaign: d.campaign_name,
+						ad_id: d.ad_id,
 					});
 				}
 			});
@@ -2096,8 +2097,11 @@
 				const slugCell = adInfo?.preview_url
 					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${slugTitle}">${adIcon}${slugLabel}${formatBadge} <span style="font-size:11px;">↗</span></a>`
 					: `<span title="${slugTitle}">${slugLabel}</span>`;
+				const amsLink = adInfo?.ad_id
+					? `<a href="https://adsmanager.facebook.com/adsmanager/manage/ads?selected_ad_ids=${adInfo.ad_id}" target="_blank" rel="noopener" title="Open in Ads Manager" style="margin-left:6px;font-size:11px;color:var(--text3);text-decoration:none;opacity:0.7;">📊</a>`
+					: '';
 				const filterBtn = s.slug
-					? `<button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug" style="padding:2px 7px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);color:var(--text3);cursor:pointer;">⊕</button>`
+					? `<span style="display:inline-flex;align-items:center;gap:4px;"><button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug" style="padding:2px 7px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);color:var(--text3);cursor:pointer;">⊕</button>${amsLink}</span>`
 					: '';
 				return `
     <tr data-slug="${escHtml(s.slug || '')}">
