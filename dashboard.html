@@ -2001,6 +2001,22 @@
 				.trim();
 		}
 
+		// Generate ordered list of name variants to try against the endpoint.
+		// Each variant is still an exact match attempt — we never guess a different ad.
+		function _slugVariants(slug) {
+			const variants = new Set();
+			const addWithPrefixSwap = (s) => {
+				variants.add(s);
+				// known prefix substitutions: video- <-> vid-
+				if (s.startsWith('video-')) variants.add('vid-' + s.slice(6));
+				if (s.startsWith('vid-'))   variants.add('video-' + s.slice(4));
+			};
+			addWithPrefixSwap(slug);
+			const cleaned = _canonicalSlug(slug);
+			if (cleaned !== slug) addWithPrefixSwap(cleaned);
+			return [...variants];
+		}
+
 		async function _fetchAd(name) {
 			return fetch(`${ADS_API}/api/ads/preview?ad_name=${encodeURIComponent(name)}`)
 				.then(r => r.ok ? r.json() : null)
@@ -2017,13 +2033,11 @@
 
 			const results = await Promise.allSettled(
 				candidates.map(async slug => {
-					// 1) Try exact match
-					let data = await _fetchAd(slug);
-					if (data) return data;
-					// 2) Strip copy suffixes and retry — only if name actually changed
-					const cleaned = _canonicalSlug(slug);
-					if (cleaned !== slug) data = await _fetchAd(cleaned);
-					return data;
+					for (const variant of _slugVariants(slug)) {
+						const data = await _fetchAd(variant);
+						if (data) return data;
+					}
+					return null;
 				})
 			);
 
