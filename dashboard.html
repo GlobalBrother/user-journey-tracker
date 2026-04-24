@@ -1992,6 +1992,21 @@
 		// ════════════════════════════════════════
 		// ADS PREVIEW MAP — fetches ad metadata per slug
 		// ════════════════════════════════════════
+		// Strip known Facebook ad copy suffixes to get the canonical ad name.
+		// Only removes well-known patterns so we don't accidentally match a different ad.
+		function _canonicalSlug(slug) {
+			return slug
+				.replace(/\s*-\s*Implement\s+test\(s\)\s*-\s*Copy(\s+\(\d+\))?\s*$/i, '')
+				.replace(/\s*-\s*Copy(\s+\(\d+\))?\s*$/i, '')
+				.trim();
+		}
+
+		async function _fetchAd(name) {
+			return fetch(`${ADS_API}/api/ads/preview?ad_name=${encodeURIComponent(name)}`)
+				.then(r => r.ok ? r.json() : null)
+				.catch(() => null);
+		}
+
 		async function fetchAdsMap(slugs) {
 			// Only fetch slugs that look like real ad names (not generated fb-noutm- ones)
 			const candidates = slugs
@@ -2001,11 +2016,15 @@
 			if (candidates.length === 0) return;
 
 			const results = await Promise.allSettled(
-				candidates.map(slug =>
-					fetch(`${ADS_API}/api/ads/preview?ad_name=${encodeURIComponent(slug)}`)
-						.then(r => r.ok ? r.json() : null)
-						.catch(() => null)
-				)
+				candidates.map(async slug => {
+					// 1) Try exact match
+					let data = await _fetchAd(slug);
+					if (data) return data;
+					// 2) Strip copy suffixes and retry — only if name actually changed
+					const cleaned = _canonicalSlug(slug);
+					if (cleaned !== slug) data = await _fetchAd(cleaned);
+					return data;
+				})
 			);
 
 			const newMap = new Map();
