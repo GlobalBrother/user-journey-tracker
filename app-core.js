@@ -29,6 +29,19 @@
 		// Domenii de checkout unde să adaugi user_id în URL
 		CHECKOUT_DOMAINS: ['digistore24.com', 'checkout-ds24.com', 'thrivecart.com'],
 
+		// Allowlist domenii legitime — pixelul nu trimite date dacă domeniul nu e în listă.
+		// Previne zgomotul din WebView-uri Android (Telegram, Google app) sau preview Leadpages.
+		// Lasă GOL [] pentru a dezactiva filtrarea (acceptă orice domeniu).
+		ALLOWED_DOMAINS: [
+			'www.forgottenhomeapothecary.com',
+			'www.buginguide.com',
+			'www.theamishways.com',
+			'nogridsurvivalprojects.com',
+			'advertorials645.lpages.co',
+			'wildernesslongtermsurvival.com',
+			'www.wildernesslongtermsurvival.com',
+		],
+
 		// Debug mode (activează console.logs)
 		DEBUG_MODE: false
 	};
@@ -907,6 +920,15 @@
 
 	async function init() {
 		debugLog('Initializing User Journey Tracker...');
+
+		// 0. Verifică allowlist — oprește tracking pe domenii neașteptate (WebView-uri, editoare)
+		if (CONFIG.ALLOWED_DOMAINS.length > 0) {
+			const currentDomain = window.location.hostname;
+			if (!CONFIG.ALLOWED_DOMAINS.includes(currentDomain)) {
+				debugLog('Domain not in allowlist, tracking disabled:', currentDomain);
+				return;
+			}
+		}
 
 		// 1. Generează/obține user ID
 		await getUserId();
