@@ -1183,7 +1183,7 @@
 					</thead>
 					<tbody id="slugTableBody">
 						<tr>
-							<td colspan="8" class="loading"><span class="spinner"></span> Loading…</td>
+							<td colspan="9" class="loading"><span class="spinner"></span> Loading…</td>
 						</tr>
 					</tbody>
 				</table>
@@ -2078,7 +2078,7 @@
 			const tbody = document.getElementById('slugTableBody');
 
 			if (sorted.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="8" class="empty">No data for this period.</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="9" class="empty">No data for this period.</td></tr>';
 				return;
 			}
 
@@ -2097,11 +2097,11 @@
 				const slugCell = adInfo?.preview_url
 					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${slugTitle}">${adIcon}${slugLabel}${formatBadge} <span style="font-size:11px;">↗</span></a>`
 					: `<span title="${slugTitle}">${slugLabel}</span>`;
-				const amsLink = adInfo?.ad_id
-					? `<a href="https://adsmanager.facebook.com/adsmanager/manage/ads?selected_ad_ids=${adInfo.ad_id}" target="_blank" rel="noopener" title="Open in Ads Manager" style="margin-left:6px;font-size:11px;color:var(--text3);text-decoration:none;opacity:0.7;">📊</a>`
-					: '';
+				const amsCell = adInfo?.ad_id
+					? `<a href="https://adsmanager.facebook.com/adsmanager/manage/ads?selected_ad_ids=${adInfo.ad_id}" target="_blank" rel="noopener" title="Open in Facebook Ads Manager" style="font-size:16px;text-decoration:none;opacity:0.8;">📊</a>`
+					: '<span style="color:var(--text3);font-size:11px;">—</span>';
 				const filterBtn = s.slug
-					? `<span style="display:inline-flex;align-items:center;gap:4px;"><button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug" style="padding:2px 7px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);color:var(--text3);cursor:pointer;">⊕</button>${amsLink}</span>`
+					? `<button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug" style="padding:2px 7px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);color:var(--text3);cursor:pointer;">⊕</button>`
 					: '';
 				return `
     <tr data-slug="${escHtml(s.slug || '')}">
@@ -2113,6 +2113,7 @@
       <td>${fmtEUR(s.revenue)}</td>
       <td>${convRateBadge(s.conversion_rate)}</td>
       <td style="text-align:center;">${filterBtn}</td>
+      <td style="text-align:center;">${amsCell}</td>
     </tr>
   `;
 			}).join('');
