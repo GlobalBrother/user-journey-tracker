@@ -2080,7 +2080,7 @@
 					? `<span title="Facebook Ad Preview available" style="margin-right:5px;font-size:11px;opacity:0.75;">📢</span>`
 					: '';
 				const slugCell = adInfo?.preview_url
-					? `${adIcon}<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${slugTitle}">${slugLabel}${formatBadge} <span style="font-size:11px;">↗</span></a>`
+					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${slugTitle}">${adIcon}${slugLabel}${formatBadge} <span style="font-size:11px;">↗</span></a>`
 					: `<span title="${slugTitle}">${slugLabel}</span>`;
 				const filterBtn = s.slug
 					? `<button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug" style="padding:2px 7px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);color:var(--text3);cursor:pointer;">⊕</button>`
