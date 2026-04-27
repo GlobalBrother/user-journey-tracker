@@ -2026,10 +2026,10 @@
 		}
 
 		async function fetchAdsMap(slugs) {
-			// Only fetch slugs that look like real ad names (not generated fb-noutm- ones)
+			// Only fetch slugs that look like real Facebook ad names
 			const candidates = slugs
 				.map(s => s.slug)
-				.filter(sl => sl && !sl.startsWith('fb-noutm-') && sl !== '(direct)');
+				.filter(sl => sl && !sl.startsWith('fb-noutm-') && sl !== '(direct)' && sl !== 'fbclid');
 
 			if (candidates.length === 0) return;
 
