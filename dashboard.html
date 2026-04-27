@@ -2575,10 +2575,10 @@
 				// ── Meta stats for the active sub-path ──
 				// For the filtered view we show full-journey stats (backend doesn't split by sub-path)
 				// but we highlight which domains are active
-				const postConv = j.post_journey_conversions ?? null;
+				const postConv = j.post_journey_converting_users ?? j.post_journey_conversions ?? null;
 				const postRate = j.post_journey_conv_rate ?? null;
 				const postHtml = postConv !== null
-					? `<span title="Conversions that happened after user visited all domains in this journey">
+					? `<span title="Unique users who converted after visiting all domains in this journey">
 							${fmtNum(postConv)} post-journey conv.
 							<span style="opacity:.7">(${postRate}%)</span>
 						</span>`
