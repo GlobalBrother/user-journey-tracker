@@ -2035,9 +2035,12 @@
 
 			const results = await Promise.allSettled(
 				candidates.map(async slug => {
-					for (const variant of _slugVariants(slug)) {
-						const data = await _fetchAd(variant);
-						if (data) return data;
+					// Race all variants in parallel — first 200 wins, no sequential 404 waits
+					const variantResults = await Promise.allSettled(
+						_slugVariants(slug).map(v => _fetchAd(v))
+					);
+					for (const r of variantResults) {
+						if (r.status === 'fulfilled' && r.value) return r.value;
 					}
 					return null;
 				})
