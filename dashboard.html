@@ -2794,32 +2794,36 @@
 						.catch(() => null);
 				}
 
-				// ── Faza 1: KPIs + Trend + RecentConvs — render imediat la sosire ──
-				// p2Promise a pornit deja în paralel ↑
-				const [stats, trend, recentConvs] = await Promise.all([
-					fetchStats(signal),
-					fetchTrend(signal),
-					fetchRecentConversions(signal),
-				]);
+				// ── Faza 1: KPIs + Trend + RecentConvs — render independent la sosire ──
+				// Fiecare cerere pornește simultan; fiecare secțiune se afișează imediat
+				// când îi sosesc datele, fără să aștepte celelalte două.
+				const statsPromise = fetchStats(signal).then(stats => {
+					if (signal.aborted) return null;
+					statsData = stats;
+					renderKPIs(stats, prevStatsData);
+					renderCharts(stats.by_slug || []);
+					renderSlugTable(stats.by_slug || []);
+					Object.keys(journeySelState).forEach(k => delete journeySelState[k]);
+					renderJourneys(stats.top_journeys || []);
+					document.getElementById('lastUpdated').textContent =
+						'Updated ' + new Date().toLocaleTimeString('en-GB');
+					fetchAdsMap(stats.by_slug || []).then(() => {
+						if (!signal.aborted && statsData) renderSlugTable(statsData.by_slug || []);
+					}).catch(() => null);
+					return stats;
+				});
 
-				if (signal.aborted) return;
+				fetchTrend(signal).then(trend => {
+					if (!signal.aborted) renderTrendChart(trend);
+				}).catch(err => { if (err?.name !== 'AbortError') console.warn('trend fetch failed', err); });
 
-				statsData = stats;
-				renderKPIs(stats, prevStatsData);   // afișează imediat cu delta din run anterior
-				renderCharts(stats.by_slug || []);
-				renderSlugTable(stats.by_slug || []);
-				renderTrendChart(trend);
-				renderRecentConversions(recentConvs);
-				Object.keys(journeySelState).forEach(k => delete journeySelState[k]);
-				renderJourneys(stats.top_journeys || []);
+				fetchRecentConversions(signal).then(recentConvs => {
+					if (!signal.aborted) renderRecentConversions(recentConvs);
+				}).catch(err => { if (err?.name !== 'AbortError') console.warn('recentConvs fetch failed', err); });
 
-				document.getElementById('lastUpdated').textContent =
-					'Updated ' + new Date().toLocaleTimeString('en-GB');
-
-				// ── Ads map — fetch in parallel with Faza 2, re-render slug table when ready ──
-				fetchAdsMap(stats.by_slug || []).then(() => {
-					if (!signal.aborted && statsData) renderSlugTable(statsData.by_slug || []);
-				}).catch(() => null);
+				// Așteptăm stats (necesar pentru re-render KPI delta în Faza 2)
+				const stats = await statsPromise;
+				if (signal.aborted || !stats) return;
 
 				// ── Faza 2: așteptăm breakdown/domains/prevStats (cohorts vine independent) ──
 				const { breakdown, domains, prevStats } = await p2Promise;
