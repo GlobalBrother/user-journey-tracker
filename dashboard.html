@@ -2585,7 +2585,7 @@
 					: '';
 				const metaHtml = `
 					<span>${fmtNum(j.users)} users</span>
-					<span title="All conversions in the period for these users">${fmtNum(j.conversions)} conv. total</span>
+					<span title="Unique users who converted (out of total users in this journey)">${fmtNum(j.converting_users ?? j.conversions)} converted</span>
 					<span>${convRateBadge(j.conversion_rate)}</span>
 					${postHtml}`;
 
