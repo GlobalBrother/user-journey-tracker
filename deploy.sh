@@ -51,6 +51,7 @@ BRANCH="main"
 
 CDN_URL="https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/${FILE}"
 PURGE_URL="https://purge.jsdelivr.net/gh/${REPO}@${BRANCH}/${FILE}"
+DASHBOARD_PURGE_URL="https://purge.jsdelivr.net/gh/${REPO}@${BRANCH}/dashboard.html"
 
 # ── 1. Git commit & push ──────────────────────────────────────
 COMMIT_MSG="${1:-update}"
@@ -74,9 +75,16 @@ echo "🧹 Purging jsDelivr cache..."
 PURGE_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
 
 if [[ "$PURGE_RESPONSE" == "200" ]]; then
-  echo "  ✅ Cache purged (HTTP 200)"
+  echo "  ✅ app-core.js cache purged (HTTP 200)"
 else
-  echo "  ⚠️  Purge response: HTTP $PURGE_RESPONSE"
+  echo "  ⚠️  app-core.js purge response: HTTP $PURGE_RESPONSE"
+fi
+
+DASH_PURGE_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$DASHBOARD_PURGE_URL")
+if [[ "$DASH_PURGE_RESPONSE" == "200" ]]; then
+  echo "  ✅ dashboard.html cache purged (HTTP 200)"
+else
+  echo "  ⚠️  dashboard.html purge response: HTTP $DASH_PURGE_RESPONSE"
   echo "  Poți purja manual la: https://www.jsdelivr.com/tools/purge"
 fi
 
