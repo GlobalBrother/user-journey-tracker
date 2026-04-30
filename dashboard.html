@@ -1269,7 +1269,7 @@
 				<div style="display:flex;gap:12px;font-size:12px;">
 					<span style="color:var(--accent2);">&#9632; Pageviews</span>
 					<span style="color:var(--green);">&#9632; Conversions</span>
-					<span style="color:var(--yellow);">&#9632; Revenue (€)</span>
+					<span style="color:var(--yellow);">&#9632; Revenue ($)</span>
 				</div>
 			</div>
 			<div class="panel-body">
@@ -1605,7 +1605,7 @@
 
 		function fmtEUR(n) {
 			if (n === null || n === undefined) return '—';
-			return '€' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+			return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 		}
 
 		function fmtPct(n) {
@@ -1767,7 +1767,7 @@
 							yAxisID: 'yLeft',
 						},
 						{
-							label: 'Revenue (€)',
+							label: 'Revenue ($)',
 							data: days.map(d => d.revenue),
 							borderColor: '#f59e0b',
 							backgroundColor: 'rgba(245,158,11,0.08)',
@@ -1789,7 +1789,7 @@
 							callbacks: {
 								label: ctx => {
 									const v = ctx.raw;
-									if (ctx.dataset.label === 'Revenue (€)') return ' €' + v.toFixed(2);
+									if (ctx.dataset.label === 'Revenue ($)') return ' $' + v.toFixed(2);
 									return ' ' + v;
 								},
 							},
@@ -1808,7 +1808,7 @@
 						yRight: {
 							position: 'right',
 							grid: { display: false },
-							ticks: { color: '#f59e0b', font: { size: 11 }, callback: v => '€' + v },
+							ticks: { color: '#f59e0b', font: { size: 11 }, callback: v => '$' + v },
 						},
 					},
 				},
@@ -1959,7 +1959,7 @@
 					...chartDefaults,
 					plugins: {
 						...chartDefaults.plugins,
-						tooltip: { callbacks: { label: ctx => ' €' + ctx.raw.toFixed(2) } },
+						tooltip: { callbacks: { label: ctx => ' $' + ctx.raw.toFixed(2) } },
 					},
 				},
 			});
@@ -2351,13 +2351,13 @@
 			}).join('');
 
 			// ── INSIGHTS ──
-			renderCohortInsights(data.cohorts);
+			renderCohortInsights(data.cohorts, data.totals);
 		}
 
 		// ════════════════════════════════════════
 		// RENDER COHORT INSIGHTS
 		// ════════════════════════════════════════
-		function renderCohortInsights(cohorts) {
+		function renderCohortInsights(cohorts, totals) {
 			const el = document.getElementById('cohortInsights');
 			if (!cohorts || cohorts.length === 0) { el.style.display = 'none'; return; }
 
@@ -2441,7 +2441,7 @@
 					icon: '⚠️',
 					color: 'var(--red)',
 					title: 'Zero-Conversion Segments',
-					text: `<strong>${nonConverting.length} cohort${nonConverting.length > 1 ? 's' : ''}</strong> with significant traffic generated zero conversions. Largest: <strong>${segLabel(worst)}</strong> (${worst.users} users, €0). Top 3 segments together: ${fmtNum(wastedUsers)} users. Consider pausing or A/B testing the landing page.`
+					text: `<strong>${nonConverting.length} cohort${nonConverting.length > 1 ? 's' : ''}</strong> with significant traffic generated zero conversions. Largest: <strong>${segLabel(worst)}</strong> (${worst.users} users, $0). Top 3 segments together: ${fmtNum(wastedUsers)} users. Consider pausing or A/B testing the landing page.`
 				});
 			}
 
@@ -2505,8 +2505,25 @@
 					icon: '📱',
 					color: 'var(--accent2)',
 					title: 'Mobile vs Desktop',
-					text: `<strong>${winner}</strong> converts better by <strong>${diff}pp</strong> (Mobile: ${mRate}% · RPU €${mRpu} · ${fmtNum(mobileUsers)} users — Desktop: ${dRate}% · RPU €${dRpu} · ${fmtNum(desktopUsers)} users). ${parseFloat(mRate) > parseFloat(dRate) ? 'Optimise the mobile experience to scale further.' : 'Desktop is more valuable — ensure your LP looks perfect on desktop.'}`
+					text: `<strong>${winner}</strong> converts better by <strong>${diff}pp</strong> (Mobile: ${mRate}% · RPU $${mRpu} · ${fmtNum(mobileUsers)} users — Desktop: ${dRate}% · RPU $${dRpu} · ${fmtNum(desktopUsers)} users). ${parseFloat(mRate) > parseFloat(dRate) ? 'Optimise the mobile experience to scale further.' : 'Desktop is more valuable — ensure your LP looks perfect on desktop.'}`
 				});
+			}
+
+			// 9. Digistore attribution coverage (based on real sync data)
+			if (totals && totals.total_conversions > 0 && totals.unmatched_conversions != null) {
+				const matched   = totals.matched_conversions   || 0;
+				const unmatched = totals.unmatched_conversions || 0;
+				const matchPct  = Math.round(matched / totals.total_conversions * 100);
+				const unmatchedRev = totals.unmatched_revenue || 0;
+				if (unmatched > 0) {
+					const icon  = matchPct >= 80 ? '✅' : matchPct >= 50 ? '⚠️' : '🔴';
+					const color = matchPct >= 80 ? 'var(--green)' : matchPct >= 50 ? 'var(--yellow)' : 'var(--red)';
+					insights.push({
+						icon, color,
+						title: 'Digistore Attribution Coverage',
+						text: `<strong>${matchPct}%</strong> of orders (${matched.toLocaleString()}/${totals.total_conversions.toLocaleString()}) are matched to a user journey with full UTM &amp; device attribution. <strong>${unmatched.toLocaleString()} orders</strong> worth <strong style="color:${color}">${fmtEUR(unmatchedRev)}</strong> came from Digistore without a tracked browser session — likely direct links, email or a different device. Revenue is counted correctly in all metrics regardless.`
+					});
+				}
 			}
 
 			el.style.display = 'block';
@@ -3297,7 +3314,7 @@
 					users: +r.cells[1].textContent.replace(/,/g, ''),
 					pageviews: +r.cells[2].textContent.replace(/,/g, ''),
 					conversions: +r.cells[3].textContent.replace(/,/g, ''),
-					revenue: parseFloat(r.cells[4].textContent.replace(/[€,]/g, '')),
+					revenue: parseFloat(r.cells[4].textContent.replace(/[$,]/g, '')),
 					conversion_rate: parseFloat(r.cells[5].textContent),
 				}));
 				// Simpler: just reload
