@@ -34,9 +34,13 @@
 		// Lasă GOL [] pentru a dezactiva filtrarea (acceptă orice domeniu).
 		ALLOWED_DOMAINS: [
 			'www.forgottenhomeapothecary.com',
+			'forgottenhomeapothecary.com',
 			'www.buginguide.com',
+			'buginguide.com',
 			'www.theamishways.com',
+			'theamishways.com',
 			'nogridsurvivalprojects.com',
+			'www.nogridsurvivalprojects.com',
 			'advertorials645.lpages.co',
 			'wildernesslongtermsurvival.com',
 			'www.wildernesslongtermsurvival.com',
