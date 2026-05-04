@@ -807,10 +807,10 @@
 			const isLeadpagesButton = element.classList.contains('lp-button-react');
 			const urlAttribute = isLeadpagesButton ? 'data-widget-link' : 'href';
 
-			// Check dacă link-ul merge către un domeniu de checkout
+			// Check dacă link-ul merge către un domeniu de checkout SAU către un path de checkout (ex: /checkout, /checkoutbundle)
 			const isCheckoutLink = CONFIG.CHECKOUT_DOMAINS.some(domain =>
 				href.includes(domain)
-			);
+			) || /\/checkout/i.test(href);
 
 			if (isCheckoutLink) {
 				try {
