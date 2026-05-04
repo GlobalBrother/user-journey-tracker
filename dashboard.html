@@ -1362,6 +1362,7 @@
 					<input type="text" id="userIdInput" placeholder="Type fingerprint ID…"
 						style="font-family:monospace;font-size:12px;" autocomplete="off" />
 					<button class="btn btn-primary" id="btnLookup">Look up</button>
+					<button class="btn" id="btnLookupReset" style="display:none;">✕ Reset</button>
 					<div id="searchSuggestions" class="search-suggestions" style="display:none;"></div>
 				</div>
 				<div id="journeyResult"></div>
@@ -3071,6 +3072,7 @@
 			const el = document.getElementById('journeyResult');
 			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading journey…</div>';
+			document.getElementById('btnLookupReset').style.display = 'inline-flex';
 
 			try {
 				const data = await fetchJourney(userId);
@@ -3337,6 +3339,12 @@
 		document.getElementById('btnLookup').addEventListener('click', () => {
 			const uid = document.getElementById('userIdInput').value.trim();
 			if (uid) lookupUser(uid);
+		});
+
+		document.getElementById('btnLookupReset').addEventListener('click', () => {
+			document.getElementById('userIdInput').value = '';
+			document.getElementById('journeyResult').innerHTML = '';
+			document.getElementById('btnLookupReset').style.display = 'none';
 		});
 
 		document.getElementById('userIdInput').addEventListener('keydown', e => {
