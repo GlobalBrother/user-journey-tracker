@@ -1441,6 +1441,7 @@
 		let statsData = null;
 		let prevStatsData = null;
 		let _adsMap = new Map(); // slug_lower → {preview_shareable_link, ad_format, adset_name, campaign_name}
+		let _ltvData = null;     // LTV data — re-render after _adsMap is populated
 		let sortColD = 'revenue';
 		let sortDirD = 'desc';
 		let sortCol = 'revenue';
@@ -1706,6 +1707,7 @@
 		}
 
 		function renderLtv(data) {
+			_ltvData = data;
 			const el = document.getElementById('ltvPanel');
 			if (!data || !data.by_source || data.by_source.length === 0) {
 				el.innerHTML = '<p style="color:var(--text3);">No conversion data in this period.</p>'; return;
@@ -3043,6 +3045,7 @@
 						'Updated ' + new Date().toLocaleTimeString('en-GB');
 					fetchAdsMap(stats.by_slug || []).then(() => {
 						if (!signal.aborted && statsData) renderSlugTable(statsData.by_slug || []);
+						if (!signal.aborted && _ltvData) renderLtv(_ltvData);
 					}).catch(() => null);
 					return stats;
 				});
