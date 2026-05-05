@@ -1710,12 +1710,7 @@
 			if (!data || !data.by_source || data.by_source.length === 0) {
 				el.innerHTML = '<p style="color:var(--text3);">No conversion data in this period.</p>'; return;
 			}
-			// Filter out slugs already shown in Ad Slugs Performance to avoid duplication
-			const adSlugSet = new Set((statsData?.by_slug || []).map(s => (s.slug || '').toLowerCase()));
-			const sources = data.by_source.filter(row => !adSlugSet.has((row.slug || '').toLowerCase()));
-			if (sources.length === 0) {
-				el.innerHTML = '<p style="color:var(--text3);">All sources are already shown in Ad Slugs Performance above.</p>'; return;
-			}
+			const sources = data.by_source;
 			let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
 				<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
 					<th style="text-align:left;padding:6px 8px;">Source</th>
@@ -1754,11 +1749,10 @@
 			el.innerHTML = html;
 		}
 
-		function _productLink(productId, productName, topDomain) {
+		function _productLink(productId, productName, topUrl) {
 			const label = escHtml(productName || productId || '—');
-			if (!topDomain) return `<span style="color:var(--accent2);">${label}</span>`;
-			const url = `https://${topDomain}`;
-			return `<a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${escHtml(topDomain)}">${label} <span style="font-size:11px;">↗</span></a>`;
+			if (!topUrl) return `<span style="color:var(--accent2);">${label}</span>`;
+			return `<a href="${escHtml(topUrl)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${escHtml(topUrl)}">${label} <span style="font-size:11px;">↗</span></a>`;
 		}
 
 		function renderProductRetention(data) {
@@ -1770,7 +1764,7 @@
 			for (const prod of data.products) {
 				html += `<div style="margin-bottom:20px;">
 					<div style="font-weight:600;margin-bottom:8px;">
-						${_productLink(prod.product_id, prod.product_name, prod.top_domain)}
+						${_productLink(prod.product_id, prod.product_name, prod.top_url)}
 						<span style="font-size:11px;color:var(--text3);margin-left:8px;">${fmtNum(prod.total_buyers)} buyers · ${fmtEUR(prod.total_revenue)}</span>
 					</div>`;
 				if (prod.cross_sells.length === 0) {
@@ -1785,7 +1779,7 @@
 					for (const cs of prod.cross_sells) {
 						const csColor = cs.cross_sell_rate_pct >= 30 ? 'var(--green)' : cs.cross_sell_rate_pct >= 10 ? 'var(--yellow)' : 'var(--text2)';
 						html += `<tr style="border-bottom:1px solid var(--border);">
-							<td style="padding:4px 8px;">${_productLink(cs.product_id, cs.product_name, cs.top_domain)}</td>
+							<td style="padding:4px 8px;">${_productLink(cs.product_id, cs.product_name, cs.top_url)}</td>
 							<td style="text-align:right;padding:4px 8px;">${fmtNum(cs.also_bought)}</td>
 							<td style="text-align:right;padding:4px 8px;font-weight:700;color:${csColor};">${cs.cross_sell_rate_pct}%</td>
 						</tr>`;
