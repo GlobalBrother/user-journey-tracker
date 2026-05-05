@@ -1330,6 +1330,17 @@
 			</div>
 		</div>
 
+		<!-- Checkout Abandon Rate -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Checkout Abandon Rate</span>
+				<span style="font-size:12px;color:var(--text3);">Users who clicked checkout but didn't convert</span>
+			</div>
+			<div class="panel-body" id="abandonRatePanel">
+				<div class="loading"><span class="spinner"></span> Loading…</div>
+			</div>
+		</div>
+
 		<!-- Conversion Funnel -->
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
@@ -1348,6 +1359,28 @@
 					<button class="btn btn-primary btn-sm" id="btnCalcFunnel">▶ Calculate Funnel</button>
 				</div>
 				<div id="funnelResult" style="margin-top:20px;"></div>
+			</div>
+		</div>
+
+		<!-- LTV per Source -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">LTV per Traffic Source</span>
+				<span style="font-size:12px;color:var(--text3);">Average Lifetime Value, revenue and repeat purchase rate per ad slug</span>
+			</div>
+			<div class="panel-body" id="ltvPanel">
+				<div class="loading"><span class="spinner"></span> Loading…</div>
+			</div>
+		</div>
+
+		<!-- Product Cross-sell / Retention -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Product Cross-sell &amp; Retention</span>
+				<span style="font-size:12px;color:var(--text3);">For each product: how many buyers also purchased another product</span>
+			</div>
+			<div class="panel-body" id="productRetentionPanel">
+				<div class="loading"><span class="spinner"></span> Loading…</div>
 			</div>
 		</div>
 
@@ -1594,6 +1627,149 @@
 			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/funnel?${params}`, { headers: HEADERS, signal });
 			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
 			return res.json();
+		}
+
+		async function fetchAbandonRate(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/checkout/abandon-rate?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
+
+		async function fetchLtv(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/ltv?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
+
+		async function fetchProductRetention(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/product-retention?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
+
+		function renderAbandonRate(data) {
+			const el = document.getElementById('abandonRatePanel');
+			if (!data || !data.overall) { el.innerHTML = '<p style="color:var(--text3);">No checkout events in this period.</p>'; return; }
+			const o = data.overall;
+			const color = o.abandon_rate_pct > 70 ? 'var(--red)' : o.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
+			let html = `<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:20px;">
+				<div style="text-align:center;">
+					<div style="font-size:28px;font-weight:700;color:${color};">${o.abandon_rate_pct}%</div>
+					<div style="font-size:11px;color:var(--text3);">Abandon Rate</div>
+				</div>
+				<div style="text-align:center;">
+					<div style="font-size:22px;font-weight:600;">${fmtNum(o.initiated)}</div>
+					<div style="font-size:11px;color:var(--text3);">Initiated Checkout</div>
+				</div>
+				<div style="text-align:center;">
+					<div style="font-size:22px;font-weight:600;color:var(--green);">${fmtNum(o.converted)}</div>
+					<div style="font-size:11px;color:var(--text3);">Converted</div>
+				</div>
+				<div style="text-align:center;">
+					<div style="font-size:22px;font-weight:600;color:var(--red);">${fmtNum(o.abandoned)}</div>
+					<div style="font-size:11px;color:var(--text3);">Abandoned</div>
+				</div>
+			</div>`;
+			if (data.by_slug && data.by_slug.length > 0) {
+				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
+						<th style="text-align:left;padding:6px 8px;">Source</th>
+						<th style="text-align:right;padding:6px 8px;">Initiated</th>
+						<th style="text-align:right;padding:6px 8px;">Converted</th>
+						<th style="text-align:right;padding:6px 8px;">Abandoned</th>
+						<th style="text-align:right;padding:6px 8px;">Abandon Rate</th>
+					</tr></thead><tbody>`;
+				for (const row of data.by_slug) {
+					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
+					html += `<tr style="border-bottom:1px solid var(--border);">
+						<td style="padding:6px 8px;font-family:monospace;color:var(--accent2);">${row.slug}</td>
+						<td style="text-align:right;padding:6px 8px;">${fmtNum(row.initiated)}</td>
+						<td style="text-align:right;padding:6px 8px;color:var(--green);">${fmtNum(row.converted)}</td>
+						<td style="text-align:right;padding:6px 8px;color:var(--red);">${fmtNum(row.abandoned)}</td>
+						<td style="text-align:right;padding:6px 8px;font-weight:700;color:${rc};">${row.abandon_rate_pct}%</td>
+					</tr>`;
+				}
+				html += `</tbody></table>`;
+			}
+			el.innerHTML = html;
+		}
+
+		function renderLtv(data) {
+			const el = document.getElementById('ltvPanel');
+			if (!data || !data.by_source || data.by_source.length === 0) {
+				el.innerHTML = '<p style="color:var(--text3);">No conversion data in this period.</p>'; return;
+			}
+			let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+				<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
+					<th style="text-align:left;padding:6px 8px;">Source</th>
+					<th style="text-align:right;padding:6px 8px;">Buyers</th>
+					<th style="text-align:right;padding:6px 8px;">Orders</th>
+					<th style="text-align:right;padding:6px 8px;">Revenue</th>
+					<th style="text-align:right;padding:6px 8px;">Avg Order</th>
+					<th style="text-align:right;padding:6px 8px;">Avg LTV</th>
+					<th style="text-align:right;padding:6px 8px;">Repeat Buyers</th>
+					<th style="text-align:right;padding:6px 8px;">Repeat Rate</th>
+				</tr></thead><tbody>`;
+			for (const row of data.by_source) {
+				const repeatColor = row.repeat_rate_pct > 10 ? 'var(--green)' : 'var(--text2)';
+				html += `<tr style="border-bottom:1px solid var(--border);">
+					<td style="padding:6px 8px;font-family:monospace;color:var(--accent2);">${row.slug}</td>
+					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.unique_buyers)}</td>
+					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.total_orders)}</td>
+					<td style="text-align:right;padding:6px 8px;">${fmtEUR(row.total_revenue)}</td>
+					<td style="text-align:right;padding:6px 8px;">${fmtEUR(row.avg_order_value)}</td>
+					<td style="text-align:right;padding:6px 8px;font-weight:700;color:var(--accent);">${fmtEUR(row.avg_ltv)}</td>
+					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.repeat_buyers)}</td>
+					<td style="text-align:right;padding:6px 8px;color:${repeatColor};">${row.repeat_rate_pct}%</td>
+				</tr>`;
+			}
+			html += `</tbody></table>`;
+			el.innerHTML = html;
+		}
+
+		function renderProductRetention(data) {
+			const el = document.getElementById('productRetentionPanel');
+			if (!data || !data.products || data.products.length === 0) {
+				el.innerHTML = '<p style="color:var(--text3);">No product data in this period.</p>'; return;
+			}
+			let html = '';
+			for (const prod of data.products) {
+				html += `<div style="margin-bottom:20px;">
+					<div style="font-weight:600;margin-bottom:8px;">
+						<span style="color:var(--accent2);">${prod.product_name}</span>
+						<span style="font-size:11px;color:var(--text3);margin-left:8px;">${fmtNum(prod.total_buyers)} buyers · ${fmtEUR(prod.total_revenue)}</span>
+					</div>`;
+				if (prod.cross_sells.length === 0) {
+					html += `<div style="font-size:12px;color:var(--text3);padding-left:12px;">No cross-sell data for this period.</div>`;
+				} else {
+					html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+						<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
+							<th style="text-align:left;padding:4px 8px;">Also Bought</th>
+							<th style="text-align:right;padding:4px 8px;">Buyers</th>
+							<th style="text-align:right;padding:4px 8px;">Cross-sell Rate</th>
+						</tr></thead><tbody>`;
+					for (const cs of prod.cross_sells) {
+						const csColor = cs.cross_sell_rate_pct >= 30 ? 'var(--green)' : cs.cross_sell_rate_pct >= 10 ? 'var(--yellow)' : 'var(--text2)';
+						html += `<tr style="border-bottom:1px solid var(--border);">
+							<td style="padding:4px 8px;color:var(--text2);">${cs.product_name}</td>
+							<td style="text-align:right;padding:4px 8px;">${fmtNum(cs.also_bought)}</td>
+							<td style="text-align:right;padding:4px 8px;font-weight:700;color:${csColor};">${cs.cross_sell_rate_pct}%</td>
+						</tr>`;
+					}
+					html += `</tbody></table>`;
+				}
+				html += `</div>`;
+			}
+			el.innerHTML = html;
 		}
 
 		// ════════════════════════════════════════
@@ -2791,6 +2967,10 @@
 					fetchCohorts(signal)
 						.then(cohorts => { if (!signal.aborted) renderCohorts(cohorts); })
 						.catch(() => null);
+					// Noile panouri independente
+					fetchAbandonRate(signal).then(d => { if (!signal.aborted) renderAbandonRate(d); }).catch(() => null);
+					fetchLtv(signal).then(d => { if (!signal.aborted) renderLtv(d); }).catch(() => null);
+					fetchProductRetention(signal).then(d => { if (!signal.aborted) renderProductRetention(d); }).catch(() => null);
 				} else {
 					const prev = getPreviousPeriod(start, end);
 					const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
@@ -2814,6 +2994,10 @@
 							if (!signal.aborted) renderCohorts(cohorts);
 						})
 						.catch(() => null);
+					// Noile panouri independente
+					fetchAbandonRate(signal).then(d => { if (!signal.aborted) renderAbandonRate(d); }).catch(() => null);
+					fetchLtv(signal).then(d => { if (!signal.aborted) renderLtv(d); }).catch(() => null);
+					fetchProductRetention(signal).then(d => { if (!signal.aborted) renderProductRetention(d); }).catch(() => null);
 				}
 
 				// ── Faza 1: KPIs + Trend + RecentConvs — render independent la sosire ──
