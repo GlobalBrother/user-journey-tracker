@@ -1710,6 +1710,12 @@
 			if (!data || !data.by_source || data.by_source.length === 0) {
 				el.innerHTML = '<p style="color:var(--text3);">No conversion data in this period.</p>'; return;
 			}
+			// Filter out slugs already shown in Ad Slugs Performance to avoid duplication
+			const adSlugSet = new Set((statsData?.by_slug || []).map(s => (s.slug || '').toLowerCase()));
+			const sources = data.by_source.filter(row => !adSlugSet.has((row.slug || '').toLowerCase()));
+			if (sources.length === 0) {
+				el.innerHTML = '<p style="color:var(--text3);">All sources are already shown in Ad Slugs Performance above.</p>'; return;
+			}
 			let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
 				<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
 					<th style="text-align:left;padding:6px 8px;">Source</th>
@@ -1720,11 +1726,20 @@
 					<th style="text-align:right;padding:6px 8px;">Avg LTV</th>
 					<th style="text-align:right;padding:6px 8px;">Repeat Buyers</th>
 					<th style="text-align:right;padding:6px 8px;">Repeat Rate</th>
+					<th style="text-align:center;padding:6px 8px;width:44px;">Ads</th>
 				</tr></thead><tbody>`;
-			for (const row of data.by_source) {
+			for (const row of sources) {
+				const adInfo = _adsMap.get((row.slug || '').toLowerCase());
 				const repeatColor = row.repeat_rate_pct > 10 ? 'var(--green)' : 'var(--text2)';
+				const slugLabel = escHtml(row.slug || 'direct');
+				const slugCell = adInfo?.preview_url
+					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;font-family:monospace;" title="${escHtml(row.slug || '')}">${slugLabel} <span style="font-size:11px;">↗</span></a>`
+					: `<span style="color:var(--accent2);font-family:monospace;">${slugLabel}</span>`;
+				const amsCell = adInfo?.ad_id
+					? `<a href="https://adsmanager.facebook.com/adsmanager/manage/ads?selected_ad_ids=${adInfo.ad_id}" target="_blank" rel="noopener" title="Open in Facebook Ads Manager" style="font-size:16px;text-decoration:none;opacity:0.8;">📊</a>`
+					: '<span style="color:var(--text3);font-size:11px;">—</span>';
 				html += `<tr style="border-bottom:1px solid var(--border);">
-					<td style="padding:6px 8px;font-family:monospace;color:var(--accent2);">${row.slug}</td>
+					<td style="padding:6px 8px;">${slugCell}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.unique_buyers)}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.total_orders)}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtEUR(row.total_revenue)}</td>
@@ -1732,10 +1747,18 @@
 					<td style="text-align:right;padding:6px 8px;font-weight:700;color:var(--accent);">${fmtEUR(row.avg_ltv)}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.repeat_buyers)}</td>
 					<td style="text-align:right;padding:6px 8px;color:${repeatColor};">${row.repeat_rate_pct}%</td>
+					<td style="text-align:center;padding:6px 8px;">${amsCell}</td>
 				</tr>`;
 			}
 			html += `</tbody></table>`;
 			el.innerHTML = html;
+		}
+
+		function _productLink(productId, productName, topDomain) {
+			const label = escHtml(productName || productId || '—');
+			if (!topDomain) return `<span style="color:var(--accent2);">${label}</span>`;
+			const url = `https://${topDomain}`;
+			return `<a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${escHtml(topDomain)}">${label} <span style="font-size:11px;">↗</span></a>`;
 		}
 
 		function renderProductRetention(data) {
@@ -1747,7 +1770,7 @@
 			for (const prod of data.products) {
 				html += `<div style="margin-bottom:20px;">
 					<div style="font-weight:600;margin-bottom:8px;">
-						<span style="color:var(--accent2);">${prod.product_name}</span>
+						${_productLink(prod.product_id, prod.product_name, prod.top_domain)}
 						<span style="font-size:11px;color:var(--text3);margin-left:8px;">${fmtNum(prod.total_buyers)} buyers · ${fmtEUR(prod.total_revenue)}</span>
 					</div>`;
 				if (prod.cross_sells.length === 0) {
@@ -1762,7 +1785,7 @@
 					for (const cs of prod.cross_sells) {
 						const csColor = cs.cross_sell_rate_pct >= 30 ? 'var(--green)' : cs.cross_sell_rate_pct >= 10 ? 'var(--yellow)' : 'var(--text2)';
 						html += `<tr style="border-bottom:1px solid var(--border);">
-							<td style="padding:4px 8px;color:var(--text2);">${cs.product_name}</td>
+							<td style="padding:4px 8px;">${_productLink(cs.product_id, cs.product_name, cs.top_domain)}</td>
 							<td style="text-align:right;padding:4px 8px;">${fmtNum(cs.also_bought)}</td>
 							<td style="text-align:right;padding:4px 8px;font-weight:700;color:${csColor};">${cs.cross_sell_rate_pct}%</td>
 						</tr>`;
