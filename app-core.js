@@ -740,12 +740,14 @@
 	 * AppCore.trackEvent('video_play', {video_id: 'vimeo-12345'});
 	 */
 	async function trackEvent(eventName, eventData = {}) {
+		const firstTouch = getTrafficSource();
 		const payload = {
 			user_id: await getUserId(),
 			event_type: 'custom_event',
 			event_name: eventName,
 			domain: window.location.hostname,
 			url: window.location.href,
+			slug: firstTouch.slug,
 			timestamp: new Date().toISOString(),
 			metadata: eventData
 		};
