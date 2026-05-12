@@ -1686,6 +1686,7 @@
 				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
 					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
 						<th style="text-align:left;padding:6px 8px;">Source</th>
+						<th style="text-align:left;padding:6px 8px;">Domain</th>
 						<th style="text-align:right;padding:6px 8px;">Initiated</th>
 						<th style="text-align:right;padding:6px 8px;">Converted</th>
 						<th style="text-align:right;padding:6px 8px;">Abandoned</th>
@@ -1693,8 +1694,10 @@
 					</tr></thead><tbody>`;
 				for (const row of data.by_slug) {
 					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
+					const domainVal = Array.isArray(row.domain) ? row.domain.join(', ') : (row.domain || '—');
 					html += `<tr style="border-bottom:1px solid var(--border);">
 						<td style="padding:6px 8px;font-family:monospace;color:var(--accent2);">${row.slug}</td>
+						<td style="padding:6px 8px;color:var(--text2);">${domainVal}</td>
 						<td style="text-align:right;padding:6px 8px;">${fmtNum(row.initiated)}</td>
 						<td style="text-align:right;padding:6px 8px;color:var(--green);">${fmtNum(row.converted)}</td>
 						<td style="text-align:right;padding:6px 8px;color:var(--red);">${fmtNum(row.abandoned)}</td>
