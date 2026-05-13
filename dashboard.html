@@ -1548,15 +1548,41 @@
 			if (slug) params.set('slug', slug);
 			if (domain) params.set('domain', domain);
 
-			// Stats can be slow on first load (no cache) — allow up to 90s, no retry
+			// Stats can be slow on first load — retry up to 4x on 5xx (DB warm-up)
 			const statsAbort = new AbortController();
 			const statsTimeout = setTimeout(() => statsAbort.abort(), 90000);
-			const combinedSignal = signal;
 			if (signal) signal.addEventListener('abort', () => statsAbort.abort(), { once: true });
 			try {
-				const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal: statsAbort.signal });
-				if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-				return res.json();
+				let lastErr;
+				for (let attempt = 0; attempt < 4; attempt++) {
+					if (statsAbort.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+					try {
+						const res = await fetch(`${API_ENDPOINT}/api/analytics/stats?${params}`, { headers: HEADERS, signal: statsAbort.signal });
+						if (res.ok) return res.json();
+						// Retry on 5xx (DB warm-up / transient errors)
+						if (res.status >= 500 && attempt < 3) {
+							lastErr = new Error(`API ${res.status}: ${res.statusText}`);
+							const delay = 1500 * Math.pow(2, attempt); // 1.5s, 3s, 6s
+							await new Promise((resolve, reject) => {
+								const t = setTimeout(resolve, delay);
+								statsAbort.signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+							});
+							continue;
+						}
+						throw new Error(`API ${res.status}: ${res.statusText}`);
+					} catch (err) {
+						if (err.name === 'AbortError') throw err;
+						lastErr = err;
+						if (attempt < 3) {
+							const delay = 1500 * Math.pow(2, attempt);
+							await new Promise((resolve, reject) => {
+								const t = setTimeout(resolve, delay);
+								statsAbort.signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+							});
+						}
+					}
+				}
+				throw lastErr;
 			} finally {
 				clearTimeout(statsTimeout);
 			}
