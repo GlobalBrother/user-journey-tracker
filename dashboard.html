@@ -2846,10 +2846,12 @@
 
 				// ── UID chips — converting users first (★), then others, max 6 shown ──
 				const chips = j.sample_user_ids || [];
-				const convertingSet = new Set(j.sample_converting_user_ids || []);
-				// Pune userii cu conversie primii
-				const convertingChips = chips.filter(uid => convertingSet.has(uid));
-				const otherChips = chips.filter(uid => !convertingSet.has(uid));
+				const convertingIds = j.sample_converting_user_ids || [];
+				const convertingSet = new Set(convertingIds);
+				// Merge both arrays (converting users may not be in sample_user_ids), dedup
+				const mergedUids = [...new Set([...convertingIds, ...chips])];
+				const convertingChips = mergedUids.filter(uid => convertingSet.has(uid));
+				const otherChips = mergedUids.filter(uid => !convertingSet.has(uid));
 				const allChipsSorted = [...convertingChips, ...otherChips];
 				const SHOW = 6;
 				const shown = allChipsSorted.slice(0, SHOW);
