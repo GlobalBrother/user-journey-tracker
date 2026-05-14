@@ -799,6 +799,12 @@
 		// Găsește toate link-urile și butoanele Leadpages
 		const elements = document.querySelectorAll('a[href], .lp-button-react[data-widget-link]');
 
+		// Pre-compute checkout elements list for position tracking
+		const checkoutElements = Array.from(elements).filter(el => {
+			const h = el.getAttribute('href') || el.getAttribute('data-widget-link') || '';
+			return CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h);
+		});
+
 		elements.forEach(element => {
 			// ── Evită re-procesarea elementelor deja enhanced ──────────
 			// NOTĂ: dataset.acEnhanced e insuficient singur — Leadpages distruge
@@ -822,6 +828,10 @@
 			if (isCheckoutLink) {
 				try {
 					const url = new URL(href, window.location.origin);
+
+					// Position of this checkout button among all checkout buttons on the page (1-based)
+					const buttonIndex = checkoutElements.indexOf(element) + 1;
+					const buttonTotal = checkoutElements.length;
 
 					// Extrage product_id din URL (ex: /product/640053/ → 640053)
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
@@ -877,6 +887,8 @@
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
 								checkout_url: url.toString(),
+								button_position: buttonIndex,
+								button_total: buttonTotal,
 								timestamp: Date.now(),
 								element_type: isLeadpagesButton ? 'leadpages_button' : 'link'
 							});

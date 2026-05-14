@@ -1989,11 +1989,19 @@
 									<thead><tr style="color:var(--text3);">
 										<th style="${thStyleL}">Button / Product</th>
 										<th style="${thStyle}">Clicks</th>
+										<th style="${thStyle}">Positions</th>
 									</tr></thead><tbody>`;
 						for (const btn of row.buttons) {
+							const posStr = btn.positions && Object.keys(btn.positions).length
+								? Object.entries(btn.positions)
+									.sort((a,b) => Number(a[0]) - Number(b[0]))
+									.map(([pos, cnt]) => `#${pos}: ${fmtNum(cnt)}`)
+									.join(', ')
+								: '—';
 							html += `<tr style="border-top:1px solid var(--border);">
 								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btn.label)}</td>
 								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
+								<td style="${thStyle};color:var(--text3);">${escHtml(posStr)}</td>
 							</tr>`;
 						}
 						html += `</tbody></table></td></tr>`;
