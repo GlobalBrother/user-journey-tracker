@@ -199,11 +199,14 @@
 
 	let userId = null;
 	let fingerprint = null;
+	let fingerprintType = null; // 'persistent' = din localStorage, 'new' = generat acum
 	let pageviewSent = false;
 	let pageLoadStartTime = null;
 
 	/**
-	 * Obține sau creează user ID
+	 * Obține sau creează user ID.
+	 * Setează fingerprintType: 'persistent' dacă userId exista în localStorage,
+	 * 'new' dacă a fost generat acum (prima vizită sau după ștergere ITP).
 	 */
 	async function getUserId() {
 		if (userId) return userId;
@@ -215,25 +218,25 @@
 		const storedUserId = localStorage.getItem(STORAGE_KEY);
 		if (storedUserId) {
 			userId = storedUserId;
+			fingerprintType = 'persistent';
 			debugLog('User ID from localStorage:', userId);
 			return userId;
 		}
 
-		// 2. Prima vizită pe acest domeniu — generează fingerprint.
-		// Fingerprint-ul este util cross-domain pe Chrome/Firefox (unde e stabil):
-		// dacă userul a vizitat domeniul A înainte, domeniul B va genera același
-		// fingerprint → același user_id fără să fi vizitat B înainte.
-		// Pe iOS Safari fingerprint-ul diferă per domeniu (canvas noise per eTLD+1),
-		// deci nu ajută cross-domain, dar nici nu strică — tot generează un ID unic.
+		// 2. Prima vizită pe acest domeniu (sau după ce ITP/utilizatorul a șters localStorage)
+		// — generează fingerprint nou. Aceasta este o sesiune "new", fără identificare anterioară.
+		// Pe iOS Safari cu ITP, localStorage poate fi șters după 7 zile de inactivitate,
+		// deci același om poate reveni ca utilizator "new".
 		fingerprint = await generateFingerprint();
 		userId = fingerprint;
+		fingerprintType = 'new';
 
 		localStorage.setItem(STORAGE_KEY, userId);
 		if (!localStorage.getItem(STORAGE_KEY_FIRST_SEEN)) {
 			localStorage.setItem(STORAGE_KEY_FIRST_SEEN, new Date().toISOString());
 		}
 
-		debugLog('User ID generated:', userId);
+		debugLog('User ID generated (new):', userId);
 		return userId;
 	}
 
@@ -579,6 +582,7 @@
 
 		const payload = {
 			user_id: await getUserId(),  // Ensures localStorage is set before pagehide can fire
+			fingerprint_type: fingerprintType,  // 'persistent' = known returning user, 'new' = first visit or ITP reset
 			cohort_id: await calculateCohortId(firstTouch, deviceType, navigator.language),
 			domain: window.location.hostname,
 			url: window.location.href,
@@ -702,6 +706,7 @@
 
 		const payload = {
 			user_id: await getUserId(),
+			fingerprint_type: fingerprintType,  // 'persistent' = known returning user, 'new' = first visit or ITP reset
 			tracking_user_id: trackingUserId,  // original visitor user_id from landing page
 			cohort_id: await calculateCohortId(trafficSource, deviceType, navigator.language),
 			order_id: conversionData.order_id || null,

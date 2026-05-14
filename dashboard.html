@@ -132,9 +132,11 @@
 		input[type="date"] {
 			color-scheme: dark;
 		}
+
 		#btnRefresh {
 			min-width: 76px;
 		}
+
 		input[type="date"]:focus,
 		input[type="text"]:focus {
 			border-color: var(--accent);
@@ -276,7 +278,9 @@
 			gap: 16px;
 			margin-bottom: 24px;
 		}
-		.grid-2 .panel .table-wrap, .grid-2 .panel .panel-body {
+
+		.grid-2 .panel .table-wrap,
+		.grid-2 .panel .panel-body {
 			max-height: 371px;
 			overflow: auto;
 		}
@@ -311,13 +315,13 @@
 		.panel-body {
 			padding: 20px;
 			max-height: 500px;
-    	overflow: auto;
+			overflow: auto;
 		}
 
 		/* ── TABLE ── */
 		.table-wrap {
 			overflow: auto;
-    	max-height: 550px;
+			max-height: 550px;
 		}
 
 		table {
@@ -454,14 +458,17 @@
 			transition: background .15s, border-color .15s, color .15s;
 			user-select: none;
 		}
+
 		.domain-chip:hover {
 			background: rgba(99, 102, 241, 0.28);
 		}
+
 		.domain-chip.selected {
 			border-color: var(--accent);
 			background: rgba(99, 102, 241, 0.30);
 			color: #fff;
 		}
+
 		.domain-chip.unselected {
 			opacity: 0.38;
 		}
@@ -471,6 +478,7 @@
 			font-size: 11px;
 			padding: 0 1px;
 		}
+
 		/* timing label between arrows */
 		.timing-sep {
 			display: flex;
@@ -479,10 +487,12 @@
 			gap: 1px;
 			padding: 0 2px;
 		}
+
 		.timing-sep .arrow-line {
 			color: var(--text3);
 			font-size: 11px;
 		}
+
 		.timing-sep .timing-label {
 			font-size: 9px;
 			color: var(--text3);
@@ -506,6 +516,7 @@
 			flex-wrap: wrap;
 			font-size: 11px;
 		}
+
 		.domain-conv-badge {
 			display: inline-flex;
 			align-items: center;
@@ -518,9 +529,11 @@
 			color: var(--text2);
 			font-family: monospace;
 		}
+
 		.domain-conv-badge .dc-name {
 			color: var(--text3);
 		}
+
 		.domain-conv-badge .dc-val {
 			color: var(--green);
 			font-weight: 600;
@@ -560,14 +573,17 @@
 			border-color: rgba(251, 191, 36, 0.5);
 			font-weight: 700;
 		}
+
 		.journey-uid-chip.has-conversion::before {
 			content: '★ ';
 			font-size: 10px;
 		}
+
 		.journey-uid-chip.has-conversion:hover {
 			background: rgba(251, 191, 36, 0.35);
 			color: #fff;
 		}
+
 		.journey-more-label {
 			font-size: 11px;
 			color: var(--text3);
@@ -582,7 +598,10 @@
 			cursor: pointer;
 			opacity: 0.75;
 		}
-		.journey-filter-hint:hover { opacity: 1; }
+
+		.journey-filter-hint:hover {
+			opacity: 1;
+		}
 
 		/* ── SEARCH / JOURNEY MODAL ── */
 		.search-bar {
@@ -604,7 +623,7 @@
 			background: var(--surface2);
 			border: 1px solid var(--border);
 			border-radius: 8px;
-			box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 			z-index: 100;
 			overflow: hidden;
 			max-height: 320px;
@@ -621,8 +640,13 @@
 			transition: background 0.15s;
 		}
 
-		.search-suggestion-item:last-child { border-bottom: none; }
-		.search-suggestion-item:hover { background: var(--surface3, rgba(255,255,255,0.05)); }
+		.search-suggestion-item:last-child {
+			border-bottom: none;
+		}
+
+		.search-suggestion-item:hover {
+			background: var(--surface3, rgba(255, 255, 255, 0.05));
+		}
 
 		.sug-id {
 			font-family: monospace;
@@ -658,11 +682,13 @@
 			align-items: center;
 			gap: 10px;
 		}
+
 		.timeline-session-line {
 			flex: 1;
 			height: 1px;
 			background: var(--border);
 		}
+
 		.timeline-session-label {
 			font-size: 11px;
 			font-weight: 700;
@@ -682,6 +708,7 @@
 			padding: 8px 0;
 			position: relative;
 		}
+
 		.timeline-item:not(:last-child):not(.timeline-item-collapsed)::after {
 			content: '';
 			position: absolute;
@@ -705,13 +732,37 @@
 			margin-top: 1px;
 			border: 2px solid transparent;
 		}
-		.dot-pageview  { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.35); }
-		.dot-conversion { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.5); box-shadow: 0 0 8px rgba(34,197,94,0.25); }
-		.dot-custom    { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.35); }
-		.dot-collapsed { background: var(--surface2); border-color: var(--border); cursor: pointer; }
-		.dot-collapsed:hover { border-color: var(--accent2); }
 
-		.timeline-content { flex: 1; min-width: 0; }
+		.dot-pageview {
+			background: rgba(99, 102, 241, 0.15);
+			border-color: rgba(99, 102, 241, 0.35);
+		}
+
+		.dot-conversion {
+			background: rgba(34, 197, 94, 0.15);
+			border-color: rgba(34, 197, 94, 0.5);
+			box-shadow: 0 0 8px rgba(34, 197, 94, 0.25);
+		}
+
+		.dot-custom {
+			background: rgba(245, 158, 11, 0.15);
+			border-color: rgba(245, 158, 11, 0.35);
+		}
+
+		.dot-collapsed {
+			background: var(--surface2);
+			border-color: var(--border);
+			cursor: pointer;
+		}
+
+		.dot-collapsed:hover {
+			border-color: var(--accent2);
+		}
+
+		.timeline-content {
+			flex: 1;
+			min-width: 0;
+		}
 
 		.timeline-header {
 			display: flex;
@@ -719,6 +770,7 @@
 			gap: 8px;
 			flex-wrap: wrap;
 		}
+
 		.timeline-type-badge {
 			font-size: 12px;
 			font-weight: 700;
@@ -727,14 +779,32 @@
 			padding: 1px 6px;
 			border-radius: 4px;
 		}
-		.badge-pageview   { background: rgba(99,102,241,0.15); color: var(--accent); }
-		.badge-conversion { background: rgba(34,197,94,0.15); color: var(--green); }
-		.badge-custom     { background: rgba(245,158,11,0.15); color: var(--yellow); }
 
-		.timeline-time { font-size: 12px; color: var(--text3); }
+		.badge-pageview {
+			background: rgba(99, 102, 241, 0.15);
+			color: var(--accent);
+		}
+
+		.badge-conversion {
+			background: rgba(34, 197, 94, 0.15);
+			color: var(--green);
+		}
+
+		.badge-custom {
+			background: rgba(245, 158, 11, 0.15);
+			color: var(--yellow);
+		}
+
+		.timeline-time {
+			font-size: 12px;
+			color: var(--text3);
+		}
+
 		.timeline-gap-badge {
-			font-size: 10px; color: var(--text3);
-			padding: 1px 6px; border-radius: 4px;
+			font-size: 10px;
+			color: var(--text3);
+			padding: 1px 6px;
+			border-radius: 4px;
 			background: var(--surface2);
 			border: 1px solid var(--border);
 		}
@@ -747,15 +817,18 @@
 			margin: 6px 0;
 			flex-wrap: wrap;
 		}
+
 		.timeline-domain-chip {
-			font-size: 12px; font-weight: 600;
+			font-size: 12px;
+			font-weight: 600;
 			padding: 2px 7px;
 			border-radius: 5px;
-			background: rgba(34,211,238,0.1);
+			background: rgba(34, 211, 238, 0.1);
 			color: var(--accent2);
-			border: 1px solid rgba(34,211,238,0.2);
+			border: 1px solid rgba(34, 211, 238, 0.2);
 			white-space: nowrap;
 		}
+
 		.timeline-path {
 			font-size: 12px;
 			color: var(--text2);
@@ -764,17 +837,27 @@
 			text-overflow: ellipsis;
 			max-width: 340px;
 		}
+
 		.timeline-url-link {
-			font-size: 12px; color: var(--text3);
+			font-size: 12px;
+			color: var(--text3);
 			text-decoration: none;
 			border-bottom: 1px dotted var(--text3);
 		}
-		.timeline-url-link:hover { color: var(--accent2); border-color: var(--accent2); }
+
+		.timeline-url-link:hover {
+			color: var(--accent2);
+			border-color: var(--accent2);
+		}
 
 		/* UTM tags row */
 		.timeline-utm-row {
-			display: flex; gap: 5px; flex-wrap: wrap; margin-top: 3px;
+			display: flex;
+			gap: 5px;
+			flex-wrap: wrap;
+			margin-top: 3px;
 		}
+
 		.utm-tag {
 			font-size: 12px;
 			padding: 1px 6px;
@@ -787,47 +870,83 @@
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-		.utm-tag strong { color: var(--text); }
+
+		.utm-tag strong {
+			color: var(--text);
+		}
 
 		/* Conversion detail card */
 		.timeline-conv-card {
 			margin-top: 5px;
 			padding: 8px 12px;
-			background: rgba(34,197,94,0.07);
-			border: 1px solid rgba(34,197,94,0.25);
+			background: rgba(34, 197, 94, 0.07);
+			border: 1px solid rgba(34, 197, 94, 0.25);
 			border-radius: 7px;
-			display: flex; gap: 20px; flex-wrap: wrap;
+			display: flex;
+			gap: 20px;
+			flex-wrap: wrap;
 		}
-		.conv-card-stat { display: flex; flex-direction: column; gap: 1px; }
-		.conv-card-val { font-size: 13px; font-weight: 700; color: var(--green); }
-		.conv-card-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing:.05em; }
+
+		.conv-card-stat {
+			display: flex;
+			flex-direction: column;
+			gap: 1px;
+		}
+
+		.conv-card-val {
+			font-size: 13px;
+			font-weight: 700;
+			color: var(--green);
+		}
+
+		.conv-card-lbl {
+			font-size: 10px;
+			color: var(--text3);
+			text-transform: uppercase;
+			letter-spacing: .05em;
+		}
 
 		/* Collapsed duplicate events */
 		.timeline-collapsed-toggle {
-			display: flex; align-items: center; gap: 8px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
 			padding: 4px 0 4px 42px;
 			cursor: pointer;
-			font-size: 11px; color: var(--text3);
+			font-size: 11px;
+			color: var(--text3);
 			user-select: none;
 		}
-		.timeline-collapsed-toggle:hover { color: var(--accent2); }
+
+		.timeline-collapsed-toggle:hover {
+			color: var(--accent2);
+		}
+
 		.timeline-collapsed-badge {
 			background: var(--surface2);
 			border: 1px solid var(--border);
 			border-radius: 10px;
 			padding: 1px 8px;
-			font-size: 11px; font-weight: 600;
+			font-size: 11px;
+			font-weight: 600;
 			color: var(--text2);
 		}
-		.timeline-collapsed-inner { display: none; padding-left: 42px; }
-		.timeline-collapsed-inner.open { display: block; }
+
+		.timeline-collapsed-inner {
+			display: none;
+			padding-left: 42px;
+		}
+
+		.timeline-collapsed-inner.open {
+			display: block;
+		}
 
 		.time-on-page-badge {
 			display: inline-block;
 			margin-top: 3px;
 			padding: 1px 7px;
 			border-radius: 10px;
-			background: rgba(251,191,36,0.1);
+			background: rgba(251, 191, 36, 0.1);
 			color: var(--yellow);
 			font-size: 10px;
 			font-weight: 600;
@@ -982,42 +1101,124 @@
 			font-weight: 600;
 			line-height: 1.4;
 		}
-		.delta-up   { color: var(--green); }
-		.delta-down { color: var(--red); }
-		.delta-neutral { color: var(--text3); }
+
+		.delta-up {
+			color: var(--green);
+		}
+
+		.delta-down {
+			color: var(--red);
+		}
+
+		.delta-neutral {
+			color: var(--text3);
+		}
 
 		/* ── FUNNEL ── */
-		.funnel-steps { display: flex; flex-direction: column; gap: 10px; }
-		.funnel-step  { display: flex; align-items: center; gap: 12px; }
+		.funnel-steps {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.funnel-step {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
 		.funnel-step-label {
-			width: 200px; font-size: 12px; color: var(--text2);
-			white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+			width: 200px;
+			font-size: 12px;
+			color: var(--text2);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex-shrink: 0;
 		}
+
 		.funnel-bar-wrap {
-			flex: 1; background: var(--surface2); border-radius: 4px; height: 34px;
-			overflow: hidden; position: relative; min-width: 60px;
+			flex: 1;
+			background: var(--surface2);
+			border-radius: 4px;
+			height: 34px;
+			overflow: hidden;
+			position: relative;
+			min-width: 60px;
 		}
+
 		.funnel-bar-fill {
-			border-radius: 4px; height: 100%; transition: width 0.6s ease;
-			display: flex; align-items: center; padding-left: 10px; min-width: 0;
+			border-radius: 4px;
+			height: 100%;
+			transition: width 0.6s ease;
+			display: flex;
+			align-items: center;
+			padding-left: 10px;
+			min-width: 0;
 		}
-		.funnel-bar-text { font-size: 12px; font-weight: 600; color: white; white-space: nowrap; }
-		.funnel-step-meta { width: 100px; text-align: right; font-size: 11px; flex-shrink: 0; }
-		.funnel-builder { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-		.funnel-step-input { display: flex; align-items: center; gap: 8px; }
+
+		.funnel-bar-text {
+			font-size: 12px;
+			font-weight: 600;
+			color: white;
+			white-space: nowrap;
+		}
+
+		.funnel-step-meta {
+			width: 100px;
+			text-align: right;
+			font-size: 11px;
+			flex-shrink: 0;
+		}
+
+		.funnel-builder {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			margin-bottom: 16px;
+		}
+
+		.funnel-step-input {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
 		.funnel-step-num {
-			width: 22px; height: 22px; background: var(--surface2); border: 1px solid var(--border);
-			border-radius: 50%; display: flex; align-items: center; justify-content: center;
-			font-size: 11px; font-weight: 700; flex-shrink: 0; color: var(--text);
+			width: 22px;
+			height: 22px;
+			background: var(--surface2);
+			border: 1px solid var(--border);
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 11px;
+			font-weight: 700;
+			flex-shrink: 0;
+			color: var(--text);
 		}
+
 		.funnel-step-remove {
-			background: none; border: none; color: var(--text3); cursor: pointer;
-			font-size: 18px; padding: 0 4px; line-height: 1;
+			background: none;
+			border: none;
+			color: var(--text3);
+			cursor: pointer;
+			font-size: 18px;
+			padding: 0 4px;
+			line-height: 1;
 		}
-		.funnel-step-remove:hover { color: var(--red); }
+
+		.funnel-step-remove:hover {
+			color: var(--red);
+		}
 
 		/* ── Custom th tooltip ── */
-		[data-tip] { position: relative; cursor: default; }
+		[data-tip] {
+			position: relative;
+			cursor: default;
+		}
+
 		[data-tip]::after {
 			content: attr(data-tip);
 			position: absolute;
@@ -1032,17 +1233,19 @@
 			white-space: nowrap;
 			padding: 5px 9px;
 			border-radius: 6px;
-			box-shadow: 0 4px 12px rgba(0,0,0,.45);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, .45);
 			pointer-events: none;
 			opacity: 0;
 			transition: opacity .15s ease;
 			z-index: 9999;
 		}
+
 		[data-tip]::before {
 			content: '';
 			position: absolute;
 			bottom: calc(100% + 1px);
-			left: 50%; transform: translateX(-50%);
+			left: 50%;
+			transform: translateX(-50%);
 			border: 5px solid transparent;
 			border-top-color: #1e293b;
 			pointer-events: none;
@@ -1050,8 +1253,12 @@
 			transition: opacity .15s ease;
 			z-index: 9999;
 		}
+
 		[data-tip]:hover::after,
-		[data-tip]:hover::before { opacity: 1; }
+		[data-tip]:hover::before {
+			opacity: 1;
+		}
+
 		@media (max-width: 600px) {
 			.journey-meta {
 				gap: 5px 20px;
@@ -1247,8 +1454,8 @@
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
 				<span class="panel-title">Audience Cohorts</span>
-				<span style="font-size:12px;color:var(--text3);">Users grouped by traffic source + device — includes users that
-					cannot be individually identified</span>
+				<span style="font-size:12px;color:var(--text3);">Segmente de audiență după sursă de trafic + device —
+					performanța per canal de marketing</span>
 			</div>
 			<div class="panel-body" style="padding-bottom:0;">
 				<div id="cohortSummary" style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;"></div>
@@ -1265,20 +1472,24 @@
 							<th>Top Pages</th>
 							<th>Top Ad</th>
 							<th>Users</th>
+							<th
+								data-tip="Utilizatori fără ID stocat — prima vizită sau după ștergere (ex. Safari ITP după 7 zile inactivitate)">
+								New IDs</th>
 							<th>Bounce</th>
 							<th>Conversions</th>
 							<th>Revenue</th>
 							<th data-tip="Revenue Per User — total revenue ÷ users in segment">Rev/User</th>
 							<th data-tip="Average Order Value — revenue ÷ conversions">AOV</th>
 							<th>Conv.%</th>
-							<th data-tip="Avg time from first visit to first conversion (hours if &lt;1 day, else days)">Time→Conv</th>
+							<th data-tip="Avg time from first visit to first conversion (hours if &lt;1 day, else days)">Time→Conv
+							</th>
 							<th data-tip="% of users in this segment who visited more than one tracked domain">Multi-Site</th>
 							<th data-tip="Peak activity hour in UTC (24h clock) — when this segment is most active">Peak Hour</th>
 						</tr>
 					</thead>
 					<tbody id="cohortTableBody">
 						<tr>
-							<td colspan="17" class="loading"><span class="spinner"></span> Loading…</td>
+							<td colspan="18" class="loading"><span class="spinner"></span> Loading…</td>
 						</tr>
 					</tbody>
 				</table>
@@ -1369,12 +1580,17 @@
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
 				<span class="panel-title">Conversion Funnel</span>
-				<span style="font-size:12px;color:var(--text3);">Define your funnel steps — see exact drop-off between each stage</span>
+				<span style="font-size:12px;color:var(--text3);">Define your funnel steps — see exact drop-off between each
+					stage</span>
 			</div>
 			<div class="panel-body">
 				<div style="font-size:12px;color:var(--text2);margin-bottom:14px;">
-					Enter domains (e.g. <code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">mysite.com</code>) or
-					<code style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">conversion</code> as the last step for orders.
+					Enter domains (e.g. <code
+						style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">mysite.com</code>)
+					or
+					<code
+						style="color:var(--accent2);background:var(--surface2);padding:1px 5px;border-radius:3px;">conversion</code>
+					as the last step for orders.
 					We count users who completed <strong>all</strong> previous steps.
 				</div>
 				<div class="funnel-builder" id="funnelBuilder"></div>
@@ -1390,7 +1606,8 @@
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
 				<span class="panel-title">LTV per Traffic Source</span>
-				<span style="font-size:12px;color:var(--text3);">Average Lifetime Value, revenue and repeat purchase rate per ad slug</span>
+				<span style="font-size:12px;color:var(--text3);">Average Lifetime Value, revenue and repeat purchase rate per ad
+					slug</span>
 			</div>
 			<div class="panel-body" id="ltvPanel">
 				<div class="loading"><span class="spinner"></span> Loading…</div>
@@ -1401,7 +1618,8 @@
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
 				<span class="panel-title">Product Cross-sell &amp; Retention</span>
-				<span style="font-size:12px;color:var(--text3);">For each product: how many buyers also purchased another product</span>
+				<span style="font-size:12px;color:var(--text3);">For each product: how many buyers also purchased another
+					product</span>
 			</div>
 			<div class="panel-body" id="productRetentionPanel">
 				<div class="loading"><span class="spinner"></span> Loading…</div>
@@ -1478,9 +1696,9 @@
 		// { key: string, ts: number, breakdown, domains, cohorts, prevStats }
 
 		function _phase2CacheKey() {
-			const start  = document.getElementById('startDate').value;
-			const end    = document.getElementById('endDate').value;
-			const slug   = document.getElementById('slugFilter').value.trim();
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
 			const domain = document.getElementById('domainFilter').value.trim();
 			return `${start}|${end}|${slug}|${domain}`;
 		}
@@ -1714,6 +1932,10 @@
 			if (!data || !data.overall) { el.innerHTML = '<p style="color:var(--text3);">No checkout events in this period.</p>'; return; }
 			const o = data.overall;
 			const color = o.abandon_rate_pct > 70 ? 'var(--red)' : o.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
+			const thStyle = 'text-align:right;padding:6px 8px;';
+			const thStyleL = 'text-align:left;padding:6px 8px;';
+
+			// ── Overall KPIs ──────────────────────────────────────────────────
 			let html = `<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:20px;">
 				<div style="text-align:center;">
 					<div style="font-size:28px;font-weight:700;color:${color};">${o.abandon_rate_pct}%</div>
@@ -1732,15 +1954,65 @@
 					<div style="font-size:11px;color:var(--text3);">Abandoned</div>
 				</div>
 			</div>`;
+
+			// ── Per Site (by_domain) ──────────────────────────────────────────
+			if (data.by_domain && data.by_domain.length > 0) {
+				html += `<div style="font-size:12px;font-weight:600;color:var(--text2);margin:18px 0 8px;">Per Site</div>`;
+				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px;">
+					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
+						<th style="${thStyleL}">Site</th>
+						<th style="${thStyle}">Initiated</th>
+						<th style="${thStyle}">Converted</th>
+						<th style="${thStyle}">Abandoned</th>
+						<th style="${thStyle}">Abandon Rate</th>
+					</tr></thead><tbody>`;
+				for (const row of data.by_domain) {
+					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
+					const domId = 'btns_' + row.domain.replace(/[^a-z0-9]/gi, '_');
+					const hasButtons = row.buttons && row.buttons.length > 0;
+					html += `<tr style="border-bottom:1px solid var(--border);">
+						<td style="padding:6px 8px;">
+							${hasButtons ? `<button onclick="document.getElementById('${domId}').style.display=document.getElementById('${domId}').style.display==='none'?'table-row':'none'" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent2);padding:0;margin-right:4px;">▶</button>` : ''}
+							<span style="color:var(--text1);">${row.domain}</span>
+						</td>
+						<td style="${thStyle}">${fmtNum(row.initiated)}</td>
+						<td style="${thStyle};color:var(--green);">${fmtNum(row.converted)}</td>
+						<td style="${thStyle};color:var(--red);">${fmtNum(row.abandoned)}</td>
+						<td style="${thStyle};font-weight:700;color:${rc};">${row.abandon_rate_pct}%</td>
+					</tr>`;
+					// Expandable button sub-row
+					if (hasButtons) {
+						html += `<tr id="${domId}" style="display:none;background:var(--surface2);">
+							<td colspan="5" style="padding:4px 16px 12px;">
+								<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Checkout button clicks on ${row.domain}</div>
+								<table style="width:100%;border-collapse:collapse;font-size:11px;">
+									<thead><tr style="color:var(--text3);">
+										<th style="${thStyleL}">Button / Product</th>
+										<th style="${thStyle}">Clicks</th>
+									</tr></thead><tbody>`;
+						for (const btn of row.buttons) {
+							html += `<tr style="border-top:1px solid var(--border);">
+								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btn.label)}</td>
+								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
+							</tr>`;
+						}
+						html += `</tbody></table></td></tr>`;
+					}
+				}
+				html += `</tbody></table>`;
+			}
+
+			// ── Per Ad Source (by_slug) ───────────────────────────────────────
 			if (data.by_slug && data.by_slug.length > 0) {
+				html += `<div style="font-size:12px;font-weight:600;color:var(--text2);margin:0 0 8px;">Per Ad Source</div>`;
 				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
 					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
-						<th style="text-align:left;padding:6px 8px;">Source</th>
-						<th style="text-align:left;padding:6px 8px;">Domain</th>
-						<th style="text-align:right;padding:6px 8px;">Initiated</th>
-						<th style="text-align:right;padding:6px 8px;">Converted</th>
-						<th style="text-align:right;padding:6px 8px;">Abandoned</th>
-						<th style="text-align:right;padding:6px 8px;">Abandon Rate</th>
+						<th style="${thStyleL}">Source</th>
+						<th style="${thStyleL}">Domain</th>
+						<th style="${thStyle}">Initiated</th>
+						<th style="${thStyle}">Converted</th>
+						<th style="${thStyle}">Abandoned</th>
+						<th style="${thStyle}">Abandon Rate</th>
 					</tr></thead><tbody>`;
 				for (const row of data.by_slug) {
 					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
@@ -1748,15 +2020,25 @@
 					html += `<tr style="border-bottom:1px solid var(--border);">
 						<td style="padding:6px 8px;font-family:monospace;color:var(--accent2);">${row.slug}</td>
 						<td style="padding:6px 8px;color:var(--text2);">${domainVal}</td>
-						<td style="text-align:right;padding:6px 8px;">${fmtNum(row.initiated)}</td>
-						<td style="text-align:right;padding:6px 8px;color:var(--green);">${fmtNum(row.converted)}</td>
-						<td style="text-align:right;padding:6px 8px;color:var(--red);">${fmtNum(row.abandoned)}</td>
-						<td style="text-align:right;padding:6px 8px;font-weight:700;color:${rc};">${row.abandon_rate_pct}%</td>
+						<td style="${thStyle}">${fmtNum(row.initiated)}</td>
+						<td style="${thStyle};color:var(--green);">${fmtNum(row.converted)}</td>
+						<td style="${thStyle};color:var(--red);">${fmtNum(row.abandoned)}</td>
+						<td style="${thStyle};font-weight:700;color:${rc};">${row.abandon_rate_pct}%</td>
 					</tr>`;
 				}
 				html += `</tbody></table>`;
 			}
 			el.innerHTML = html;
+			// Wire up toggle buttons (using onclick inline) — also handle arrow rotation
+			el.querySelectorAll('button[onclick]').forEach(btn => {
+				btn.addEventListener('click', () => {
+					btn.textContent = btn.textContent === '▶' ? '▼' : '▶';
+				});
+			});
+		}
+
+		function escHtml(s) {
+			return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 		}
 
 		function renderLtv(data) {
@@ -1871,12 +2153,12 @@
 			const parts = iso.replace('T', '-').replace(/:/g, '-').split('-');
 			// parts: [year, month, day, hour, minute, second?]
 			if (parts.length < 5) return iso;
-			const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-			const d = parts[2].padStart(2,'0');
+			const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+			const d = parts[2].padStart(2, '0');
 			const mon = months[parseInt(parts[1], 10) - 1] || parts[1];
 			const y = parts[0];
-			const hh = parts[3].padStart(2,'0');
-			const mm = parts[4].padStart(2,'0');
+			const hh = parts[3].padStart(2, '0');
+			const mm = parts[4].padStart(2, '0');
 			return `${d} ${mon} ${y}, ${hh}:${mm}`;
 		}
 
@@ -1931,9 +2213,9 @@
 
 		function getPreviousPeriod(startStr, endStr) {
 			const start = new Date(startStr + 'T00:00:00');
-			const end   = new Date(endStr   + 'T00:00:00');
-			const days  = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-			const prevEnd   = new Date(start);
+			const end = new Date(endStr + 'T00:00:00');
+			const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+			const prevEnd = new Date(start);
 			prevEnd.setDate(prevEnd.getDate() - 1);
 			const prevStart = new Date(prevEnd);
 			prevStart.setDate(prevStart.getDate() - days + 1);
@@ -1979,17 +2261,17 @@
 			if (prevData) {
 				const pt = prevData.totals;
 				const pe = prevData.engagement || {};
-				document.getElementById('deltaUsers').innerHTML       = fmtDelta(t.unique_users, pt.unique_users);
-				document.getElementById('deltaPageviews').innerHTML   = fmtDelta(t.total_pageviews, pt.total_pageviews);
+				document.getElementById('deltaUsers').innerHTML = fmtDelta(t.unique_users, pt.unique_users);
+				document.getElementById('deltaPageviews').innerHTML = fmtDelta(t.total_pageviews, pt.total_pageviews);
 				document.getElementById('deltaConversions').innerHTML = fmtDelta(t.total_conversions, pt.total_conversions);
-				document.getElementById('deltaRevenue').innerHTML     = fmtDelta(t.total_revenue, pt.total_revenue);
+				document.getElementById('deltaRevenue').innerHTML = fmtDelta(t.total_revenue, pt.total_revenue);
 				document.getElementById('deltaCrossDomain').innerHTML = fmtDelta(data.cross_domain_users, prevData.cross_domain_users);
-				document.getElementById('deltaBounce').innerHTML      = fmtDelta(e.bounce_rate, pe.bounce_rate, true);
+				document.getElementById('deltaBounce').innerHTML = fmtDelta(e.bounce_rate, pe.bounce_rate, true);
 				if (e.avg_time_on_page_seconds && pe.avg_time_on_page_seconds) {
 					document.getElementById('deltaTime').innerHTML = fmtDelta(e.avg_time_on_page_seconds, pe.avg_time_on_page_seconds, true);
 				}
 			} else {
-				['deltaUsers','deltaPageviews','deltaConversions','deltaRevenue','deltaCrossDomain','deltaBounce','deltaTime']
+				['deltaUsers', 'deltaPageviews', 'deltaConversions', 'deltaRevenue', 'deltaCrossDomain', 'deltaBounce', 'deltaTime']
 					.forEach(id => document.getElementById(id).innerHTML = '<span class="delta-neutral">—</span>');
 			}
 		}
@@ -2271,7 +2553,7 @@
 				variants.add(s);
 				// known prefix substitutions: video- <-> vid-
 				if (s.startsWith('video-')) variants.add('vid-' + s.slice(6));
-				if (s.startsWith('vid-'))   variants.add('video-' + s.slice(4));
+				if (s.startsWith('vid-')) variants.add('video-' + s.slice(4));
 			};
 			addWithPrefixSwap(slug);
 			const cleaned = _canonicalSlug(slug);
@@ -2478,7 +2760,7 @@
 					</div>`;
 				}).join('');
 				sugBox.style.display = 'block';
-			} catch(e) { sugBox.style.display = 'none'; }
+			} catch (e) { sugBox.style.display = 'none'; }
 		}
 
 		function selectSuggestion(userId) {
@@ -2497,7 +2779,7 @@
 			const tbody = document.getElementById('cohortTableBody');
 
 			if (!data || !data.cohorts) {
-				tbody.innerHTML = '<tr><td colspan="17" class="empty">No cohort data.</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="18" class="empty">No cohort data.</td></tr>';
 				return;
 			}
 
@@ -2536,8 +2818,7 @@
     <div style="display:flex;flex-direction:column;gap:6px;align-self:center;">
       ${cacheBadge}
       <span style="font-size:12px;color:var(--text3);max-width:280px;line-height:1.5;">
-        ℹ️ Users that cannot be individually identified (e.g. Safari ITP) are grouped into cohorts
-        based on traffic source + device, so no visit is lost from reporting.
+        ℹ️ Fiecare cohort = un segment de audiență (sursă + mediu + campanie + device). Coloana <strong>New IDs</strong> arată utilizatorii fără ID stocat — potențiali Safari ITP sau prima vizită.
       </span>
     </div>
   `;
@@ -2545,7 +2826,7 @@
 			const deviceIcons = { mobile: '📱', desktop: '🖥️', tablet: '📟', unknown: '❓' };
 
 			if (data.cohorts.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="17" class="empty">No cohorts found for the selected period.</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="18" class="empty">No cohorts found for the selected period.</td></tr>';
 				return;
 			}
 
@@ -2597,6 +2878,7 @@
         <td style="font-size:11px;">${domainPills || '<span style="color:var(--text3)">—</span>'}</td>
         <td>${firstSlug}</td>
         <td style="font-weight:600;">${fmtNum(c.users)}</td>
+        <td style="color:var(--text2);font-size:12px;" title="Utilizatori fără ID stocat în acest segment — prima vizită sau după ștergere ITP">${fmtNum(c.new_id_users ?? 0)}</td>
         <td style="color:${bounceColor};font-weight:600;">${c.bounce_rate}%</td>
         <td>${fmtNum(c.conversions)}</td>
         <td style="color:var(--green);font-weight:600;">${fmtEUR(c.revenue)}</td>
@@ -2625,7 +2907,7 @@
 
 			// Sort helpers
 			const withTraffic = cohorts.filter(c => c.users >= 3);
-			const converting  = withTraffic.filter(c => c.conversion_rate > 0).sort((a, b) => b.conversion_rate - a.conversion_rate);
+			const converting = withTraffic.filter(c => c.conversion_rate > 0).sort((a, b) => b.conversion_rate - a.conversion_rate);
 			const nonConverting = withTraffic.filter(c => c.conversion_rate === 0).sort((a, b) => b.users - a.users);
 			const noUtm = cohorts.filter(c => c.utm_source === '—' || !c.utm_source || c.utm_source === 'null');
 			const totalRevenue = cohorts.reduce((s, c) => s + (c.revenue || 0), 0);
@@ -2721,7 +3003,7 @@
 			const noUtmConverting = noUtm.filter(c => c.conversion_rate > 0);
 			if (noUtmConverting.length > 0) {
 				const totalNoUtmConv = noUtmConverting.reduce((s, c) => s + c.conversions, 0);
-				const totalNoUtmRev  = noUtmConverting.reduce((s, c) => s + c.revenue, 0);
+				const totalNoUtmRev = noUtmConverting.reduce((s, c) => s + c.revenue, 0);
 				const avgRate = (noUtmConverting.reduce((s, c) => s + c.conversion_rate, 0) / noUtmConverting.length).toFixed(1);
 				insights.push({
 					icon: '🔎',
@@ -2746,19 +3028,19 @@
 			}
 
 			// 8. Mobile vs Desktop
-			const mobile  = cohorts.filter(c => c.device_type === 'mobile');
+			const mobile = cohorts.filter(c => c.device_type === 'mobile');
 			const desktop = cohorts.filter(c => c.device_type === 'desktop');
-			const mobileUsers  = mobile.reduce((s, c) => s + c.users, 0);
+			const mobileUsers = mobile.reduce((s, c) => s + c.users, 0);
 			const desktopUsers = desktop.reduce((s, c) => s + c.users, 0);
-			const mobileConv   = mobile.reduce((s, c) => s + c.conversions, 0);
-			const desktopConv  = desktop.reduce((s, c) => s + c.conversions, 0);
-			const mobileRev    = mobile.reduce((s, c) => s + c.revenue, 0);
-			const desktopRev   = desktop.reduce((s, c) => s + c.revenue, 0);
+			const mobileConv = mobile.reduce((s, c) => s + c.conversions, 0);
+			const desktopConv = desktop.reduce((s, c) => s + c.conversions, 0);
+			const mobileRev = mobile.reduce((s, c) => s + c.revenue, 0);
+			const desktopRev = desktop.reduce((s, c) => s + c.revenue, 0);
 			if (mobileUsers > 0 && desktopUsers > 0) {
 				const mRate = (mobileConv / mobileUsers * 100).toFixed(1);
 				const dRate = (desktopConv / desktopUsers * 100).toFixed(1);
-				const mRpu  = mobileUsers  ? (mobileRev  / mobileUsers).toFixed(2)  : '0.00';
-				const dRpu  = desktopUsers ? (desktopRev / desktopUsers).toFixed(2) : '0.00';
+				const mRpu = mobileUsers ? (mobileRev / mobileUsers).toFixed(2) : '0.00';
+				const dRpu = desktopUsers ? (desktopRev / desktopUsers).toFixed(2) : '0.00';
 				const winner = parseFloat(mRate) >= parseFloat(dRate) ? 'Mobile' : 'Desktop';
 				const diff = Math.abs(parseFloat(mRate) - parseFloat(dRate)).toFixed(1);
 				insights.push({
@@ -2771,12 +3053,12 @@
 
 			// 9. Digistore attribution coverage (based on real sync data)
 			if (totals && totals.total_conversions > 0 && totals.unmatched_conversions != null) {
-				const matched   = totals.matched_conversions   || 0;
+				const matched = totals.matched_conversions || 0;
 				const unmatched = totals.unmatched_conversions || 0;
-				const matchPct  = Math.round(matched / totals.total_conversions * 100);
+				const matchPct = Math.round(matched / totals.total_conversions * 100);
 				const unmatchedRev = totals.unmatched_revenue || 0;
 				if (unmatched > 0) {
-					const icon  = matchPct >= 80 ? '✅' : matchPct >= 50 ? '⚠️' : '🔴';
+					const icon = matchPct >= 80 ? '✅' : matchPct >= 50 ? '⚠️' : '🔴';
 					const color = matchPct >= 80 ? 'var(--green)' : matchPct >= 50 ? 'var(--yellow)' : 'var(--red)';
 					insights.push({
 						icon, color,
@@ -2840,7 +3122,7 @@
 						</span>`;
 					}
 					return `<span class="domain-chip ${cls}" data-journey="${idx}" data-di="${i}"
-						title="${i < sel - 1 ? 'Click to narrow to first ' + (i+1) + ' domain(s)' : i === sel - 1 && sel < totalDomains ? 'Click to expand' : i === sel - 1 ? 'Last selected — click to deselect' : 'Click to include up to here'}"
+						title="${i < sel - 1 ? 'Click to narrow to first ' + (i + 1) + ' domain(s)' : i === sel - 1 && sel < totalDomains ? 'Click to expand' : i === sel - 1 ? 'Last selected — click to deselect' : 'Click to include up to here'}"
 					>${escHtml(d)}</span>${sep}`;
 				}).join('');
 
@@ -2918,7 +3200,7 @@
 
 			el.innerHTML = '<div class="journey-list">' +
 				journeys.map((j, idx) => buildItem(j, idx)).join('') +
-			'</div>';
+				'</div>';
 
 			// ── Event delegation for domain chip clicks ──
 			el.onclick = (e) => {
@@ -2934,8 +3216,8 @@
 				const chip = e.target.closest('.domain-chip[data-journey]');
 				if (!chip) return;
 				const idx = parseInt(chip.dataset.journey, 10);
-				const di  = parseInt(chip.dataset.di, 10);
-				const j   = journeys[idx];
+				const di = parseInt(chip.dataset.di, 10);
+				const j = journeys[idx];
 				const totalDomains = j.domains.length;
 				const curSel = journeySelState[idx] !== undefined ? journeySelState[idx] : totalDomains;
 
@@ -2979,10 +3261,10 @@
 			existing.querySelectorAll('.domain-chip[data-journey]').forEach(chip => {
 				const di = parseInt(chip.dataset.di, 10);
 				chip.className = 'domain-chip ' + (di < sel ? 'selected' : 'unselected');
-				chip.title = di < sel - 1 ? `Click to narrow to first ${di+1} domain(s)`
+				chip.title = di < sel - 1 ? `Click to narrow to first ${di + 1} domain(s)`
 					: di === sel - 1 && sel < totalDomains ? 'Click to expand'
-					: di === sel - 1 ? 'Last selected — click to deselect'
-					: 'Click to include up to here';
+						: di === sel - 1 ? 'Last selected — click to deselect'
+							: 'Click to include up to here';
 			});
 
 			// Update filter hint
@@ -3046,10 +3328,10 @@
 			ring.classList.add('active');
 			banner.style.display = 'none';
 
-			const start  = document.getElementById('startDate').value;
-			const end    = document.getElementById('endDate').value;
-			const slug   = document.getElementById('slugFilter').value.trim();
-			const domain = (document.getElementById('domainFilter') || {value: ''}).value.trim();
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
+			const domain = (document.getElementById('domainFilter') || { value: '' }).value.trim();
 
 			try {
 				// ── Verifică cache Faza 2 client-side (TTL 60s) ──
@@ -3151,7 +3433,7 @@
 		// ════════════════════════════════════════
 		// RENDER FUNNEL
 		// ════════════════════════════════════════
-		const FUNNEL_COLORS = ['#6366f1','#22d3ee','#22c55e','#f59e0b','#a78bfa','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9'];
+		const FUNNEL_COLORS = ['#6366f1', '#22d3ee', '#22c55e', '#f59e0b', '#a78bfa', '#f472b6', '#fb923c', '#34d399', '#60a5fa', '#e879f9'];
 
 		function renderFunnel(steps) {
 			const el = document.getElementById('funnelResult');
@@ -3161,7 +3443,7 @@
 			}
 			const maxUsers = steps[0].users || 1;
 			el.innerHTML = '<div class="funnel-steps">' + steps.map((s, i) => {
-				const pct  = maxUsers > 0 ? Math.max(4, Math.round(s.users / maxUsers * 100)) : 4;
+				const pct = maxUsers > 0 ? Math.max(4, Math.round(s.users / maxUsers * 100)) : 4;
 				const color = FUNNEL_COLORS[i % FUNNEL_COLORS.length];
 				const dropHtml = i > 0
 					? `<span style="color:var(--red);">▼ ${s.drop_from_prev}% drop</span>`
@@ -3220,7 +3502,7 @@
 			try {
 				const u = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
 				const r = {};
-				['utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id','fbclid'].forEach(k => {
+				['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id', 'fbclid'].forEach(k => {
 					const v = u.searchParams.get(k);
 					if (v) r[k] = decodeURIComponent(v.replace(/\+/g, ' '));
 				});
@@ -3249,11 +3531,11 @@
 			const diffMs = new Date(curr) - new Date(prev);
 			if (diffMs <= 0) return null;
 			const mins = Math.floor(diffMs / 60000);
-			if (mins < 1)   return `${Math.floor(diffMs/1000)}s`;
-			if (mins < 60)  return `${mins}m`;
+			if (mins < 1) return `${Math.floor(diffMs / 1000)}s`;
+			if (mins < 60) return `${mins}m`;
 			const hrs = Math.floor(mins / 60);
-			if (hrs < 24)   return `${hrs}h ${mins % 60}m`;
-			return `${Math.floor(hrs/24)}d ${hrs%24}h`;
+			if (hrs < 24) return `${hrs}h ${mins % 60}m`;
+			return `${Math.floor(hrs / 24)}d ${hrs % 24}h`;
 		}
 
 		function sessionGapMins(prev, curr) {
@@ -3264,11 +3546,11 @@
 		// Build UTM tags HTML
 		function utmTagsHtml(utm) {
 			const tags = [];
-			if (utm.utm_source)   tags.push(`<span class="utm-tag"><strong>src</strong> ${escHtml(utm.utm_source)}</span>`);
-			if (utm.utm_medium)   tags.push(`<span class="utm-tag"><strong>med</strong> ${escHtml(utm.utm_medium)}</span>`);
-			if (utm.utm_campaign) tags.push(`<span class="utm-tag" title="${escHtml(utm.utm_campaign)}"><strong>cmp</strong> ${escHtml(utm.utm_campaign.length > 40 ? utm.utm_campaign.slice(0,40)+'…' : utm.utm_campaign)}</span>`);
-			if (utm.utm_content)  tags.push(`<span class="utm-tag" title="${escHtml(utm.utm_content)}"><strong>ad</strong> ${escHtml(utm.utm_content.length > 45 ? utm.utm_content.slice(0,45)+'…' : utm.utm_content)}</span>`);
-			if (utm.fbclid)       tags.push(`<span class="utm-tag" style="color:var(--accent2);border-color:rgba(34,211,238,.25)">📘 FB Click</span>`);
+			if (utm.utm_source) tags.push(`<span class="utm-tag"><strong>src</strong> ${escHtml(utm.utm_source)}</span>`);
+			if (utm.utm_medium) tags.push(`<span class="utm-tag"><strong>med</strong> ${escHtml(utm.utm_medium)}</span>`);
+			if (utm.utm_campaign) tags.push(`<span class="utm-tag" title="${escHtml(utm.utm_campaign)}"><strong>cmp</strong> ${escHtml(utm.utm_campaign.length > 40 ? utm.utm_campaign.slice(0, 40) + '…' : utm.utm_campaign)}</span>`);
+			if (utm.utm_content) tags.push(`<span class="utm-tag" title="${escHtml(utm.utm_content)}"><strong>ad</strong> ${escHtml(utm.utm_content.length > 45 ? utm.utm_content.slice(0, 45) + '…' : utm.utm_content)}</span>`);
+			if (utm.fbclid) tags.push(`<span class="utm-tag" style="color:var(--accent2);border-color:rgba(34,211,238,.25)">📘 FB Click</span>`);
 			return tags.length ? `<div class="timeline-utm-row">${tags.join('')}</div>` : '';
 		}
 
@@ -3282,8 +3564,8 @@
 			const gapHtml = gap ? `<span class="timeline-gap-badge">+${gap}</span>` : '';
 
 			const domain = domainFromUrl(ev.url || ev.domain || '');
-			const path   = cleanPath(ev.url || ev.domain || '');
-			const utm    = parseUtmFromUrl(ev.url || '');
+			const path = cleanPath(ev.url || ev.domain || '');
+			const utm = parseUtmFromUrl(ev.url || '');
 
 			// Domain + path row
 			let domainRow = '';
@@ -3469,8 +3751,8 @@
 				</div>` : ''}
 
 				<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-					${Object.entries(countByType).map(([t,c]) => `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);">${t === 'pageview' ? '👁' : t === 'conversion' ? '💰' : '⚡'} ${c} ${t}</span>`).join('')}
-					${Object.entries(countByName).filter(([,c]) => c > 0).map(([n,c]) => `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--yellow);">⚡ ${c}× ${escHtml(n)}</span>`).join('')}
+					${Object.entries(countByType).map(([t, c]) => `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);">${t === 'pageview' ? '👁' : t === 'conversion' ? '💰' : '⚡'} ${c} ${t}</span>`).join('')}
+					${Object.entries(countByName).filter(([, c]) => c > 0).map(([n, c]) => `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--yellow);">⚡ ${c}× ${escHtml(n)}</span>`).join('')}
 				</div>
 
 				<div style="font-weight:700;font-size:15px;margin-bottom:4px;color:var(--text);">🗺 Journey Timeline</div>
@@ -3485,10 +3767,10 @@
 				sessions.forEach((sess, si) => {
 					// Session header
 					const sessStart = sess[0]?.timestamp;
-					const sessEnd   = sess[sess.length - 1]?.timestamp;
-					const sessDur   = timeDiffLabel(sessStart, sessEnd);
-					const sessGap   = si > 0 ? timeDiffLabel(sessions[si-1][sessions[si-1].length-1]?.timestamp, sessStart) : null;
-					const gapNote   = sessGap ? ` · <span style="color:var(--text3)">↳ ${sessGap} since last session</span>` : '';
+					const sessEnd = sess[sess.length - 1]?.timestamp;
+					const sessDur = timeDiffLabel(sessStart, sessEnd);
+					const sessGap = si > 0 ? timeDiffLabel(sessions[si - 1][sessions[si - 1].length - 1]?.timestamp, sessStart) : null;
+					const gapNote = sessGap ? ` · <span style="color:var(--text3)">↳ ${sessGap} since last session</span>` : '';
 
 					const sessDiv = document.createElement('div');
 					sessDiv.className = 'timeline-session';
