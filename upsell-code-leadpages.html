@@ -6,35 +6,6 @@
 <script src="https://cdn.jsdelivr.net/gh/GlobalBrother/user-journey-tracker@main/app-core.js"></script>
 
 <script>
-  // ── Checkout Initiated tracking ──
-  // Extrage product_id automat din URL-ul butonului: /content/{product_id}/...
-  function _getProductIdFromHref(href) {
-    var match = href.match(/\/content\/(\d+)\//);
-    return match ? match[1] : null;
-  }
-
-  function _attachCheckoutTracking() {
-    document.querySelectorAll('a[href*="digistore24.com"], a[href*="checkout-ds24.com"]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        if (window.AppCore && window.AppCore.trackEvent) {
-          var pid = _getProductIdFromHref(btn.href || '');
-          AppCore.trackEvent('checkout_initiated', {
-            product_id: pid || ''
-          });
-        }
-      });
-    });
-  }
-
-  // Rulează după ce pagina s-a încărcat complet
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _attachCheckoutTracking);
-  } else {
-    _attachCheckoutTracking();
-  }
-</script>
-
-<script>
   // ── Așteaptă AppCore să fie gata (apărat față de CDN lent) ──
   // Dacă AppCore nu e disponibil în 8s → log warning și sare
   function _waitForAppCore(cb, attempts) {

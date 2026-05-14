@@ -2882,7 +2882,11 @@
 				const otherChips = mergedUids.filter(uid => !convertingSet.has(uid));
 				const allChipsSorted = [...convertingChips, ...otherChips];
 				const SHOW = 6;
-				const shown = allChipsSorted.slice(0, SHOW);
+				const MAX_CONV = Math.min(convertingChips.length, Math.ceil(SHOW / 2));
+				const shown = [
+					...convertingChips.slice(0, MAX_CONV),
+					...otherChips.slice(0, SHOW - MAX_CONV),
+				];
 				const extra = j.users - shown.length;
 				const userChips = shown.map(uid => {
 					const hasConv = convertingSet.has(uid);
