@@ -2000,14 +2000,24 @@
 								posStr = btn.positions
 									.map(p => `btn ${p.pos}/${p.total} (${fmtNum(p.clicks)}×)`)
 									.join(', ');
-							}
-							// Clean up fallback labels: url_www.site.com/checkout → /checkout
-							let btnLabel = btn.label || '—';
+						}
+							// Build label: prefer captured text; fall back to #product_id (muted)
+							let btnLabel = btn.label || '';
 							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
-							// Append product_id when available to distinguish same-label buttons
-							if (btn.product_id && !btnLabel.includes('#' + btn.product_id)) btnLabel += ' — #' + btn.product_id;
+							let labelHtml;
+							if (btnLabel) {
+								// Real text captured — append product_id if needed to disambiguate
+								const suffix = (btn.product_id && !btnLabel.includes('#' + btn.product_id))
+									? ` <span style="opacity:0.45;font-size:10px;">— #${escHtml(String(btn.product_id))}</span>` : '';
+								labelHtml = escHtml(btnLabel) + suffix;
+							} else if (btn.product_id) {
+								// No text captured — show product_id clearly, muted note
+								labelHtml = `<span style="opacity:0.6;">#${escHtml(String(btn.product_id))}</span> <span style="opacity:0.3;font-size:10px;">(text neînregistrat)</span>`;
+							} else {
+								labelHtml = '<span style="opacity:0.4">—</span>';
+							}
 							html += `<tr style="border-top:1px solid var(--border);">
-								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btnLabel)}</td>
+								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${labelHtml}</td>
 								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
 								<td style="${thStyle};color:var(--text3);">${escHtml(posStr)}</td>
 							</tr>`;
