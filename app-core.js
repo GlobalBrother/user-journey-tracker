@@ -833,6 +833,9 @@
 					const buttonIndex = checkoutElements.indexOf(element) + 1;
 					const buttonTotal = checkoutElements.length;
 
+					// Capture visible button text
+					const buttonText = (element.textContent || element.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 100) || null;
+
 					// Extrage product_id din URL (ex: /product/640053/ → 640053)
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
 					const productId = productIdMatch ? productIdMatch[1] : null;
@@ -887,6 +890,7 @@
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
 								checkout_url: url.toString(),
+								button_label: buttonText,
 								button_position: buttonIndex,
 								button_total: buttonTotal,
 								timestamp: Date.now(),

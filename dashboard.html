@@ -1992,12 +1992,13 @@
 										<th style="${thStyle}">Positions</th>
 									</tr></thead><tbody>`;
 						for (const btn of row.buttons) {
-							const posStr = btn.positions && Object.keys(btn.positions).length
-								? Object.entries(btn.positions)
-									.sort((a,b) => Number(a[0]) - Number(b[0]))
-									.map(([pos, cnt]) => `#${pos}: ${fmtNum(cnt)}`)
-									.join(', ')
-								: '—';
+							let posStr = '—';
+							if (btn.positions && btn.positions.length) {
+								// Show each position as "button X of Y (N clicks)"
+								posStr = btn.positions
+									.map(p => `btn ${p.pos}/${p.total} (${fmtNum(p.clicks)}×)`)
+									.join(', ');
+							}
 							html += `<tr style="border-top:1px solid var(--border);">
 								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btn.label)}</td>
 								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
