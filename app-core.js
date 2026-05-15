@@ -875,23 +875,39 @@
 							}
 
 							// Capture button text at click time (text is guaranteed rendered by now)
+							// Walk text nodes only — skip <style>/<script> to avoid CSS-in-JS garbage
+							const _getVisibleText = (node) => {
+								if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+								if (node.nodeType !== Node.ELEMENT_NODE) return '';
+								const tag = node.tagName.toUpperCase();
+								if (tag === 'STYLE' || tag === 'SCRIPT') return '';
+								return Array.from(node.childNodes).map(_getVisibleText).join(' ');
+							};
 							const _getButtonText = (el) => {
-								let t = (el.textContent || el.innerText || '').trim().replace(/\s+/g, ' ');
+								let t = _getVisibleText(el).replace(/\s+/g, ' ').trim();
 								if (t) return t.slice(0, 100);
 								t = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
 								if (t) return t.slice(0, 100);
+								// Walk children for span/div/p/button — also skip style/script there
 								for (const child of el.querySelectorAll('span, div, p, button')) {
-									t = (child.textContent || child.innerText || '').trim().replace(/\s+/g, ' ');
+									t = _getVisibleText(child).replace(/\s+/g, ' ').trim();
 									if (t) return t.slice(0, 100);
 								}
 								return null;
 							};
 							const clickedButtonText = _getButtonText(element);
 
-							// Compute position at click time — DOM is fully rendered now
+							// Compute position at click time — only count VISIBLE checkout elements
+							const _isVisible = (el) => {
+								const r = el.getBoundingClientRect();
+								if (r.width === 0 && r.height === 0) return false;
+								const s = window.getComputedStyle(el);
+								return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+							};
 							const _allCheckoutEls = Array.from(document.querySelectorAll('a[href], .lp-button-react[data-widget-link]')).filter(el => {
 								const h = el.getAttribute('href') || el.getAttribute('data-widget-link') || '';
-								return CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h);
+								if (!(CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h))) return false;
+								return _isVisible(el);
 							});
 							const clickedIndex = _allCheckoutEls.indexOf(element) + 1;
 							const clickedTotal = _allCheckoutEls.length;

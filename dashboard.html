@@ -1999,8 +1999,11 @@
 									.map(p => `btn ${p.pos}/${p.total} (${fmtNum(p.clicks)}×)`)
 									.join(', ');
 							}
+							// Clean up fallback labels: url_www.site.com/checkout → /checkout
+							let btnLabel = btn.label || '—';
+							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
 							html += `<tr style="border-top:1px solid var(--border);">
-								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btn.label)}</td>
+								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btnLabel)}</td>
 								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
 								<td style="${thStyle};color:var(--text3);">${escHtml(posStr)}</td>
 							</tr>`;
