@@ -2002,6 +2002,8 @@
 							// Clean up fallback labels: url_www.site.com/checkout → /checkout
 							let btnLabel = btn.label || '—';
 							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
+							// Append product_id when available to distinguish same-label buttons
+							if (btn.product_id && !btnLabel.includes('#' + btn.product_id)) btnLabel += ' — #' + btn.product_id;
 							html += `<tr style="border-top:1px solid var(--border);">
 								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${escHtml(btnLabel)}</td>
 								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>

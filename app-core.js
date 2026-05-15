@@ -916,12 +916,21 @@
 								}
 								return true;
 							};
-							const _allCheckoutEls = Array.from(document.querySelectorAll('a[href], .lp-button-react[data-widget-link]')).filter(el => {
+							// Get all checkout elements (a[href] + Leadpages wrappers), filter to visible
+							const _rawCheckoutEls = Array.from(document.querySelectorAll('a[href], .lp-button-react[data-widget-link]')).filter(el => {
 								const h = el.getAttribute('href') || el.getAttribute('data-widget-link') || '';
 								if (!(CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h))) return false;
 								return _isVisible(el);
 							});
-							const clickedIndex = _allCheckoutEls.indexOf(element) + 1;
+							// Remove descendants: if an element is inside another matched element, skip it
+							// (Leadpages renders .lp-button-react wrapping an <a> — both match, causing double-count)
+							const _rawSet = new Set(_rawCheckoutEls);
+							const _allCheckoutEls = _rawCheckoutEls.filter(el => {
+								let p = el.parentElement;
+								while (p) { if (_rawSet.has(p)) return false; p = p.parentElement; }
+								return true;
+							});
+							const clickedIndex = _allCheckoutEls.indexOf(element) + 1 || (_rawCheckoutEls.indexOf(element) + 1) || null;
 							const clickedTotal = _allCheckoutEls.length;
 
 							await trackEvent('checkout_initiated', {
