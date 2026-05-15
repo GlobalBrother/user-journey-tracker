@@ -901,8 +901,20 @@
 							const _isVisible = (el) => {
 								const r = el.getBoundingClientRect();
 								if (r.width === 0 && r.height === 0) return false;
+								// Must intersect with the document (not clipped offscreen)
+								const docH = document.documentElement.scrollHeight || document.body.scrollHeight || 99999;
+								const docW = document.documentElement.scrollWidth || document.body.scrollWidth || 99999;
+								if (r.bottom <= 0 || r.right <= 0 || r.top >= docH || r.left >= docW) return false;
 								const s = window.getComputedStyle(el);
-								return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+								if (s.display === 'none' || s.visibility === 'hidden' || parseFloat(s.opacity) === 0) return false;
+								// Walk ancestors: if any has display:none, visibility:hidden, or overflow:hidden + clips this el
+								let parent = el.parentElement;
+								while (parent && parent !== document.body) {
+									const ps = window.getComputedStyle(parent);
+									if (ps.display === 'none' || ps.visibility === 'hidden') return false;
+									parent = parent.parentElement;
+								}
+								return true;
 							};
 							const _allCheckoutEls = Array.from(document.querySelectorAll('a[href], .lp-button-react[data-widget-link]')).filter(el => {
 								const h = el.getAttribute('href') || el.getAttribute('data-widget-link') || '';
