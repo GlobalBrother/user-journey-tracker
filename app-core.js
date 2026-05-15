@@ -833,8 +833,7 @@
 					const buttonIndex = checkoutElements.indexOf(element) + 1;
 					const buttonTotal = checkoutElements.length;
 
-					// Capture visible button text
-					const buttonText = (element.textContent || element.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 100) || null;
+
 
 					// Extrage product_id din URL (ex: /product/640053/ → 640053)
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
@@ -887,10 +886,24 @@
 								debugLog('✅ Checkout lookup saved for product_id:', productId);
 							}
 
+							// Capture button text at click time (text is guaranteed rendered by now)
+							const _getButtonText = (el) => {
+								let t = (el.textContent || el.innerText || '').trim().replace(/\s+/g, ' ');
+								if (t) return t.slice(0, 100);
+								t = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
+								if (t) return t.slice(0, 100);
+								for (const child of el.querySelectorAll('span, div, p, button')) {
+									t = (child.textContent || child.innerText || '').trim().replace(/\s+/g, ' ');
+									if (t) return t.slice(0, 100);
+								}
+								return null;
+							};
+							const clickedButtonText = _getButtonText(element);
+
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
 								checkout_url: url.toString(),
-								button_label: buttonText,
+								button_label: clickedButtonText,
 								button_position: buttonIndex,
 								button_total: buttonTotal,
 								timestamp: Date.now(),
