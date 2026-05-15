@@ -928,6 +928,10 @@
 							const _allCheckoutEls = Array.from(document.querySelectorAll(_coSel)).filter(el => {
 								const h = el.getAttribute(_coAttr) || '';
 								if (!(CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h))) return false;
+								// Exclude sticky CTA buttons (shown only after 25% scroll) from position count.
+								// They always point to the same checkout URL as a regular button and would
+								// inflate button_total if included when they're not yet visible.
+								if (el.classList.contains('aw-sticky-cta-btn') || el.closest('.aw-sticky-cta-btn')) return false;
 								return _isVisible(el);
 							});
 							const clickedIndex = _allCheckoutEls.indexOf(element) + 1 || null;
