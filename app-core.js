@@ -778,6 +778,51 @@
 	// Pus pe window — shared între toate instanțele scriptului.
 	if (window._acEnhancingCheckout === undefined) window._acEnhancingCheckout = false;
 
+	// ── Pre-computed checkout button list ────────────────────────
+	// Populated at window.load + after each LP re-render via MutationObserver.
+	// Stores visible, non-sticky checkout buttons in DOM order.
+	// Used at click time for button_position / button_total.
+	if (!window._acPageCheckoutButtons) window._acPageCheckoutButtons = null;
+
+	// URL patterns that identify a genuine checkout button.
+	// More specific than CHECKOUT_DOMAINS — avoids counting footer links etc.
+	const _CHECKOUT_BTN_PATTERNS = ['digistore24.com/content', 'checkout-ds24.com/content'];
+
+	function _isElementVisible(el) {
+		// No dimensions → hidden (e.g. display:none on ancestor)
+		const r = el.getBoundingClientRect();
+		if (r.width === 0 && r.height === 0) return false;
+		// Walk up the ancestor chain checking computed styles
+		let node = el;
+		while (node && node !== document.body) {
+			const s = window.getComputedStyle(node);
+			if (s.display === 'none' || s.visibility === 'hidden') return false;
+			node = node.parentElement;
+		}
+		return true;
+	}
+
+	function _computeCheckoutButtonList() {
+		// 1. [data-widget-link] elements pointing to checkout (Leadpages primary)
+		const byWidgetLink = Array.from(document.querySelectorAll('[data-widget-link]')).filter(el => {
+			const u = el.getAttribute('data-widget-link') || '';
+			return _CHECKOUT_BTN_PATTERNS.some(p => u.includes(p));
+		});
+		// 2. Plain a[href] pointing to checkout, NOT inside a [data-widget-link] (non-LP fallback)
+		const byHref = Array.from(document.querySelectorAll('a[href]')).filter(el => {
+			const u = el.getAttribute('href') || '';
+			if (!_CHECKOUT_BTN_PATTERNS.some(p => u.includes(p))) return false;
+			if (el.closest('[data-widget-link]')) return false; // inner <a> inside LP button — skip
+			return true;
+		});
+		const all = [...byWidgetLink, ...byHref];
+		return all.filter(el => {
+			// Exclude sticky CTA (appears at 25% scroll — not a page-level button)
+			if (el.classList.contains('aw-sticky-cta-btn') || el.closest('.aw-sticky-cta-btn')) return false;
+			return _isElementVisible(el);
+		});
+	}
+
 	/**
 	 * Adaugă user_id în toate link-urile către checkout
 	 * Suportă și link-uri standard (<a href="">) și butoane Leadpages (.lp-button-react[data-widget-link])
@@ -897,45 +942,14 @@
 							};
 							const clickedButtonText = _getButtonText(element);
 
-							// Compute position at click time — only count VISIBLE checkout elements
-							const _isVisible = (el) => {
-								const r = el.getBoundingClientRect();
-								if (r.width === 0 && r.height === 0) return false;
-								// Must intersect with the document (not clipped offscreen)
-								const docH = document.documentElement.scrollHeight || document.body.scrollHeight || 99999;
-								const docW = document.documentElement.scrollWidth || document.body.scrollWidth || 99999;
-								if (r.bottom <= 0 || r.right <= 0 || r.top >= docH || r.left >= docW) return false;
-								const s = window.getComputedStyle(el);
-								if (s.display === 'none' || s.visibility === 'hidden' || parseFloat(s.opacity) === 0) return false;
-								// Walk ancestors: if any has display:none, visibility:hidden, or overflow:hidden + clips this el
-								let parent = el.parentElement;
-								while (parent && parent !== document.body) {
-									const ps = window.getComputedStyle(parent);
-									if (ps.display === 'none' || ps.visibility === 'hidden') return false;
-									parent = parent.parentElement;
-								}
-								return true;
-							};
-							// Count only elements of the SAME TYPE as what was clicked.
-							// On Leadpages, .lp-button-react[data-widget-link] and a[href] can both point to
-							// the same checkout URL but are separate DOM nodes (not ancestor/descendant).
-							// Mixing them in one querySelectorAll doubles the count. Using the clicked
-							// element's type as the selector ensures element is always in the result set.
-							const _coSel = isLeadpagesButton
-								? '.lp-button-react[data-widget-link]'
-								: 'a[href]';
-							const _coAttr = isLeadpagesButton ? 'data-widget-link' : 'href';
-							const _allCheckoutEls = Array.from(document.querySelectorAll(_coSel)).filter(el => {
-								const h = el.getAttribute(_coAttr) || '';
-								if (!(CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h))) return false;
-								// Exclude sticky CTA buttons (shown only after 25% scroll) from position count.
-								// They always point to the same checkout URL as a regular button and would
-								// inflate button_total if included when they're not yet visible.
-								if (el.classList.contains('aw-sticky-cta-btn') || el.closest('.aw-sticky-cta-btn')) return false;
-								return _isVisible(el);
-							});
-							const clickedIndex = _allCheckoutEls.indexOf(element) + 1 || null;
-							const clickedTotal = _allCheckoutEls.length;
+// Use the pre-computed list (populated at window.load + after LP re-renders).
+						// Falls back to on-demand computation if list isn't ready yet (very fast click).
+						// Sticky CTA is excluded from the list — clicking it gives position=null.
+						const _allCheckoutEls = (window._acPageCheckoutButtons && window._acPageCheckoutButtons.length > 0)
+							? window._acPageCheckoutButtons
+							: _computeCheckoutButtonList();
+						const clickedIndex = (_allCheckoutEls.indexOf(element) + 1) || null;
+						const clickedTotal = _allCheckoutEls.length || null;
 
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
@@ -972,7 +986,11 @@
 			const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
 			if (!hasAddedNodes) return;
 			clearTimeout(_debounceTimer);
-			_debounceTimer = setTimeout(() => enhanceCheckoutLinks(), 200);
+			_debounceTimer = setTimeout(() => {
+			enhanceCheckoutLinks().then(() => {
+				window._acPageCheckoutButtons = _computeCheckoutButtonList();
+			});
+		}, 200);
 		});
 
 		observer.observe(document.body, {
@@ -1019,7 +1037,19 @@
 		// 4. Enhance checkout links
 		await enhanceCheckoutLinks();
 
-		// 5. Observe pentru link-uri noi
+		// 5. Pre-compute checkout button list for position tracking.
+		// Uses window.load so all styles are applied and Leadpages buttons are rendered.
+		if (document.readyState === 'complete') {
+			window._acPageCheckoutButtons = _computeCheckoutButtonList();
+			debugLog('Checkout buttons pre-computed:', window._acPageCheckoutButtons.length);
+		} else {
+			window.addEventListener('load', () => {
+				window._acPageCheckoutButtons = _computeCheckoutButtonList();
+				debugLog('Checkout buttons pre-computed on load:', window._acPageCheckoutButtons.length);
+			}, { once: true });
+		}
+
+		// 6. Observe pentru link-uri noi
 		observeNewLinks();
 
 		debugLog('User Journey Tracker initialized successfully');
