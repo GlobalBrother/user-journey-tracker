@@ -916,21 +916,21 @@
 								}
 								return true;
 							};
-							// Get all checkout elements (a[href] + Leadpages wrappers), filter to visible
-							const _rawCheckoutEls = Array.from(document.querySelectorAll('a[href], .lp-button-react[data-widget-link]')).filter(el => {
-								const h = el.getAttribute('href') || el.getAttribute('data-widget-link') || '';
+							// Count only elements of the SAME TYPE as what was clicked.
+							// On Leadpages, .lp-button-react[data-widget-link] and a[href] can both point to
+							// the same checkout URL but are separate DOM nodes (not ancestor/descendant).
+							// Mixing them in one querySelectorAll doubles the count. Using the clicked
+							// element's type as the selector ensures element is always in the result set.
+							const _coSel = isLeadpagesButton
+								? '.lp-button-react[data-widget-link]'
+								: 'a[href]';
+							const _coAttr = isLeadpagesButton ? 'data-widget-link' : 'href';
+							const _allCheckoutEls = Array.from(document.querySelectorAll(_coSel)).filter(el => {
+								const h = el.getAttribute(_coAttr) || '';
 								if (!(CONFIG.CHECKOUT_DOMAINS.some(d => h.includes(d)) || /\/checkout/i.test(h))) return false;
 								return _isVisible(el);
 							});
-							// Remove descendants: if an element is inside another matched element, skip it
-							// (Leadpages renders .lp-button-react wrapping an <a> — both match, causing double-count)
-							const _rawSet = new Set(_rawCheckoutEls);
-							const _allCheckoutEls = _rawCheckoutEls.filter(el => {
-								let p = el.parentElement;
-								while (p) { if (_rawSet.has(p)) return false; p = p.parentElement; }
-								return true;
-							});
-							const clickedIndex = _allCheckoutEls.indexOf(element) + 1 || (_rawCheckoutEls.indexOf(element) + 1) || null;
+							const clickedIndex = _allCheckoutEls.indexOf(element) + 1 || null;
 							const clickedTotal = _allCheckoutEls.length;
 
 							await trackEvent('checkout_initiated', {
