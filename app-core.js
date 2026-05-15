@@ -950,6 +950,11 @@
 							: _computeCheckoutButtonList();
 						const clickedIndex = (_allCheckoutEls.indexOf(element) + 1) || null;
 						const clickedTotal = _allCheckoutEls.length || null;
+						// Sticky CTA: excluded from list so clickedIndex is null; detect via CSS class
+						const isStickyClick = !clickedIndex && (
+							element.classList.contains('aw-sticky-cta-btn') ||
+							!!element.closest('.aw-sticky-cta-btn')
+						);
 
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
@@ -957,6 +962,7 @@
 								button_label: clickedButtonText,
 								button_position: clickedIndex || null,
 								button_total: clickedTotal || null,
+								is_sticky_cta: isStickyClick || undefined,
 								timestamp: Date.now(),
 								element_type: isLeadpagesButton ? 'leadpages_button' : 'link'
 							});
