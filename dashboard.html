@@ -1995,12 +1995,11 @@
 									</tr></thead><tbody>`;
 						for (const btn of row.buttons) {
 							let posStr = '—';
-							if (btn.positions && btn.positions.length) {
-								// Show each position as "button X of Y (N clicks)"
-								posStr = btn.positions
-									.map(p => `btn ${p.pos}/${p.total} (${fmtNum(p.clicks)}×)`)
-									.join(', ');
-						}
+							if (btn.position === 'sticky') {
+								posStr = 'sticky';
+							} else if (btn.position != null && btn.total != null) {
+								posStr = `${btn.position} / ${btn.total}`;
+							}
 							// Build label: prefer captured text; fall back to #product_id (muted)
 							let btnLabel = btn.label || '';
 							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
