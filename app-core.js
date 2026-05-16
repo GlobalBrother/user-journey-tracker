@@ -1,5 +1,5 @@
 /**
- * AppCore Analytics v1.0
+ * AppCore Analytics v1.0.1
  * Cross-Domain User Tracking for 200+ Landing Pages
  *
  * Features:
