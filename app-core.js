@@ -824,29 +824,17 @@
 	}
 
 	function _computeCheckoutButtonList() {
-		// 1. [data-widget-link] elements pointing to checkout (Leadpages primary)
-		const byWidgetLink = Array.from(document.querySelectorAll('[data-widget-link]')).filter(el => {
-			const u = el.getAttribute('data-widget-link') || '';
-			return _CHECKOUT_BTN_PATTERNS.some(p => u.includes(p));
-		});
-		// 2. Plain a[href] pointing to checkout, NOT inside a [data-widget-link] that ALSO has checkout URL.
-		//    If the parent [data-widget-link] container has the same checkout URL, the container is already
-		//    captured in byWidgetLink — skip the inner <a> to avoid double-counting.
-		//    But if the parent widget-link does NOT have a checkout URL (e.g. image widgets where the <a>
-		//    inside carries the real checkout href), include the inner <a>.
+		// Leadpages buttons: <a data-widget-link="true" href="checkout-url">
+		// The checkout URL is always in href, not in data-widget-link (which is "true").
+		// Plain image links: <a href="checkout-url"> without data-widget-link.
+		// Both are captured by querying a[href] with checkout URL patterns.
 		const byHref = Array.from(document.querySelectorAll('a[href]')).filter(el => {
 			const u = el.getAttribute('href') || '';
-			if (!_CHECKOUT_BTN_PATTERNS.some(p => u.includes(p))) return false;
-			const parentWidget = el.closest('[data-widget-link]');
-			if (parentWidget) {
-				const widgetUrl = parentWidget.getAttribute('data-widget-link') || '';
-				if (_CHECKOUT_BTN_PATTERNS.some(p => widgetUrl.includes(p))) return false; // parent already captured
-			}
-			return true;
+			return _CHECKOUT_BTN_PATTERNS.some(p => u.includes(p));
 		});
 
 		// Exclude sticky CTA — it's tracked separately
-		const all = [...byWidgetLink, ...byHref].filter(el =>
+		const all = byHref.filter(el =>
 			!el.classList.contains('aw-sticky-cta-btn') && !el.closest('.aw-sticky-cta-btn')
 		);
 
