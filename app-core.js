@@ -789,10 +789,10 @@
 	const _CHECKOUT_BTN_PATTERNS = ['digistore24.com/content', 'checkout-ds24.com/content'];
 
 	function _isElementVisible(el) {
-		// No dimensions → hidden (e.g. display:none on ancestor)
-		const r = el.getBoundingClientRect();
-		if (r.width === 0 && r.height === 0) return false;
-		// Walk up the ancestor chain checking computed styles
+		// Walk up the ancestor chain checking computed styles only.
+		// We intentionally skip getBoundingClientRect: buttons below the fold or in
+		// lazy-rendered Leadpages sections have rect={0,0} even though they are
+		// genuinely present and will be visible once the user scrolls to them.
 		let node = el;
 		while (node && node !== document.body) {
 			const s = window.getComputedStyle(node);
@@ -800,6 +800,27 @@
 			node = node.parentElement;
 		}
 		return true;
+	}
+
+	/**
+	 * Returns the nearest "section-level" ancestor of el.
+	 * Used to group A/B variant buttons that live in the same page section
+	 * so only the visible variant is counted.
+	 */
+	function _nearestSection(el) {
+		let node = el.parentElement;
+		while (node && node !== document.body) {
+			const tag = node.tagName.toUpperCase();
+			const cls = (node.className && typeof node.className === 'string') ? node.className : '';
+			const id  = node.id || '';
+			if (
+				tag === 'SECTION' ||
+				/lp-section|page-section|section-container/i.test(cls) ||
+				/^section/i.test(id)
+			) return node;
+			node = node.parentElement;
+		}
+		return document.body; // no section found → use body as fallback group
 	}
 
 	function _computeCheckoutButtonList() {
@@ -815,12 +836,33 @@
 			if (el.closest('[data-widget-link]')) return false; // inner <a> inside LP button — skip
 			return true;
 		});
-		const all = [...byWidgetLink, ...byHref];
-		return all.filter(el => {
-			// Exclude sticky CTA (appears at 25% scroll — not a page-level button)
-			if (el.classList.contains('aw-sticky-cta-btn') || el.closest('.aw-sticky-cta-btn')) return false;
-			return _isElementVisible(el);
-		});
+
+		// Exclude sticky CTA — it's tracked separately
+		const all = [...byWidgetLink, ...byHref].filter(el =>
+			!el.classList.contains('aw-sticky-cta-btn') && !el.closest('.aw-sticky-cta-btn')
+		);
+
+		// 3. A/B test deduplication:
+		//    Group buttons by their nearest section ancestor. Within each section,
+		//    keep only visible variants. This ensures that two checkout buttons
+		//    that are A/B variants inside the same section (one hidden, one shown)
+		//    count as ONE logical button position — not two separate ones.
+		//    Buttons in DIFFERENT sections are always independent positions.
+		const sectionMap = new Map(); // section element → [buttons in that section]
+		for (const el of all) {
+			const sec = _nearestSection(el);
+			if (!sectionMap.has(sec)) sectionMap.set(sec, []);
+			sectionMap.get(sec).push(el);
+		}
+
+		const result = [];
+		for (const buttons of sectionMap.values()) {
+			const visible = buttons.filter(_isElementVisible);
+			// If at least one variant is visible, include only the visible ones.
+			// If ALL are hidden (shouldn't happen in normal flow) include none.
+			result.push(...visible);
+		}
+		return result;
 	}
 
 	/**
