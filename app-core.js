@@ -942,12 +942,11 @@
 							};
 							const clickedButtonText = _getButtonText(element);
 
-// Use the pre-computed list (populated at window.load + after LP re-renders).
-						// Falls back to on-demand computation if list isn't ready yet (very fast click).
+// Always recompute at click time — the DOM is fully rendered at this point.
+						// Pre-computed list (window.load) can miss buttons revealed by LP animations
+						// or dynamic sections that appear after initial render.
 						// Sticky CTA is excluded from the list — clicking it gives position=null.
-						const _allCheckoutEls = (window._acPageCheckoutButtons && window._acPageCheckoutButtons.length > 0)
-							? window._acPageCheckoutButtons
-							: _computeCheckoutButtonList();
+						const _allCheckoutEls = _computeCheckoutButtonList();
 						const clickedIndex = (_allCheckoutEls.indexOf(element) + 1) || null;
 						const clickedTotal = _allCheckoutEls.length || null;
 						// Sticky CTA: excluded from list so clickedIndex is null; detect via CSS class
