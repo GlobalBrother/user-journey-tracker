@@ -796,7 +796,7 @@
 		let node = el;
 		while (node && node !== document.body) {
 			const s = window.getComputedStyle(node);
-			if (s.display === 'none' || s.visibility === 'hidden') return false;
+			if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return false;
 			node = node.parentElement;
 		}
 		return true;
@@ -829,11 +829,19 @@
 			const u = el.getAttribute('data-widget-link') || '';
 			return _CHECKOUT_BTN_PATTERNS.some(p => u.includes(p));
 		});
-		// 2. Plain a[href] pointing to checkout, NOT inside a [data-widget-link] (non-LP fallback)
+		// 2. Plain a[href] pointing to checkout, NOT inside a [data-widget-link] that ALSO has checkout URL.
+		//    If the parent [data-widget-link] container has the same checkout URL, the container is already
+		//    captured in byWidgetLink — skip the inner <a> to avoid double-counting.
+		//    But if the parent widget-link does NOT have a checkout URL (e.g. image widgets where the <a>
+		//    inside carries the real checkout href), include the inner <a>.
 		const byHref = Array.from(document.querySelectorAll('a[href]')).filter(el => {
 			const u = el.getAttribute('href') || '';
 			if (!_CHECKOUT_BTN_PATTERNS.some(p => u.includes(p))) return false;
-			if (el.closest('[data-widget-link]')) return false; // inner <a> inside LP button — skip
+			const parentWidget = el.closest('[data-widget-link]');
+			if (parentWidget) {
+				const widgetUrl = parentWidget.getAttribute('data-widget-link') || '';
+				if (_CHECKOUT_BTN_PATTERNS.some(p => widgetUrl.includes(p))) return false; // parent already captured
+			}
 			return true;
 		});
 
