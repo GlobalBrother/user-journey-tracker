@@ -52,6 +52,7 @@ BRANCH="main"
 CDN_URL="https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/${FILE}"
 PURGE_URL="https://purge.jsdelivr.net/gh/${REPO}@${BRANCH}/${FILE}"
 DASHBOARD_PURGE_URL="https://purge.jsdelivr.net/gh/${REPO}@${BRANCH}/dashboard.html"
+REPO_DIR="$(dirname "$0")"
 
 # ── 1. Git commit & push ──────────────────────────────────────
 COMMIT_MSG="${1:-update}"
@@ -60,14 +61,18 @@ shift  # elimină primul argument (mesajul), restul sunt fișierele
 echo "📦 Commit & push..."
 if [[ $# -eq 0 ]]; then
   echo "  (adăugând toate fișierele modificate)"
-  git -C "$(dirname "$0")" add -A
+  git -C "$REPO_DIR" add -A
 else
   echo "  (adăugând: $*)"
-  git -C "$(dirname "$0")" add -- "$@"
+  git -C "$REPO_DIR" add -- "$@"
 fi
-git -C "$(dirname "$0")" commit -m "$COMMIT_MSG" || echo "  (nothing new to commit)"
-git -C "$(dirname "$0")" push origin "$BRANCH"
+git -C "$REPO_DIR" commit -m "$COMMIT_MSG" || echo "  (nothing new to commit)"
+git -C "$REPO_DIR" push origin "$BRANCH"
 echo "  ✅ Push OK"
+
+HEAD_SHA=$(git -C "$REPO_DIR" rev-parse --short HEAD)
+SHA_CDN_URL="https://cdn.jsdelivr.net/gh/${REPO}@${HEAD_SHA}/${FILE}"
+RAW_SHA_URL="https://raw.githubusercontent.com/${REPO}/${HEAD_SHA}/${FILE}"
 
 # ── 2. Purjează cache jsDelivr ────────────────────────────────
 echo ""
@@ -90,15 +95,43 @@ fi
 
 # ── 3. Verifică că fișierul e accesibil ──────────────────────
 echo ""
-echo "🔍 Verificare CDN..."
-sleep 3
-CDN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$CDN_URL")
+echo "🔍 Verificare CDN (@main vs commit)..."
 
-if [[ "$CDN_STATUS" == "200" ]]; then
-  echo "  ✅ Fișierul e live: $CDN_URL"
-else
-  echo "  ⚠️  CDN status: HTTP $CDN_STATUS — mai așteaptă 1-2 minute"
+_hash_of_url() {
+  local url="$1"
+  curl -fsSL "$url" | shasum -a 256 | awk '{print $1}'
+}
+
+MAX_RETRIES=10
+SLEEP_SECS=8
+SUCCESS=0
+
+for ((i=1; i<=MAX_RETRIES; i++)); do
+  RAW_HASH=$(_hash_of_url "$RAW_SHA_URL" || true)
+  MAIN_HASH=$(_hash_of_url "$CDN_URL" || true)
+  SHA_HASH=$(_hash_of_url "$SHA_CDN_URL" || true)
+
+  if [[ -n "$RAW_HASH" && "$RAW_HASH" == "$MAIN_HASH" ]]; then
+    echo "  ✅ jsDelivr @main este sincronizat cu commit $HEAD_SHA"
+    SUCCESS=1
+    break
+  fi
+
+  echo "  ⏳ Încercare $i/$MAX_RETRIES: @main încă nu e sincronizat"
+  if [[ -n "$SHA_HASH" && "$RAW_HASH" == "$SHA_HASH" ]]; then
+    echo "     - commit URL este deja corect: $SHA_CDN_URL"
+  fi
+
+  # Re-trigger purge while waiting for branch cache refresh
+  curl -s -o /dev/null "$PURGE_URL" || true
+  sleep "$SLEEP_SECS"
+done
+
+if [[ "$SUCCESS" != "1" ]]; then
+  echo "  ⚠️  @main încă nu s-a aliniat după $MAX_RETRIES încercări."
+  echo "     Folosește temporar commit URL (fără ghicit):"
+  echo "     $SHA_CDN_URL"
 fi
 
 echo ""
-echo "🎉 Done! Toate domeniile cu @main vor primi versiunea nouă în ~1-2 minute."
+echo "🎉 Done!"
