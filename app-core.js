@@ -823,6 +823,47 @@
 		return document.body; // no section found → use body as fallback group
 	}
 
+	/**
+	 * Build a stable DOM fingerprint for a clickable checkout element.
+	 * This lets backend group clicks by physical button, even when
+	 * two buttons share the same product_id and label.
+	 */
+	function _domFingerprint(el) {
+		try {
+			// 1) Best-case: Leadpages widget id is stable in page source and unique per button block.
+			const widgetRoot = el.closest('[data-widget-id]');
+			if (widgetRoot) {
+				const wid = widgetRoot.getAttribute('data-widget-id');
+				if (wid) return `wid:${wid}`;
+			}
+
+			// 2) Next best: explicit element IDs in source (common for image-link buttons).
+			if (el.id) return `id:${el.id}`;
+			const idRoot = el.closest('[id]');
+			if (idRoot && idRoot.id) return `pid:${idRoot.id}`;
+
+			// 3) Fallback: short structural path.
+			const parts = [];
+			let node = el;
+			let depth = 0;
+			while (node && node.nodeType === Node.ELEMENT_NODE && node !== document.body && depth < 6) {
+				const tag = (node.tagName || 'x').toLowerCase();
+				const parent = node.parentElement;
+				let idx = 1;
+				if (parent) {
+					const sameTag = Array.from(parent.children).filter(c => c.tagName === node.tagName);
+					idx = sameTag.indexOf(node) + 1;
+				}
+				parts.push(`${tag}:${idx}`);
+				node = parent;
+				depth += 1;
+			}
+			return `path:${parts.reverse().join('>')}`;
+		} catch (_err) {
+			return null;
+		}
+	}
+
 	function _computeCheckoutButtonList() {
 		// Leadpages buttons: <a data-widget-link="true" href="checkout-url">
 		// The checkout URL is always in href, not in data-widget-link (which is "true").
@@ -987,6 +1028,7 @@
 						const _allCheckoutEls = _computeCheckoutButtonList();
 						const clickedIndex = (_allCheckoutEls.indexOf(element) + 1) || null;
 						const clickedTotal = _allCheckoutEls.length || null;
+						const clickedDomFingerprint = _domFingerprint(element);
 						// Sticky CTA: excluded from list so clickedIndex is null; detect via CSS class
 						const isStickyClick = !clickedIndex && (
 							element.classList.contains('aw-sticky-cta-btn') ||
@@ -997,6 +1039,7 @@
 								product_id: productId,
 								checkout_url: url.toString(),
 								button_label: clickedButtonText,
+								button_dom_fingerprint: clickedDomFingerprint,
 								button_position: clickedIndex || null,
 								button_total: clickedTotal || null,
 								is_sticky_cta: isStickyClick || undefined,
