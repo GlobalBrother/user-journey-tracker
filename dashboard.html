@@ -1991,49 +1991,75 @@
 					</tr>`;
 					// Expandable button sub-row
 					if (hasButtons) {
+						const buttonGroupsMap = new Map();
+						const observedSlots = new Set();
+						for (const btn of row.buttons) {
+							const rawLabel = (btn.label || '').trim();
+							const groupKey = `${rawLabel}||${btn.product_id || ''}`;
+							if (!buttonGroupsMap.has(groupKey)) {
+								buttonGroupsMap.set(groupKey, { label: rawLabel, product_id: btn.product_id, clicks: 0, items: [] });
+							}
+							const group = buttonGroupsMap.get(groupKey);
+							group.clicks += Number(btn.clicks || 0);
+							group.items.push(btn);
+							const slotKey = btn.position === 'sticky'
+								? 'sticky'
+								: btn.position != null
+									? `slot:${btn.position}`
+									: `legacy:${btn.product_id || rawLabel || 'unknown'}`;
+							observedSlots.add(slotKey);
+						}
+						const buttonGroups = Array.from(buttonGroupsMap.values()).sort((a, b) => b.clicks - a.clicks);
+						const renderButtonLabel = (btn) => {
+							let btnLabel = btn.label || '';
+							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
+							if (btnLabel) {
+								const suffix = (btn.product_id && !btnLabel.includes('#' + btn.product_id))
+									? ` <span style="opacity:0.5;">- #${escHtml(String(btn.product_id))}</span>` : '';
+								return escHtml(btnLabel) + suffix;
+							}
+							if (btn.product_id) {
+								return `<span style="opacity:0.92;">#${escHtml(String(btn.product_id))}</span> <span style="opacity:0.45;">(no text captured)</span>`;
+							}
+							return '<span style="opacity:0.45;">—</span>';
+						};
+						const renderSlotChip = (btn) => {
+							if (btn.position === 'sticky') {
+								return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:var(--green);font-size:10px;font-weight:700;">Sticky CTA</span>`;
+							}
+							if (btn.position != null) {
+								const totalText = btn.total != null ? ` of ${escHtml(String(btn.total))}` : '';
+								return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);color:#93c5fd;font-size:10px;font-weight:700;">Button ${escHtml(String(btn.position))}${totalText}</span>`;
+							}
+							return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.2);color:var(--text3);font-size:10px;font-weight:700;">Legacy, no position</span>`;
+						};
+						let buttonCardsHtml = '';
+						for (const group of buttonGroups) {
+							const slots = group.items.map(renderSlotChip).join('');
+							buttonCardsHtml += `<div style="padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.02);">
+								<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+									<div style="min-width:0;">
+										<div style="font-family:monospace;color:var(--accent2);font-size:11px;line-height:1.35;">${renderButtonLabel(group.items[0])}</div>
+										<div style="font-size:10px;color:var(--text3);margin-top:3px;">Button group · ${group.items.length} tracked row${group.items.length === 1 ? '' : 's'}</div>
+									</div>
+									<div style="text-align:right;flex-shrink:0;">
+										<div style="font-size:16px;font-weight:700;color:var(--text1);line-height:1;">${fmtNum(group.clicks)}</div>
+										<div style="font-size:10px;color:var(--text3);margin-top:3px;">clicks</div>
+									</div>
+								</div>
+								<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${slots}</div>
+							</div>`;
+						}
 						html += `<tr id="${domId}" style="display:none;background:var(--surface2);">
 							<td colspan="5" style="padding:4px 16px 12px;">
 								<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">
 									Checkout button clicks on ${row.domain}
-									${isAbTestLikely ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);font-weight:700;">A/B test</span>' : hasVariants ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:var(--green);font-weight:700;">Multiple offers</span>' : ''}
+									<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text2);font-weight:700;">${buttonGroups.length} button groups</span>
+									<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text2);font-weight:700;">${observedSlots.size} observed slots</span>
+									${isAbTestLikely ? '<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);font-weight:700;">A/B test</span>' : hasVariants ? '<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:var(--green);font-weight:700;">Multiple offers</span>' : ''}
 								</div>
-								<table style="width:100%;border-collapse:collapse;font-size:11px;">
-									<thead><tr style="color:var(--text3);">
-										<th style="${thStyleL}">Button / Product</th>
-										<th style="${thStyle}">Clicks</th>
-										<th style="${thStyle}">Position</th>
-									</tr></thead><tbody>`;
-						for (const btn of row.buttons) {
-							let posStr = '—';
-							let posTitle = '';
-							if (btn.position === 'sticky') {
-								posStr = 'sticky';
-							} else if (btn.position != null) {
-								posStr = `#${btn.position}`;
-								if (btn.total != null) posTitle = ` title="raw: ${escHtml(String(btn.position))}/${escHtml(String(btn.total))}"`;
-							}
-							// Build label: prefer captured text; fall back to #product_id (muted)
-							let btnLabel = btn.label || '';
-							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
-							let labelHtml;
-							if (btnLabel) {
-								// Real text captured — append product_id if needed to disambiguate
-								const suffix = (btn.product_id && !btnLabel.includes('#' + btn.product_id))
-									? ` <span style="opacity:0.45;">- #${escHtml(String(btn.product_id))}</span>` : '';
-								labelHtml = escHtml(btnLabel) + suffix;
-							} else if (btn.product_id) {
-								// No text captured — show product_id clearly, muted note
-								labelHtml = `<span style="opacity:0.85;">#${escHtml(String(btn.product_id))}</span> <span style="opacity:0.45;">(no text captured)</span>`;
-							} else {
-								labelHtml = '<span style="opacity:0.4">—</span>';
-							}
-							html += `<tr style="border-top:1px solid var(--border);">
-								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${labelHtml}</td>
-								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
-								<td style="${thStyle};color:var(--text3);"${posTitle}>${escHtml(posStr)}</td>
-							</tr>`;
-						}
-						html += `</tbody></table></td></tr>`;
+								<div style="display:grid;gap:8px;">${buttonCardsHtml}</div>
+							</td></tr>`;
 					}
 				}
 				html += `</tbody></table>`;
