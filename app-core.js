@@ -764,16 +764,6 @@
 	// CHECKOUT LINK ENHANCEMENT
 	// ═══════════════════════════════════════════════════════════════
 
-	// ── Deduplicare globală checkout_initiated ──────────────────
-	// Cheie: product_id (sau URL dacă nu există product_id)
-	// Valoare: timestamp-ul ultimului event trimis
-	// Scop: Leadpages/SPA recreează nodurile DOM → acEnhanced se pierde
-	// → fără această gardă, fiecare recreare adaugă un nou click listener
-	// → user dă 1 click real → se declanșează N listeners în paralel
-	// NOTĂ: _acCheckoutDone e un Set pe window — shared când scriptul e încărcat de mai multe ori.
-	// Odată checkout_initiated capturat pentru un produs în această sesiune, nu se mai trimite.
-	if (!window._acCheckoutDone) window._acCheckoutDone = new Set();
-
 	// ── Guard împotriva execuției concurente a enhanceCheckoutLinks ──
 	// Pus pe window — shared între toate instanțele scriptului.
 	if (window._acEnhancingCheckout === undefined) window._acEnhancingCheckout = false;
@@ -902,6 +892,55 @@
 		return result;
 	}
 
+	function _extractCheckoutButtonLabelAndKind(el) {
+		const getVisibleText = (node) => {
+			if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+			if (node.nodeType !== Node.ELEMENT_NODE) return '';
+			const tag = node.tagName.toUpperCase();
+			if (tag === 'STYLE' || tag === 'SCRIPT') return '';
+			return Array.from(node.childNodes).map(getVisibleText).join(' ');
+		};
+
+		const fromText = (node) => {
+			const text = getVisibleText(node).replace(/\s+/g, ' ').trim();
+			return text ? text.slice(0, 100) : null;
+		};
+
+		const directText = fromText(el);
+		if (directText) return { label: directText, kind: 'text' };
+
+		const ariaTitle = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
+		if (ariaTitle) return { label: ariaTitle.slice(0, 100), kind: 'label' };
+
+		const imageEl = el.querySelector('img, picture img, svg');
+		if (imageEl) {
+			const imgLabel = (
+				imageEl.getAttribute('alt') ||
+				imageEl.getAttribute('aria-label') ||
+				imageEl.getAttribute('title') ||
+				''
+			).trim();
+			if (imgLabel) return { label: imgLabel.slice(0, 100), kind: 'image' };
+			const src = imageEl.getAttribute && imageEl.getAttribute('src');
+			if (src) {
+				try {
+					const pathPart = new URL(src, window.location.href).pathname.split('/').pop() || 'image';
+					return { label: pathPart.replace(/\.(png|jpe?g|webp|gif|svg)$/i, ''), kind: 'image' };
+				} catch (_err) {
+					return { label: 'image', kind: 'image' };
+				}
+			}
+			return { label: 'image', kind: 'image' };
+		}
+
+		for (const child of el.querySelectorAll('span, div, p, button')) {
+			const text = fromText(child);
+			if (text) return { label: text, kind: 'text' };
+		}
+
+		return { label: null, kind: 'unknown' };
+	}
+
 	/**
 	 * Adaugă user_id în toate link-urile către checkout
 	 * Suportă și link-uri standard (<a href="">) și butoane Leadpages (.lp-button-react[data-widget-link])
@@ -950,6 +989,7 @@
 					// Extrage product_id din URL (ex: /product/640053/ → 640053)
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
 					const productId = productIdMatch ? productIdMatch[1] : null;
+					const buttonMeta = _extractCheckoutButtonLabelAndKind(element);
 
 					// Adaugă user_id în 'custom' parameter (Digistore24 format)
 					// Format: user_id---existing_custom_data
@@ -973,18 +1013,8 @@
 					// ── Marchează elementul ca enhanced (evită re-procesare) ──
 					element.dataset.acEnhanced = '1';
 
-					// CHECKOUT TRACKING REDUNDANCY:
 					// Track click event înainte ca user-ul să plece
 					element.addEventListener('click', async function() {
-						// ── Deduplicare per sesiune: odată capturat pentru acest produs, nu se mai trimite ──
-						// window._acCheckoutDone e shared între toate instanțele scriptului (multiple <script>).
-						const dedupeKey = productId || url.toString();
-						if (window._acCheckoutDone.has(dedupeKey)) {
-							debugLog('⏭️ checkout_initiated deja capturat în această sesiune:', dedupeKey);
-							return;
-						}
-						window._acCheckoutDone.add(dedupeKey);
-
 						try {
 							if (productId) {
 								localStorage.setItem(
@@ -998,28 +1028,7 @@
 								debugLog('✅ Checkout lookup saved for product_id:', productId);
 							}
 
-							// Capture button text at click time (text is guaranteed rendered by now)
-							// Walk text nodes only — skip <style>/<script> to avoid CSS-in-JS garbage
-							const _getVisibleText = (node) => {
-								if (node.nodeType === Node.TEXT_NODE) return node.textContent;
-								if (node.nodeType !== Node.ELEMENT_NODE) return '';
-								const tag = node.tagName.toUpperCase();
-								if (tag === 'STYLE' || tag === 'SCRIPT') return '';
-								return Array.from(node.childNodes).map(_getVisibleText).join(' ');
-							};
-							const _getButtonText = (el) => {
-								let t = _getVisibleText(el).replace(/\s+/g, ' ').trim();
-								if (t) return t.slice(0, 100);
-								t = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
-								if (t) return t.slice(0, 100);
-								// Walk children for span/div/p/button — also skip style/script there
-								for (const child of el.querySelectorAll('span, div, p, button')) {
-									t = _getVisibleText(child).replace(/\s+/g, ' ').trim();
-									if (t) return t.slice(0, 100);
-								}
-								return null;
-							};
-							const clickedButtonText = _getButtonText(element);
+							const clickedButtonText = buttonMeta.label;
 
 // Always recompute at click time — the DOM is fully rendered at this point.
 						// Pre-computed list (window.load) can miss buttons revealed by LP animations
@@ -1039,6 +1048,7 @@
 								product_id: productId,
 								checkout_url: url.toString(),
 								button_label: clickedButtonText,
+								button_content_kind: buttonMeta.kind,
 								button_dom_fingerprint: clickedDomFingerprint,
 								button_position: clickedIndex || null,
 								button_total: clickedTotal || null,
