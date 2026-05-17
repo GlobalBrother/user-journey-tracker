@@ -570,6 +570,240 @@
 			border-bottom-right-radius: 12px;
 		}
 
+		/* ── Checkout Abandon Rate (card mode) ── */
+		.abx-wrap {
+			display: grid;
+			gap: 14px;
+		}
+
+		.abx-overview {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+			gap: 10px;
+			margin-bottom: 8px;
+		}
+
+		.abx-overview-card {
+			padding: 12px 14px;
+			border-radius: 12px;
+			border: 1px solid rgba(148, 163, 184, 0.18);
+			background: rgba(255, 255, 255, 0.02);
+		}
+
+		.abx-overview-label {
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: .08em;
+			color: var(--text3);
+			margin-bottom: 4px;
+		}
+
+		.abx-overview-value {
+			font-size: 21px;
+			font-weight: 800;
+			line-height: 1.1;
+		}
+
+		.abx-domain-card {
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			border-radius: 14px;
+			background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+			overflow: hidden;
+			animation: riseIn .45s ease both;
+		}
+
+		.abx-domain-head {
+			padding: 12px 14px;
+			display: grid;
+			gap: 8px;
+			border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+			background: rgba(15, 23, 42, 0.35);
+		}
+
+		.abx-domain-row {
+			display: flex;
+			justify-content: space-between;
+			gap: 12px;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+
+		.abx-domain-name {
+			font-size: 14px;
+			font-weight: 700;
+		}
+
+		.abx-badges {
+			display: flex;
+			gap: 6px;
+			flex-wrap: wrap;
+		}
+
+		.abx-chip {
+			display: inline-flex;
+			align-items: center;
+			padding: 2px 8px;
+			border-radius: 999px;
+			border: 1px solid rgba(148, 163, 184, 0.22);
+			background: rgba(255, 255, 255, 0.03);
+			font-size: 10px;
+			font-weight: 700;
+			color: var(--text2);
+		}
+
+		.abx-kpis {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.abx-kpi {
+			padding: 6px 8px;
+			border-radius: 8px;
+			background: rgba(255, 255, 255, 0.03);
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			font-size: 11px;
+			color: var(--text2);
+		}
+
+		.abx-kpi strong {
+			font-size: 13px;
+			color: var(--text);
+			margin-right: 4px;
+		}
+
+		.abx-ratebar {
+			height: 8px;
+			border-radius: 999px;
+			overflow: hidden;
+			display: flex;
+			background: rgba(148, 163, 184, 0.16);
+		}
+
+		.abx-ratebar > span {
+			display: block;
+			height: 100%;
+		}
+
+		.abx-body {
+			display: none;
+			padding: 12px;
+			background: rgba(15, 23, 42, 0.2);
+		}
+
+		.abx-body.open {
+			display: block;
+			animation: riseIn .25s ease;
+		}
+
+		.abx-group-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+			gap: 10px;
+		}
+
+		.abx-group {
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			border-radius: 12px;
+			padding: 10px;
+			background: rgba(255, 255, 255, 0.02);
+		}
+
+		.abx-group-top {
+			display: flex;
+			justify-content: space-between;
+			gap: 8px;
+			align-items: baseline;
+		}
+
+		.abx-group-label {
+			font-family: monospace;
+			font-size: 11px;
+			font-weight: 700;
+			color: var(--accent2);
+			line-height: 1.3;
+		}
+
+		.abx-group-clicks {
+			font-size: 18px;
+			font-weight: 800;
+			line-height: 1;
+		}
+
+		.abx-group-sub {
+			margin-top: 4px;
+			font-size: 10px;
+			color: var(--text3);
+		}
+
+		.abx-slot-list {
+			margin-top: 8px;
+			display: grid;
+			gap: 6px;
+		}
+
+		.abx-slot-row {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 8px;
+			align-items: center;
+			padding: 6px 8px;
+			border-radius: 8px;
+			background: rgba(255, 255, 255, 0.02);
+			border: 1px solid rgba(148, 163, 184, 0.12);
+		}
+
+		.abx-slot-name {
+			font-size: 11px;
+			font-weight: 700;
+			color: var(--text2);
+		}
+
+		.abx-slot-bar {
+			margin-top: 4px;
+			height: 4px;
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.18);
+			overflow: hidden;
+		}
+
+		.abx-slot-bar span {
+			display: block;
+			height: 100%;
+			background: linear-gradient(90deg, #60a5fa, #22d3ee);
+		}
+
+		.abx-slot-clicks {
+			font-size: 12px;
+			font-weight: 800;
+			color: var(--text);
+		}
+
+		.abx-toggle {
+			border: 1px solid rgba(34, 211, 238, 0.35);
+			background: rgba(34, 211, 238, 0.09);
+			color: var(--accent2);
+			padding: 5px 10px;
+			border-radius: 999px;
+			font-size: 11px;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.abx-slug-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+			gap: 8px;
+			margin-top: 10px;
+		}
+
+		.abx-slug-card {
+			border: 1px solid rgba(148, 163, 184, 0.15);
+			border-radius: 10px;
+			padding: 8px 10px;
+			background: rgba(255, 255, 255, 0.02);
+		}
+
 		.td-slug {
 			font-family: monospace;
 			font-size: 12px;
@@ -2154,198 +2388,196 @@
 
 		function renderAbandonRate(data) {
 			const el = document.getElementById('abandonRatePanel');
-			if (!data || !data.overall) { el.innerHTML = '<p style="color:var(--text3);">No checkout events in this period.</p>'; return; }
+			if (!data || !data.overall) {
+				el.innerHTML = '<p style="color:var(--text3);">No checkout events in this period.</p>';
+				return;
+			}
+
 			const o = data.overall;
 			const color = o.abandon_rate_pct > 70 ? 'var(--red)' : o.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
-			const thStyle = 'text-align:right;padding:6px 8px;';
-			const thStyleL = 'text-align:left;padding:6px 8px;';
 
-			// ── Overall KPIs ──────────────────────────────────────────────────
-			let html = `<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:20px;">
-				<div style="text-align:center;">
-					<div style="font-size:28px;font-weight:700;color:${color};">${o.abandon_rate_pct}%</div>
-					<div style="font-size:11px;color:var(--text3);">Abandon Rate</div>
-				</div>
-				<div style="text-align:center;">
-					<div style="font-size:22px;font-weight:600;">${fmtNum(o.initiated)}</div>
-					<div style="font-size:11px;color:var(--text3);">Initiated Checkout</div>
-				</div>
-				<div style="text-align:center;">
-					<div style="font-size:22px;font-weight:600;color:var(--green);">${fmtNum(o.converted)}</div>
-					<div style="font-size:11px;color:var(--text3);">Converted</div>
-				</div>
-				<div style="text-align:center;">
-					<div style="font-size:22px;font-weight:600;color:var(--red);">${fmtNum(o.abandoned)}</div>
-					<div style="font-size:11px;color:var(--text3);">Abandoned</div>
-				</div>
-			</div>`;
+			const slotSort = (a, b) => {
+				const aSticky = a.key === 'sticky' ? 0 : 1;
+				const bSticky = b.key === 'sticky' ? 0 : 1;
+				if (aSticky !== bSticky) return aSticky - bSticky;
+				const aLegacy = a.key.startsWith('legacy:') ? 1 : 0;
+				const bLegacy = b.key.startsWith('legacy:') ? 1 : 0;
+				if (aLegacy !== bLegacy) return aLegacy - bLegacy;
+				const aPos = a.key.startsWith('pos:') ? Number(a.key.slice(4)) : Number.MAX_SAFE_INTEGER;
+				const bPos = b.key.startsWith('pos:') ? Number(b.key.slice(4)) : Number.MAX_SAFE_INTEGER;
+				return aPos - bPos;
+			};
 
-			// ── Per Site (by_domain) ──────────────────────────────────────────
+			const slotKeyFromButton = (btn) => {
+				if (btn.position === 'sticky') return 'sticky';
+				if (btn.position != null) return `pos:${btn.position}`;
+				return `legacy:${btn.product_id || btn.label || 'unknown'}`;
+			};
+
+			const slotLabel = (key) => {
+				if (key === 'sticky') return 'Sticky';
+				if (key.startsWith('pos:')) return `Button ${key.slice(4)}`;
+				return 'Legacy';
+			};
+
+			const summarizeSlots = (buttons) => {
+				const slotMap = new Map();
+				for (const btn of buttons || []) {
+					const key = slotKeyFromButton(btn);
+					if (!slotMap.has(key)) slotMap.set(key, { key: key, clicks: 0 });
+					slotMap.get(key).clicks += Number(btn.clicks || 0);
+				}
+				return Array.from(slotMap.values()).sort(slotSort);
+			};
+
+			const renderButtonLabel = (group) => {
+				let btnLabel = (group.label || '').trim();
+				if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
+				if (btnLabel) {
+					const suffix = (group.product_id && !btnLabel.includes('#' + group.product_id))
+						? ` <span style="opacity:.5;">- #${escHtml(String(group.product_id))}</span>`
+						: '';
+					return escHtml(btnLabel) + suffix;
+				}
+				if (group.product_id) {
+					return `<span style="opacity:.92;">#${escHtml(String(group.product_id))}</span> <span style="opacity:.45;">(no text captured)</span>`;
+				}
+				return '<span style="opacity:.45;">-</span>';
+			};
+
+			const ovCards = [
+				{ label: 'Abandon Rate', value: `${o.abandon_rate_pct}%`, color: color },
+				{ label: 'Initiated Checkout', value: fmtNum(o.initiated), color: 'var(--text)' },
+				{ label: 'Converted', value: fmtNum(o.converted), color: 'var(--green)' },
+				{ label: 'Abandoned', value: fmtNum(o.abandoned), color: 'var(--red)' },
+			];
+
+			let html = `<div class="abx-overview">${ovCards.map(card => `
+				<div class="abx-overview-card">
+					<div class="abx-overview-label">${card.label}</div>
+					<div class="abx-overview-value" style="color:${card.color};">${card.value}</div>
+				</div>
+			`).join('')}</div>`;
+
 			if (data.by_domain && data.by_domain.length > 0) {
-				html += `<div style="font-size:12px;font-weight:600;color:var(--text2);margin:18px 0 8px;">Per Site</div>`;
-				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px;">
-					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
-						<th style="${thStyleL}">Site</th>
-						<th style="${thStyle}">Initiated</th>
-						<th style="${thStyle}">Converted</th>
-						<th style="${thStyle}">Abandoned</th>
-						<th style="${thStyle}">Abandon Rate</th>
-					</tr></thead><tbody>`;
-				for (const row of data.by_domain) {
-					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
-					const domId = 'btns_' + row.domain.replace(/[^a-z0-9]/gi, '_');
-					const hasButtons = row.buttons && row.buttons.length > 0;
+				html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin:12px 0 8px;">Site Drilldown</div>`;
+				html += `<div class="abx-wrap">`;
+
+				for (const [index, row] of data.by_domain.entries()) {
+					const hasButtons = Array.isArray(row.buttons) && row.buttons.length > 0;
 					const hasVariants = !!row.multiple_checkout_variants;
 					const isAbTestLikely = !!row.ab_test_likely;
 					const variantList = Array.isArray(row.checkout_variants) ? row.checkout_variants : [];
-					const variantBadge = hasVariants
-						? `<span title="${isAbTestLikely ? 'Same offer likely tested via multiple checkout variants' : 'Multiple distinct checkout offers detected'}" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid ${isAbTestLikely ? 'rgba(245,158,11,.35)' : 'rgba(34,197,94,.25)'};color:${isAbTestLikely ? 'var(--yellow)' : 'var(--green)'};background:${isAbTestLikely ? 'rgba(245,158,11,.08)' : 'rgba(34,197,94,.07)'};'>${isAbTestLikely ? 'A/B test' : 'Multiple offers'}${variantList.length ? ` · ${variantList.length}` : ''}</span>`
-						: '';
-					html += `<tr style="border-bottom:1px solid var(--border);">
-						<td style="padding:6px 8px;">
-							${hasButtons ? `<button onclick="document.getElementById('${domId}').style.display=document.getElementById('${domId}').style.display==='none'?'table-row':'none'" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent2);padding:0;margin-right:4px;">▶</button>` : ''}
-							<span style="color:var(--text1);">${row.domain}</span>
-							${variantBadge}
-						</td>
-						<td style="${thStyle}">${fmtNum(row.initiated)}</td>
-						<td style="${thStyle};color:var(--green);">${fmtNum(row.converted)}</td>
-						<td style="${thStyle};color:var(--red);">${fmtNum(row.abandoned)}</td>
-						<td style="${thStyle};font-weight:700;color:${rc};">${row.abandon_rate_pct}%</td>
-					</tr>`;
-					// Expandable button sub-row
+					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
+					const detailId = `abx_${String(row.domain || 'domain').replace(/[^a-z0-9]/gi, '_')}_${index}`;
+
+					let totalButtonClicks = 0;
+					let buttonGroups = [];
+					let domainSlots = [];
+
 					if (hasButtons) {
-						const buttonGroupsMap = new Map();
-							const observedSlots = new Set();
+						const groupMap = new Map();
 						for (const btn of row.buttons) {
+							totalButtonClicks += Number(btn.clicks || 0);
 							const rawLabel = (btn.label || '').trim();
-							const groupKey = `${rawLabel}||${btn.product_id || ''}`;
-							if (!buttonGroupsMap.has(groupKey)) {
-									buttonGroupsMap.set(groupKey, { label: rawLabel, product_id: btn.product_id, clicks: 0, items: [] });
+							const key = `${rawLabel}||${btn.product_id || ''}`;
+							if (!groupMap.has(key)) {
+								groupMap.set(key, { label: rawLabel, product_id: btn.product_id, clicks: 0, items: [] });
 							}
-							const group = buttonGroupsMap.get(groupKey);
+							const group = groupMap.get(key);
 							group.clicks += Number(btn.clicks || 0);
 							group.items.push(btn);
-							const slotKey = btn.position === 'sticky'
-								? 'sticky'
-								: btn.position != null
-									? `slot:${btn.position}`
-									: `legacy:${btn.product_id || rawLabel || 'unknown'}`;
-							observedSlots.add(slotKey);
 						}
-						const buttonGroups = Array.from(buttonGroupsMap.values()).sort((a, b) => b.clicks - a.clicks);
-							const summarizeSlots = (items) => {
-								const slotMap = new Map();
-								for (const btn of items) {
-									const slotKey = btn.position === 'sticky'
-										? 'sticky'
-										: btn.position != null
-											? `pos:${btn.position}`
-											: `legacy:${btn.product_id || btn.label || 'unknown'}`;
-									if (!slotMap.has(slotKey)) {
-										slotMap.set(slotKey, { key: slotKey, clicks: 0, items: [] });
-									}
-									const slot = slotMap.get(slotKey);
-									slot.clicks += Number(btn.clicks || 0);
-									slot.items.push(btn);
-								}
-								return Array.from(slotMap.values()).sort((a, b) => {
-									const aSticky = a.key === 'sticky' ? 0 : 1;
-									const bSticky = b.key === 'sticky' ? 0 : 1;
-									if (aSticky !== bSticky) return aSticky - bSticky;
-									const aLegacy = a.key.startsWith('legacy:') ? 1 : 0;
-									const bLegacy = b.key.startsWith('legacy:') ? 1 : 0;
-									if (aLegacy !== bLegacy) return aLegacy - bLegacy;
-									const aPos = a.key.startsWith('pos:') ? Number(a.key.slice(4)) : Number.MAX_SAFE_INTEGER;
-									const bPos = b.key.startsWith('pos:') ? Number(b.key.slice(4)) : Number.MAX_SAFE_INTEGER;
-									return aPos - bPos;
-								});
-							};
-						const renderButtonLabel = (btn) => {
-							let btnLabel = btn.label || '';
-							if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
-							if (btnLabel) {
-								const suffix = (btn.product_id && !btnLabel.includes('#' + btn.product_id))
-									? ` <span style="opacity:0.5;">- #${escHtml(String(btn.product_id))}</span>` : '';
-								return escHtml(btnLabel) + suffix;
-							}
-							if (btn.product_id) {
-								return `<span style="opacity:0.92;">#${escHtml(String(btn.product_id))}</span> <span style="opacity:0.45;">(no text captured)</span>`;
-							}
-							return '<span style="opacity:0.45;">—</span>';
-						};
-						const renderSlotChip = (slot) => {
-							if (slot.key === 'sticky') {
-								return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:var(--green);font-size:10px;font-weight:700;">Sticky CTA</span>`;
-							}
-							if (slot.key.startsWith('pos:')) {
-								const pos = slot.key.slice(4);
-								return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);color:#93c5fd;font-size:10px;font-weight:700;">Button ${escHtml(String(pos))}</span>`;
-							}
-							return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.2);color:var(--text3);font-size:10px;font-weight:700;">Legacy, no position</span>`;
-						};
-						let buttonCardsHtml = '';
-						for (const group of buttonGroups) {
-								const slots = summarizeSlots(group.items).map(renderSlotChip).join('');
-							buttonCardsHtml += `<div style="padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.02);">
-								<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
-									<div style="min-width:0;">
-										<div style="font-family:monospace;color:var(--accent2);font-size:11px;line-height:1.35;">${renderButtonLabel(group.items[0])}</div>
-											<div style="font-size:10px;color:var(--text3);margin-top:3px;">Button group · ${group.items.length} raw row${group.items.length === 1 ? '' : 's'} · ${summarizeSlots(group.items).length} distinct slot${summarizeSlots(group.items).length === 1 ? '' : 's'}</div>
-									</div>
-									<div style="text-align:right;flex-shrink:0;">
-										<div style="font-size:16px;font-weight:700;color:var(--text1);line-height:1;">${fmtNum(group.clicks)}</div>
-										<div style="font-size:10px;color:var(--text3);margin-top:3px;">clicks</div>
-									</div>
-								</div>
-								<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${slots}</div>
-							</div>`;
-						}
-						html += `<tr id="${domId}" style="display:none;background:var(--surface2);">
-							<td colspan="5" style="padding:4px 16px 12px;">
-								<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">
-									Checkout button clicks on ${row.domain}
-									<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text2);font-weight:700;">${buttonGroups.length} button groups</span>
-									<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text2);font-weight:700;">${observedSlots.size} distinct slots</span>
-									${isAbTestLikely ? '<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);font-weight:700;">A/B test</span>' : hasVariants ? '<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:var(--green);font-weight:700;">Multiple offers</span>' : ''}
-								</div>
-								<div style="display:grid;gap:8px;">${buttonCardsHtml}</div>
-							</td></tr>`;
+						buttonGroups = Array.from(groupMap.values()).sort((a, b) => b.clicks - a.clicks);
+						domainSlots = summarizeSlots(row.buttons);
 					}
+
+					const convPct = row.initiated ? (row.converted / row.initiated) * 100 : 0;
+					const abdPct = row.initiated ? (row.abandoned / row.initiated) * 100 : 0;
+
+					const slotSummary = domainSlots.length
+						? domainSlots.map(s => `${slotLabel(s.key)} = ${fmtNum(s.clicks)}`).join(' | ')
+						: 'No button slot data';
+
+					const groupsHtml = buttonGroups.map(group => {
+						const slots = summarizeSlots(group.items);
+						const maxSlotClicks = Math.max(...slots.map(s => s.clicks), 1);
+						const slotRows = slots.map(slot => {
+							const pct = group.clicks ? Math.round((slot.clicks / group.clicks) * 100) : 0;
+							const rel = Math.max(8, Math.round((slot.clicks / maxSlotClicks) * 100));
+							return `<div class="abx-slot-row">
+								<div>
+									<div class="abx-slot-name">${escHtml(slotLabel(slot.key))} <span style="color:var(--text3);font-weight:500;">(${pct}%)</span></div>
+									<div class="abx-slot-bar"><span style="width:${rel}%;"></span></div>
+								</div>
+								<div class="abx-slot-clicks">${fmtNum(slot.clicks)}</div>
+							</div>`;
+						}).join('');
+
+						return `<div class="abx-group">
+							<div class="abx-group-top">
+								<div class="abx-group-label">${renderButtonLabel(group)}</div>
+								<div class="abx-group-clicks">${fmtNum(group.clicks)}</div>
+							</div>
+							<div class="abx-group-sub">${group.items.length} raw row${group.items.length === 1 ? '' : 's'} merged into ${slots.length} slot${slots.length === 1 ? '' : 's'}</div>
+							<div class="abx-slot-list">${slotRows}</div>
+						</div>`;
+					}).join('');
+
+					html += `<div class="abx-domain-card" style="animation-delay:${index * 0.05}s;">
+						<div class="abx-domain-head">
+							<div class="abx-domain-row">
+								<div class="abx-domain-name">${escHtml(row.domain || 'Unknown')}</div>
+								<div class="abx-badges">
+									<span class="abx-chip" style="color:${rc};border-color:${rc};">${row.abandon_rate_pct}% abandon</span>
+									${hasVariants ? `<span class="abx-chip" style="color:${isAbTestLikely ? 'var(--yellow)' : 'var(--green)'};">${isAbTestLikely ? 'A/B test' : 'Multiple offers'}${variantList.length ? ` | ${variantList.length}` : ''}</span>` : ''}
+								</div>
+							</div>
+							<div class="abx-kpis">
+								<div class="abx-kpi"><strong>${fmtNum(row.initiated)}</strong> initiated</div>
+								<div class="abx-kpi"><strong style="color:var(--green);">${fmtNum(row.converted)}</strong> converted</div>
+								<div class="abx-kpi"><strong style="color:var(--red);">${fmtNum(row.abandoned)}</strong> abandoned</div>
+								${hasButtons ? `<div class="abx-kpi"><strong>${fmtNum(totalButtonClicks)}</strong> button clicks</div>` : ''}
+							</div>
+							<div class="abx-ratebar">
+								<span style="width:${Math.max(0, Math.min(100, convPct)).toFixed(1)}%;background:linear-gradient(90deg, rgba(34,197,94,.7), rgba(34,197,94,.95));"></span>
+								<span style="width:${Math.max(0, Math.min(100, abdPct)).toFixed(1)}%;background:linear-gradient(90deg, rgba(239,68,68,.7), rgba(239,68,68,.95));"></span>
+							</div>
+							<div style="font-size:11px;color:var(--text3);">${escHtml(slotSummary)}</div>
+							${hasButtons ? `<div class="abx-domain-row"><span style="font-size:11px;color:var(--text3);">${buttonGroups.length} button group${buttonGroups.length === 1 ? '' : 's'} | ${domainSlots.length} slot${domainSlots.length === 1 ? '' : 's'}</span><button class="abx-toggle" data-target="${detailId}">Show button slot map</button></div>` : ''}
+						</div>
+						${hasButtons ? `<div class="abx-body" id="${detailId}"><div class="abx-group-grid">${groupsHtml}</div></div>` : ''}
+					</div>`;
 				}
-				html += `</tbody></table>`;
+
+				html += `</div>`;
 			}
 
-			// ── Per Ad Source (by_slug) ───────────────────────────────────────
 			if (data.by_slug && data.by_slug.length > 0) {
-				html += `<div style="font-size:12px;font-weight:600;color:var(--text2);margin:0 0 8px;">Per Ad Source</div>`;
-				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
-					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
-						<th style="${thStyleL}">Source</th>
-						<th style="${thStyleL}">Domain</th>
-						<th style="${thStyle}">Initiated</th>
-						<th style="${thStyle}">Converted</th>
-						<th style="${thStyle}">Abandoned</th>
-						<th style="${thStyle}">Abandon Rate</th>
-					</tr></thead><tbody>`;
-				for (const row of data.by_slug) {
+				html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin:16px 0 8px;">Ad Source Snapshot</div>`;
+				html += `<div class="abx-slug-grid">${data.by_slug.slice(0, 18).map(row => {
 					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
-					const domainVal = Array.isArray(row.domain) ? row.domain.join(', ') : (row.domain || '—');
-					html += `<tr style="border-bottom:1px solid var(--border);">
-						<td style="padding:6px 8px;font-family:monospace;color:var(--accent2);">${row.slug}</td>
-						<td style="padding:6px 8px;color:var(--text2);">${domainVal}</td>
-						<td style="${thStyle}">${fmtNum(row.initiated)}</td>
-						<td style="${thStyle};color:var(--green);">${fmtNum(row.converted)}</td>
-						<td style="${thStyle};color:var(--red);">${fmtNum(row.abandoned)}</td>
-						<td style="${thStyle};font-weight:700;color:${rc};">${row.abandon_rate_pct}%</td>
-					</tr>`;
-				}
-				html += `</tbody></table>`;
+					const domainVal = Array.isArray(row.domain) ? row.domain.join(', ') : (row.domain || '-');
+					return `<div class="abx-slug-card">
+						<div style="font-family:monospace;color:var(--accent2);font-size:11px;line-height:1.35;">${escHtml(row.slug)}</div>
+						<div style="font-size:10px;color:var(--text3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(domainVal)}</div>
+						<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:var(--text2);">
+							<span>${fmtNum(row.initiated)} -> ${fmtNum(row.abandoned)}</span>
+							<strong style="color:${rc};">${row.abandon_rate_pct}%</strong>
+						</div>
+					</div>`;
+				}).join('')}</div>`;
 			}
+
 			el.innerHTML = html;
-			// Wire up toggle buttons (using onclick inline) — also handle arrow rotation
-			el.querySelectorAll('button[onclick]').forEach(btn => {
+
+			el.querySelectorAll('.abx-toggle').forEach(btn => {
 				btn.addEventListener('click', () => {
-					btn.textContent = btn.textContent === '▶' ? '▼' : '▶';
+					const targetId = btn.getAttribute('data-target');
+					const body = targetId ? el.querySelector('#' + targetId) : null;
+					if (!body) return;
+					const isOpen = body.classList.toggle('open');
+					btn.textContent = isOpen ? 'Hide button slot map' : 'Show button slot map';
 				});
 			});
 		}
