@@ -2496,7 +2496,8 @@
 					const abdPct = row.initiated ? (row.abandoned / row.initiated) * 100 : 0;
 
 					const filterOutEmptyLegacy = (slots) => slots.filter(s => {
-						if (s.key.startsWith('legacy:') && s.clicks === 0) return false;
+						// Remove ALL legacy slots - they're tracked buttons without proper position data
+						if (s.key.startsWith('legacy:')) return false;
 						return true;
 					});
 
