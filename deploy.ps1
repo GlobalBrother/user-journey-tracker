@@ -75,7 +75,7 @@ for ($i = 1; $i -le $maxRetries; $i++) {
         break
     }
 
-    Write-Host "Attempt $i/$maxRetries: @main not synced yet."
+    Write-Host "Attempt ${i}/${maxRetries}: @main not synced yet."
     if ($rawHash -and $shaHash -and $rawHash -eq $shaHash) {
         Write-Host "Commit URL already correct: $ShaCdnUrl"
     }

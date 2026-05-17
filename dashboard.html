@@ -1960,6 +1960,12 @@
 			// ── Per Site (by_domain) ──────────────────────────────────────────
 			if (data.by_domain && data.by_domain.length > 0) {
 				html += `<div style="font-size:12px;font-weight:600;color:var(--text2);margin:18px 0 8px;">Per Site</div>`;
+				html += `<div style="font-size:11px;color:var(--text3);margin:0 0 8px;">
+					<span style="display:inline-flex;align-items:center;gap:4px;padding:1px 6px;border-radius:999px;border:1px solid rgba(245,158,11,.35);color:var(--yellow);background:rgba(245,158,11,.08);font-weight:700;">A/B test</span>
+					 same offer shown through multiple checkout variants;
+					 <span style="display:inline-flex;align-items:center;gap:4px;padding:1px 6px;border-radius:999px;border:1px solid rgba(34,197,94,.25);color:var(--green);background:rgba(34,197,94,.07);font-weight:700;">Multiple offers</span>
+					 multiple distinct checkout products/offers on the same domain.
+				</div>`;
 				html += `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px;">
 					<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
 						<th style="${thStyleL}">Site</th>
@@ -1974,8 +1980,17 @@
 					const hasButtons = row.buttons && row.buttons.length > 0;
 					const hasVariants = !!row.multiple_checkout_variants;
 					const isAbTestLikely = !!row.ab_test_likely;
+					const variantList = Array.isArray(row.checkout_variants) ? row.checkout_variants : [];
+					const variantDetails = variantList.length
+						? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">${variantList.slice(0, 6).map((v, i) => {
+							const vLabel = (v.label || (v.product_id ? '#' + v.product_id : `variant ${i + 1}`) || '').trim();
+							const pid = v.product_id ? ` - #${escHtml(String(v.product_id))}` : '';
+							const clicks = fmtNum(v.clicks || 0);
+							return `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:10px;">${escHtml(vLabel)}${pid} - ${clicks} clicks</span>`;
+						}).join('')}</div>`
+						: '';
 					const variantBadge = hasVariants
-						? `<span style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid ${isAbTestLikely ? 'rgba(245,158,11,.35)' : 'rgba(34,197,94,.25)'};color:${isAbTestLikely ? 'var(--yellow)' : 'var(--green)'};background:${isAbTestLikely ? 'rgba(245,158,11,.08)' : 'rgba(34,197,94,.07)'};'>${isAbTestLikely ? 'A/B likely' : 'Multiple variants'}${row.checkout_variants ? ` · ${row.checkout_variants.length}` : ''}</span>`
+						? `<span title="${isAbTestLikely ? 'Same offer likely tested via multiple checkout variants' : 'Multiple distinct checkout offers detected'}" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid ${isAbTestLikely ? 'rgba(245,158,11,.35)' : 'rgba(34,197,94,.25)'};color:${isAbTestLikely ? 'var(--yellow)' : 'var(--green)'};background:${isAbTestLikely ? 'rgba(245,158,11,.08)' : 'rgba(34,197,94,.07)'};'>${isAbTestLikely ? 'A/B test' : 'Multiple offers'}${variantList.length ? ` · ${variantList.length}` : ''}</span>`
 						: '';
 					html += `<tr style="border-bottom:1px solid var(--border);">
 						<td style="padding:6px 8px;">
@@ -1994,20 +2009,23 @@
 							<td colspan="5" style="padding:4px 16px 12px;">
 								<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">
 									Checkout button clicks on ${row.domain}
-									${isAbTestLikely ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);font-weight:700;">Likely A/B test</span>' : hasVariants ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:var(--green);font-weight:700;">Multiple checkout variants</span>' : ''}
+									${isAbTestLikely ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);font-weight:700;">A/B test</span>' : hasVariants ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:var(--green);font-weight:700;">Multiple offers</span>' : ''}
+									${variantDetails}
 								</div>
 								<table style="width:100%;border-collapse:collapse;font-size:11px;">
 									<thead><tr style="color:var(--text3);">
 										<th style="${thStyleL}">Button / Product</th>
 										<th style="${thStyle}">Clicks</th>
-										<th style="${thStyle}">Positions</th>
+										<th style="${thStyle}">Position</th>
 									</tr></thead><tbody>`;
 						for (const btn of row.buttons) {
 							let posStr = '—';
+							let posTitle = '';
 							if (btn.position === 'sticky') {
 								posStr = 'sticky';
-							} else if (btn.position != null && btn.total != null) {
-								posStr = `${btn.position} / ${btn.total}`;
+							} else if (btn.position != null) {
+								posStr = `#${btn.position}`;
+								if (btn.total != null) posTitle = ` title="raw: ${escHtml(String(btn.position))}/${escHtml(String(btn.total))}"`;
 							}
 							// Build label: prefer captured text; fall back to #product_id (muted)
 							let btnLabel = btn.label || '';
@@ -2016,18 +2034,18 @@
 							if (btnLabel) {
 								// Real text captured — append product_id if needed to disambiguate
 								const suffix = (btn.product_id && !btnLabel.includes('#' + btn.product_id))
-									? ` <span style="opacity:0.45;font-size:10px;">— #${escHtml(String(btn.product_id))}</span>` : '';
+									? ` <span style="opacity:0.45;">- #${escHtml(String(btn.product_id))}</span>` : '';
 								labelHtml = escHtml(btnLabel) + suffix;
 							} else if (btn.product_id) {
 								// No text captured — show product_id clearly, muted note
-								labelHtml = `<span style="opacity:0.6;">#${escHtml(String(btn.product_id))}</span> <span style="opacity:0.3;font-size:10px;">(text neînregistrat)</span>`;
+								labelHtml = `<span style="opacity:0.85;">#${escHtml(String(btn.product_id))}</span> <span style="opacity:0.45;">(no text captured)</span>`;
 							} else {
 								labelHtml = '<span style="opacity:0.4">—</span>';
 							}
 							html += `<tr style="border-top:1px solid var(--border);">
 								<td style="padding:4px 8px;font-family:monospace;color:var(--accent2);">${labelHtml}</td>
 								<td style="${thStyle};font-weight:600;">${fmtNum(btn.clicks)}</td>
-								<td style="${thStyle};color:var(--text3);">${escHtml(posStr)}</td>
+								<td style="${thStyle};color:var(--text3);"${posTitle}>${escHtml(posStr)}</td>
 							</tr>`;
 						}
 						html += `</tbody></table></td></tr>`;
