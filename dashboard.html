@@ -2476,8 +2476,15 @@
 					let domainSlots = [];
 
 					if (hasButtons) {
+						// Filter out legacy buttons (those without proper position data)
+						const validButtons = row.buttons.filter(btn => {
+							const key = slotKeyFromButton(btn);
+							if (key.startsWith('legacy:')) return false;
+							return true;
+						});
+
 						const groupMap = new Map();
-						for (const btn of row.buttons) {
+						for (const btn of validButtons) {
 							totalButtonClicks += Number(btn.clicks || 0);
 							const rawLabel = (btn.label || '').trim();
 							const key = `${rawLabel}||${btn.product_id || ''}`;
@@ -2489,7 +2496,7 @@
 							group.items.push(btn);
 						}
 						buttonGroups = Array.from(groupMap.values()).sort((a, b) => b.clicks - a.clicks);
-						domainSlots = summarizeSlots(row.buttons);
+						domainSlots = summarizeSlots(validButtons);
 					}
 
 					const convPct = row.initiated ? (row.converted / row.initiated) * 100 : 0;
