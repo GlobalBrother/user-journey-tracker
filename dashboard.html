@@ -1972,10 +1972,16 @@
 					const rc = row.abandon_rate_pct > 70 ? 'var(--red)' : row.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
 					const domId = 'btns_' + row.domain.replace(/[^a-z0-9]/gi, '_');
 					const hasButtons = row.buttons && row.buttons.length > 0;
+					const hasVariants = !!row.multiple_checkout_variants;
+					const isAbTestLikely = !!row.ab_test_likely;
+					const variantBadge = hasVariants
+						? `<span style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid ${isAbTestLikely ? 'rgba(245,158,11,.35)' : 'rgba(34,197,94,.25)'};color:${isAbTestLikely ? 'var(--yellow)' : 'var(--green)'};background:${isAbTestLikely ? 'rgba(245,158,11,.08)' : 'rgba(34,197,94,.07)'};'>${isAbTestLikely ? 'A/B likely' : 'Multiple variants'}${row.checkout_variants ? ` · ${row.checkout_variants.length}` : ''}</span>`
+						: '';
 					html += `<tr style="border-bottom:1px solid var(--border);">
 						<td style="padding:6px 8px;">
 							${hasButtons ? `<button onclick="document.getElementById('${domId}').style.display=document.getElementById('${domId}').style.display==='none'?'table-row':'none'" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent2);padding:0;margin-right:4px;">▶</button>` : ''}
 							<span style="color:var(--text1);">${row.domain}</span>
+							${variantBadge}
 						</td>
 						<td style="${thStyle}">${fmtNum(row.initiated)}</td>
 						<td style="${thStyle};color:var(--green);">${fmtNum(row.converted)}</td>
@@ -1986,7 +1992,10 @@
 					if (hasButtons) {
 						html += `<tr id="${domId}" style="display:none;background:var(--surface2);">
 							<td colspan="5" style="padding:4px 16px 12px;">
-								<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Checkout button clicks on ${row.domain}</div>
+								<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">
+									Checkout button clicks on ${row.domain}
+									${isAbTestLikely ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);font-weight:700;">Likely A/B test</span>' : hasVariants ? '<span style="margin-left:8px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:var(--green);font-weight:700;">Multiple checkout variants</span>' : ''}
+								</div>
 								<table style="width:100%;border-collapse:collapse;font-size:11px;">
 									<thead><tr style="color:var(--text3);">
 										<th style="${thStyleL}">Button / Product</th>
