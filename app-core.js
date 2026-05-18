@@ -977,7 +977,8 @@
 			return text ? text.slice(0, 100) : null;
 		};
 
-		// 🔍 CHECK IMAGE FIRST — if element contains image, ONLY use image label, never recurse text
+		const directText = fromText(el);
+
 		const imageEl = el.querySelector('img, picture img, svg');
 		if (imageEl) {
 			const imgLabel = (
@@ -986,6 +987,9 @@
 				imageEl.getAttribute('title') ||
 				''
 			).trim();
+			if (directText) {
+				return { label: directText, kind: 'text' };
+			}
 			if (imgLabel) {
 				return { label: imgLabel.slice(0, 100), kind: 'image' };
 			}
@@ -1003,7 +1007,6 @@
 		}
 
 		// Only if NO image exists, search for text label
-		const directText = fromText(el);
 		if (directText) {
 			return { label: directText, kind: 'text' };
 		}
