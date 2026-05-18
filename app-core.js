@@ -793,6 +793,19 @@
 	// More specific than CHECKOUT_DOMAINS — avoids counting footer links etc.
 	const _CHECKOUT_BTN_PATTERNS = ['digistore24.com/content', 'checkout-ds24.com/content'];
 
+	function _isCheckoutHref(href) {
+		if (!href) return false;
+		// Primary rule: explicit checkout provider URL patterns used by our funnels.
+		if (_CHECKOUT_BTN_PATTERNS.some(p => href.includes(p))) return true;
+
+		// Fallback rule: checkout domains, but only when URL carries a product-like id.
+		// This avoids counting generic links ("here", placeholders, footer links) as buttons.
+		const onCheckoutDomain = CONFIG.CHECKOUT_DOMAINS.some(domain => href.includes(domain));
+		if (onCheckoutDomain && /(\d{6,})/.test(href)) return true;
+
+		return false;
+	}
+
 	function _isElementVisible(el) {
 		// Walk up the ancestor chain checking computed styles only.
 		// We intentionally skip getBoundingClientRect: buttons below the fold or in
@@ -876,7 +889,7 @@
 		// Both are captured by querying a[href] with checkout URL patterns.
 		const byHref = Array.from(document.querySelectorAll('a[href]')).filter(el => {
 			const u = el.getAttribute('href') || '';
-			return _CHECKOUT_BTN_PATTERNS.some(p => u.includes(p));
+			return _isCheckoutHref(u);
 		});
 
 		// Exclude sticky CTA — it's tracked separately
@@ -996,10 +1009,8 @@
 			const isLeadpagesButton = element.classList.contains('lp-button-react');
 			const urlAttribute = isLeadpagesButton ? 'data-widget-link' : 'href';
 
-			// Check dacă link-ul merge către un domeniu de checkout SAU către un path de checkout (ex: /checkout, /checkoutbundle)
-			const isCheckoutLink = CONFIG.CHECKOUT_DOMAINS.some(domain =>
-				href.includes(domain)
-			) || /\/checkout/i.test(href);
+			// Count only genuine checkout links to avoid attaching listeners on generic links.
+			const isCheckoutLink = _isCheckoutHref(href);
 
 			if (isCheckoutLink) {
 				try {
