@@ -2497,13 +2497,32 @@
 							return true;
 						});
 
+						// Build a label dictionary per product_id so old "no text" rows can reuse
+						// the best known label (including newly captured alt text) in the same range.
+						const preferredLabelByProduct = new Map();
+						for (const btn of validButtons) {
+							const pid = btn.product_id || '';
+							if (!pid) continue;
+							const normalized = normalizeButtonLabel(btn.label || '');
+							if (!normalized) continue;
+							const clicks = Number(btn.clicks || 0);
+							if (!preferredLabelByProduct.has(pid) || clicks > preferredLabelByProduct.get(pid).clicks) {
+								preferredLabelByProduct.set(pid, { label: normalized, clicks: clicks });
+							}
+						}
+
 						const groupMap = new Map();
 						for (const btn of validButtons) {
 							totalButtonClicks += Number(btn.clicks || 0);
 							const normalizedLabel = normalizeButtonLabel(btn.label || '');
-							const key = `${normalizedLabel}||${btn.product_id || ''}`;
+							const pid = btn.product_id || '';
+							const inferredLabel = (!normalizedLabel && pid && preferredLabelByProduct.has(pid))
+								? preferredLabelByProduct.get(pid).label
+								: '';
+							const effectiveLabel = normalizedLabel || inferredLabel;
+							const key = `${effectiveLabel}||${pid}`;
 							if (!groupMap.has(key)) {
-								groupMap.set(key, { label: normalizedLabel, product_id: btn.product_id, clicks: 0, items: [] });
+								groupMap.set(key, { label: effectiveLabel, product_id: btn.product_id, clicks: 0, items: [] });
 							}
 							const group = groupMap.get(key);
 							group.clicks += Number(btn.clicks || 0);
