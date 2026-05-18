@@ -930,6 +930,9 @@
 					return { label: 'image', kind: 'image' };
 				}
 			}
+			// Element has an image but no label was found — return 'image' WITHOUT
+			// doing recursive text search in children/siblings (prevents capturing
+			// sticky CTA text or other parent text that's not the image's label).
 			return { label: 'image', kind: 'image' };
 		}
 
