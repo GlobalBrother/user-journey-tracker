@@ -930,15 +930,14 @@
 					return { label: 'image', kind: 'image' };
 				}
 			}
-			// Element has an image but no label was found — return 'image' WITHOUT
-			// doing recursive text search in children/siblings (prevents capturing
-			// sticky CTA text or other parent text that's not the image's label).
+			// Element has an image but no label found — return 'image' WITHOUT recursing
 			return { label: 'image', kind: 'image' };
-		}
-
-		for (const child of el.querySelectorAll('span, div, p, button')) {
-			const text = fromText(child);
-			if (text) return { label: text, kind: 'text' };
+		} else {
+			// Only search for child text if there's NO image in the element
+			for (const child of el.querySelectorAll('span, div, p, button')) {
+				const text = fromText(child);
+				if (text) return { label: text, kind: 'text' };
+			}
 		}
 
 		return { label: null, kind: 'unknown' };
