@@ -920,6 +920,49 @@
 		return result;
 	}
 
+	function _extractProductIdFromCheckoutHref(href) {
+		if (!href) return null;
+		try {
+			const parsed = new URL(href, window.location.origin);
+			const m = parsed.pathname.match(/(\d{6,})/);
+			return m ? m[1] : null;
+		} catch (_err) {
+			const fallback = String(href).match(/(\d{6,})/);
+			return fallback ? fallback[1] : null;
+		}
+	}
+
+	function _buildCheckoutButtonsInventory() {
+		const checkoutEls = _computeCheckoutButtonList();
+		const total = checkoutEls.length;
+		return checkoutEls.map((el, idx) => {
+			const href = el.getAttribute('href') || el.getAttribute('data-widget-link') || null;
+			const meta = _extractCheckoutButtonLabelAndKind(el);
+			return {
+				position: idx + 1,
+				total: total,
+				product_id: _extractProductIdFromCheckoutHref(href),
+				button_label: meta.label,
+				button_content_kind: meta.kind,
+				button_dom_fingerprint: _domFingerprint(el),
+				checkout_url: href,
+			};
+		});
+	}
+
+	async function _trackCheckoutButtonsInventory() {
+		const buttons = _buildCheckoutButtonsInventory();
+		const sig = JSON.stringify(buttons.map(b => [b.position, b.total, b.product_id || '', b.button_dom_fingerprint || '', b.checkout_url || '']));
+		if (window._acLastButtonsInventorySig === sig) return;
+		window._acLastButtonsInventorySig = sig;
+
+		await trackEvent('checkout_buttons_inventory', {
+			buttons: buttons,
+			total_buttons: buttons.length,
+			timestamp: Date.now(),
+		});
+	}
+
 	function _extractCheckoutButtonLabelAndKind(el) {
 		const getVisibleText = (node) => {
 			if (node.nodeType === Node.TEXT_NODE) return node.textContent;
@@ -1115,6 +1158,7 @@
 			_debounceTimer = setTimeout(() => {
 			enhanceCheckoutLinks().then(() => {
 				window._acPageCheckoutButtons = _computeCheckoutButtonList();
+				_trackCheckoutButtonsInventory().catch(err => debugLog('Failed to track checkout buttons inventory:', err));
 			});
 		}, 200);
 		});
@@ -1168,10 +1212,12 @@
 		if (document.readyState === 'complete') {
 			window._acPageCheckoutButtons = _computeCheckoutButtonList();
 			debugLog('Checkout buttons pre-computed:', window._acPageCheckoutButtons.length);
+			await _trackCheckoutButtonsInventory();
 		} else {
 			window.addEventListener('load', () => {
 				window._acPageCheckoutButtons = _computeCheckoutButtonList();
 				debugLog('Checkout buttons pre-computed on load:', window._acPageCheckoutButtons.length);
+				_trackCheckoutButtonsInventory().catch(err => debugLog('Failed to track checkout buttons inventory:', err));
 			}, { once: true });
 		}
 
