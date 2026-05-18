@@ -367,6 +367,15 @@
 			return false;
 		}
 
+		// sendBeacon uses credentials mode "include" and can fail CORS on wildcard ACAO.
+		// For cross-origin API endpoints, skip beacon and let other transports handle the event.
+		try {
+			if (new URL(CONFIG.API_ENDPOINT).origin !== window.location.origin) {
+				debugLog('Beacon skipped on cross-origin endpoint (CORS credentials include)');
+				return false;
+			}
+		} catch (_e) {}
+
 		try {
 			// Adaugă event_source pentru identificare în backend
 			payload.event_source = 'beacon';
@@ -540,6 +549,12 @@
 		if (secs < 1) return;
 		const uid = localStorage.getItem(STORAGE_KEY);
 		if (!uid) return;
+
+		// Avoid CORS noise: sendBeacon uses credentials include and is blocked for cross-origin wildcard ACAO.
+		try {
+			if (new URL(CONFIG.API_ENDPOINT).origin !== window.location.origin) return;
+		} catch (_e) {}
+
 		try {
 			const payload = JSON.stringify({
 				user_id: uid,
@@ -916,7 +931,6 @@
 				''
 			).trim();
 			if (imgLabel) {
-				if (CONFIG.DEBUG_MODE) console.log('🟢 Image with alt found:', imgLabel);
 				return { label: imgLabel.slice(0, 100), kind: 'image' };
 			}
 			const src = imageEl.getAttribute && imageEl.getAttribute('src');
@@ -929,24 +943,20 @@
 				}
 			}
 			// Image exists but no label — return 'image', DON'T search for text in parents/siblings
-			if (CONFIG.DEBUG_MODE) console.log('🟢 Image without label found');
 			return { label: 'image', kind: 'image' };
 		}
 
 		// Only if NO image exists, search for text label
 		const directText = fromText(el);
 		if (directText) {
-			if (CONFIG.DEBUG_MODE) console.log('🔵 directText found (no image):', directText);
 			return { label: directText, kind: 'text' };
 		}
 
 		const ariaTitle = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
 		if (ariaTitle) {
-			if (CONFIG.DEBUG_MODE) console.log('🟡 ariaTitle found (no image):', ariaTitle);
 			return { label: ariaTitle.slice(0, 100), kind: 'label' };
 		}
 
-		if (CONFIG.DEBUG_MODE) console.log('⚫ No label found');
 		return { label: null, kind: 'unknown' };
 	}
 
@@ -970,27 +980,6 @@
 
 		// Găsește toate link-urile și butoanele Leadpages
 		const elements = document.querySelectorAll('a[href], .lp-button-react[data-widget-link]');
-
-		// 🔍 DEBUG: Log all checkout buttons found at page load
-		let checkoutCount = 0;
-		elements.forEach(el => {
-			const href = el.getAttribute('href') || el.getAttribute('data-widget-link');
-			const isCheckoutLink = href && (
-				CONFIG.CHECKOUT_DOMAINS.some(domain => href.includes(domain)) ||
-				/\/checkout/i.test(href)
-			);
-			if (isCheckoutLink) {
-				checkoutCount++;
-				const pidMatch = href.match(/(\d{6,})/);
-				const pid = pidMatch ? pidMatch[1] : 'unknown';
-				const isSticky = el.classList.contains('aw-sticky-cta-btn') || !!el.closest('.aw-sticky-cta-btn');
-				const meta = _extractCheckoutButtonLabelAndKind(el);
-				console.log(
-					`📦 PAGE LOAD BUTTON #${checkoutCount}: product_id=${pid} | label="${meta.label}" | ` +
-					`kind=${meta.kind} | isSticky=${isSticky}`
-				);
-			}
-		});
 
 		elements.forEach(element => {
 			// ── Evită re-procesarea elementelor deja enhanced ──────────
@@ -1072,13 +1061,6 @@
 						const isStickyClick = !clickedIndex && (
 							element.classList.contains('aw-sticky-cta-btn') ||
 							!!element.closest('.aw-sticky-cta-btn')
-						);
-
-						// 🔍 DEBUG: Log every click for debugging label capture
-						console.log(
-							`📌 CHECKOUT CLICK: product_id=${productId} | label="${clickedButtonText}" | ` +
-							`kind=${buttonMeta.kind} | position=${clickedIndex}/${clickedTotal} | ` +
-							`isSticky=${isStickyClick} | href=${element.getAttribute('href') ? element.getAttribute('href').slice(0,50) : 'N/A'}`
 						);
 
 							await trackEvent('checkout_initiated', {
