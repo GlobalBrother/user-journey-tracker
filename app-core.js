@@ -906,26 +906,7 @@
 			return text ? text.slice(0, 100) : null;
 		};
 
-		// DEBUG: Log what we're analyzing
-		const isCheckoutLink = el.getAttribute('href') && (
-			el.getAttribute('href').includes('digistore24.com') ||
-			el.getAttribute('href').includes('checkout-ds24.com') ||
-			/\/checkout/i.test(el.getAttribute('href'))
-		);
-		const debugLog = isCheckoutLink && CONFIG.DEBUG_MODE;
-
-		const directText = fromText(el);
-		if (directText) {
-			if (debugLog) console.log('🔵 directText found:', directText);
-			return { label: directText, kind: 'text' };
-		}
-
-		const ariaTitle = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
-		if (ariaTitle) {
-			if (debugLog) console.log('🟡 ariaTitle found:', ariaTitle);
-			return { label: ariaTitle.slice(0, 100), kind: 'label' };
-		}
-
+		// 🔍 CHECK IMAGE FIRST — if element contains image, ONLY use image label, never recurse text
 		const imageEl = el.querySelector('img, picture img, svg');
 		if (imageEl) {
 			const imgLabel = (
@@ -934,8 +915,10 @@
 				imageEl.getAttribute('title') ||
 				''
 			).trim();
-			if (debugLog) console.log('🟢 Image found | alt:', imageEl.getAttribute('alt'), '| extracted:', imgLabel);
-			if (imgLabel) return { label: imgLabel.slice(0, 100), kind: 'image' };
+			if (imgLabel) {
+				if (CONFIG.DEBUG_MODE) console.log('🟢 Image with alt found:', imgLabel);
+				return { label: imgLabel.slice(0, 100), kind: 'image' };
+			}
 			const src = imageEl.getAttribute && imageEl.getAttribute('src');
 			if (src) {
 				try {
@@ -945,19 +928,25 @@
 					return { label: 'image', kind: 'image' };
 				}
 			}
-			// Element has an image but no label found — return 'image' WITHOUT recursing
+			// Image exists but no label — return 'image', DON'T search for text in parents/siblings
+			if (CONFIG.DEBUG_MODE) console.log('🟢 Image without label found');
 			return { label: 'image', kind: 'image' };
-		} else {
-			// Only search for child text if there's NO image in the element
-			for (const child of el.querySelectorAll('span, div, p, button')) {
-				const text = fromText(child);
-				if (text) {
-					if (debugLog) console.log('🔴 Child text found:', text);
-					return { label: text, kind: 'text' };
-				}
-			}
 		}
 
+		// Only if NO image exists, search for text label
+		const directText = fromText(el);
+		if (directText) {
+			if (CONFIG.DEBUG_MODE) console.log('🔵 directText found (no image):', directText);
+			return { label: directText, kind: 'text' };
+		}
+
+		const ariaTitle = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
+		if (ariaTitle) {
+			if (CONFIG.DEBUG_MODE) console.log('🟡 ariaTitle found (no image):', ariaTitle);
+			return { label: ariaTitle.slice(0, 100), kind: 'label' };
+		}
+
+		if (CONFIG.DEBUG_MODE) console.log('⚫ No label found');
 		return { label: null, kind: 'unknown' };
 	}
 
