@@ -906,11 +906,25 @@
 			return text ? text.slice(0, 100) : null;
 		};
 
+		// DEBUG: Log what we're analyzing
+		const isCheckoutLink = el.getAttribute('href') && (
+			el.getAttribute('href').includes('digistore24.com') ||
+			el.getAttribute('href').includes('checkout-ds24.com') ||
+			/\/checkout/i.test(el.getAttribute('href'))
+		);
+		const debugLog = isCheckoutLink && CONFIG.DEBUG_MODE;
+
 		const directText = fromText(el);
-		if (directText) return { label: directText, kind: 'text' };
+		if (directText) {
+			if (debugLog) console.log('🔵 directText found:', directText);
+			return { label: directText, kind: 'text' };
+		}
 
 		const ariaTitle = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
-		if (ariaTitle) return { label: ariaTitle.slice(0, 100), kind: 'label' };
+		if (ariaTitle) {
+			if (debugLog) console.log('🟡 ariaTitle found:', ariaTitle);
+			return { label: ariaTitle.slice(0, 100), kind: 'label' };
+		}
 
 		const imageEl = el.querySelector('img, picture img, svg');
 		if (imageEl) {
@@ -920,6 +934,7 @@
 				imageEl.getAttribute('title') ||
 				''
 			).trim();
+			if (debugLog) console.log('🟢 Image found | alt:', imageEl.getAttribute('alt'), '| extracted:', imgLabel);
 			if (imgLabel) return { label: imgLabel.slice(0, 100), kind: 'image' };
 			const src = imageEl.getAttribute && imageEl.getAttribute('src');
 			if (src) {
@@ -936,7 +951,10 @@
 			// Only search for child text if there's NO image in the element
 			for (const child of el.querySelectorAll('span, div, p, button')) {
 				const text = fromText(child);
-				if (text) return { label: text, kind: 'text' };
+				if (text) {
+					if (debugLog) console.log('🔴 Child text found:', text);
+					return { label: text, kind: 'text' };
+				}
 			}
 		}
 
@@ -963,6 +981,27 @@
 
 		// Găsește toate link-urile și butoanele Leadpages
 		const elements = document.querySelectorAll('a[href], .lp-button-react[data-widget-link]');
+
+		// 🔍 DEBUG: Log all checkout buttons found at page load
+		let checkoutCount = 0;
+		elements.forEach(el => {
+			const href = el.getAttribute('href') || el.getAttribute('data-widget-link');
+			const isCheckoutLink = href && (
+				CONFIG.CHECKOUT_DOMAINS.some(domain => href.includes(domain)) ||
+				/\/checkout/i.test(href)
+			);
+			if (isCheckoutLink) {
+				checkoutCount++;
+				const pidMatch = href.match(/(\d{6,})/);
+				const pid = pidMatch ? pidMatch[1] : 'unknown';
+				const isSticky = el.classList.contains('aw-sticky-cta-btn') || !!el.closest('.aw-sticky-cta-btn');
+				const meta = _extractCheckoutButtonLabelAndKind(el);
+				console.log(
+					`📦 PAGE LOAD BUTTON #${checkoutCount}: product_id=${pid} | label="${meta.label}" | ` +
+					`kind=${meta.kind} | isSticky=${isSticky}`
+				);
+			}
+		});
 
 		elements.forEach(element => {
 			// ── Evită re-procesarea elementelor deja enhanced ──────────
@@ -1032,7 +1071,7 @@
 
 							const clickedButtonText = buttonMeta.label;
 
-// Always recompute at click time — the DOM is fully rendered at this point.
+						// Always recompute at click time — the DOM is fully rendered at this point.
 						// Pre-computed list (window.load) can miss buttons revealed by LP animations
 						// or dynamic sections that appear after initial render.
 						// Sticky CTA is excluded from the list — clicking it gives position=null.
@@ -1044,6 +1083,13 @@
 						const isStickyClick = !clickedIndex && (
 							element.classList.contains('aw-sticky-cta-btn') ||
 							!!element.closest('.aw-sticky-cta-btn')
+						);
+
+						// 🔍 DEBUG: Log every click for debugging label capture
+						console.log(
+							`📌 CHECKOUT CLICK: product_id=${productId} | label="${clickedButtonText}" | ` +
+							`kind=${buttonMeta.kind} | position=${clickedIndex}/${clickedTotal} | ` +
+							`isSticky=${isStickyClick} | href=${element.getAttribute('href') ? element.getAttribute('href').slice(0,50) : 'N/A'}`
 						);
 
 							await trackEvent('checkout_initiated', {
