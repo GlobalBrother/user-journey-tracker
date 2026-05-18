@@ -2430,9 +2430,23 @@
 				return Array.from(slotMap.values()).sort(slotSort);
 			};
 
+			const normalizeButtonLabel = (label) => {
+				let cleaned = (label || '').trim();
+				if (!cleaned) return '';
+				if (cleaned.startsWith('url_')) cleaned = '/' + cleaned.split('/').slice(1).join('/');
+
+				// Drop machine-like tokens captured as labels (long base64/url-safe strings).
+				const looksLikeMachineToken =
+					cleaned.length >= 35 &&
+					!/\s/.test(cleaned) &&
+					/^[A-Za-z0-9+/_=-]+$/.test(cleaned);
+
+				if (looksLikeMachineToken) return '';
+				return cleaned;
+			};
+
 			const renderButtonLabel = (group) => {
-				let btnLabel = (group.label || '').trim();
-				if (btnLabel.startsWith('url_')) btnLabel = '/' + btnLabel.split('/').slice(1).join('/');
+				let btnLabel = normalizeButtonLabel(group.label || '');
 				if (btnLabel) {
 					const suffix = (group.product_id && !btnLabel.includes('#' + group.product_id))
 						? ` <span style="opacity:.5;">- #${escHtml(String(group.product_id))}</span>`
@@ -2440,7 +2454,7 @@
 					return escHtml(btnLabel) + suffix;
 				}
 				if (group.product_id) {
-					return `<span style="opacity:.92;">#${escHtml(String(group.product_id))}</span> <span style="opacity:.45;">(no text captured)</span>`;
+					return `<span style="opacity:.9;">Checkout button</span> <span style="opacity:.55;">#${escHtml(String(group.product_id))}</span> <span style="opacity:.45;">(no text captured)</span>`;
 				}
 				return '<span style="opacity:.45;">-</span>';
 			};
@@ -2486,10 +2500,10 @@
 						const groupMap = new Map();
 						for (const btn of validButtons) {
 							totalButtonClicks += Number(btn.clicks || 0);
-							const rawLabel = (btn.label || '').trim();
-							const key = `${rawLabel}||${btn.product_id || ''}`;
+							const normalizedLabel = normalizeButtonLabel(btn.label || '');
+							const key = `${normalizedLabel}||${btn.product_id || ''}`;
 							if (!groupMap.has(key)) {
-								groupMap.set(key, { label: rawLabel, product_id: btn.product_id, clicks: 0, items: [] });
+								groupMap.set(key, { label: normalizedLabel, product_id: btn.product_id, clicks: 0, items: [] });
 							}
 							const group = groupMap.get(key);
 							group.clicks += Number(btn.clicks || 0);
