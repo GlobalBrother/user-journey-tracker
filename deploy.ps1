@@ -55,38 +55,43 @@ $HeadSha = (git -C $RepoDir rev-parse --short HEAD).Trim()
 $ShaCdnUrl = "https://cdn.jsdelivr.net/gh/$Repo@$HeadSha/$File"
 $RawShaUrl = "https://raw.githubusercontent.com/$Repo/$HeadSha/$File"
 
-Write-Host "Purging jsDelivr..."
-try { Invoke-RestMethod $PurgeUrl -TimeoutSec 30 | Out-Null } catch {}
+Write-Host "Purging jsDelivr (single purge to avoid throttling)..."
+$purgeResult = $null
+try {
+    $purgeResult = Invoke-RestMethod $PurgeUrl -TimeoutSec 30
+} catch {}
 try { Invoke-RestMethod $DashboardPurgeUrl -TimeoutSec 30 | Out-Null } catch {}
 
-$maxRetries = 10
-$sleepSecs = 8
-$ok = $false
-
-Write-Host "Verifying @main against git commit $HeadSha..."
-for ($i = 1; $i -le $maxRetries; $i++) {
-    $rawHash = Get-UrlHash $RawShaUrl
-    $mainHash = Get-UrlHash $CdnUrl
-    $shaHash = Get-UrlHash $ShaCdnUrl
-
-    if ($rawHash -and $mainHash -and $rawHash -eq $mainHash) {
-        Write-Host "OK: jsDelivr @main is synced."
-        $ok = $true
-        break
+# Show purge throttle status
+if ($purgeResult -and $purgeResult.paths) {
+    $pathInfo = $purgeResult.paths.PSObject.Properties.Value | Select-Object -First 1
+    if ($pathInfo.throttled) {
+        $resetSecs = $pathInfo.throttlingReset
+        $resetMins = [math]::Round($resetSecs / 60)
+        Write-Host "WARNING: jsDelivr purge is throttled. Reset in ~${resetMins} minutes."
+        Write-Host "Use commit URL directly until throttle resets:"
+        Write-Host "  $ShaCdnUrl"
+        Write-Host "Done."
+        exit 0
     }
-
-    Write-Host "Attempt ${i}/${maxRetries}: @main not synced yet."
-    if ($rawHash -and $shaHash -and $rawHash -eq $shaHash) {
-        Write-Host "Commit URL already correct: $ShaCdnUrl"
-    }
-
-    try { Invoke-RestMethod $PurgeUrl -TimeoutSec 30 | Out-Null } catch {}
-    Start-Sleep -Seconds $sleepSecs
 }
 
-if (-not $ok) {
-    Write-Host "WARNING: @main still not synced after retries."
-    Write-Host "Temporary URL: $ShaCdnUrl"
+# Only verify once after purge — no retry loop (avoids re-purging and more throttling)
+Write-Host "Verifying @main against git commit $HeadSha (waiting 15s for CDN propagation)..."
+Start-Sleep -Seconds 15
+
+$rawHash = Get-UrlHash $RawShaUrl
+$mainHash = Get-UrlHash $CdnUrl
+$shaHash = Get-UrlHash $ShaCdnUrl
+
+if ($rawHash -and $mainHash -and $rawHash -eq $mainHash) {
+    Write-Host "OK: jsDelivr @main is synced."
+} else {
+    Write-Host "NOTE: @main not yet synced (CDN may take a few minutes)."
+    if ($rawHash -and $shaHash -and $rawHash -eq $shaHash) {
+        Write-Host "Commit URL is live: $ShaCdnUrl"
+    }
+    Write-Host "Pagina va fi actualizata in cateva minute automat."
 }
 
 Write-Host "Done."
