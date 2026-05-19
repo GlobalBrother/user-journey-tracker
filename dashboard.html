@@ -1254,61 +1254,73 @@
 		.journey-list {
 			display: flex;
 			flex-direction: column;
-			gap: 10px;
+			gap: 14px;
 		}
 
 		.journey-item {
-			background: var(--surface2);
-			border-radius: 10px;
-			padding: 14px 16px;
+			background:
+				radial-gradient(circle at 12% 12%, rgba(34, 211, 238, 0.08), transparent 36%),
+				radial-gradient(circle at 92% 88%, rgba(99, 102, 241, 0.1), transparent 34%),
+				linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 14px;
+			padding: 16px 18px;
 			display: flex;
 			flex-direction: column;
-			gap: 10px;
+			gap: 12px;
+			box-shadow: 0 10px 30px rgba(2, 6, 23, 0.28);
+			animation: riseIn .28s ease both;
 		}
 
 		/* row 1: domain chips + meta stats */
 		.journey-top-row {
-			display: flex;
-			align-items: center;
-			gap: 10px;
+			display: grid;
+			grid-template-columns: minmax(360px, 1fr) auto;
+			align-items: start;
+			gap: 10px 14px;
 			flex-wrap: wrap;
 		}
 
 		.journey-domains {
 			display: flex;
 			align-items: center;
-			gap: 4px;
+			gap: 6px;
 			flex-wrap: wrap;
+			padding: 10px 12px;
+			border-radius: 10px;
+			background: rgba(15, 23, 42, 0.34);
+			border: 1px solid rgba(148, 163, 184, 0.2);
 			flex: 1;
 			min-width: 200px;
 		}
 
 		/* Each domain in the path — clickable, accumulates selection */
 		.domain-chip {
-			background: rgba(99, 102, 241, 0.15);
-			color: var(--accent);
+			background: rgba(99, 102, 241, 0.2);
+			color: #c7d2fe;
 			font-size: 12px;
-			padding: 3px 10px;
-			border-radius: 5px;
+			padding: 5px 11px;
+			border-radius: 999px;
 			font-family: monospace;
 			cursor: pointer;
-			border: 1.5px solid transparent;
+			border: 1px solid rgba(129, 140, 248, 0.32);
 			transition: background .15s, border-color .15s, color .15s;
 			user-select: none;
 		}
 
 		.domain-chip:hover {
-			background: rgba(99, 102, 241, 0.28);
+			background: rgba(99, 102, 241, 0.35);
 		}
 
 		.domain-chip.selected {
-			border-color: var(--accent);
-			background: rgba(99, 102, 241, 0.30);
+			border-color: rgba(34, 211, 238, 0.9);
+			background: linear-gradient(90deg, rgba(34, 211, 238, 0.34), rgba(99, 102, 241, 0.34));
 			color: #fff;
+			box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22) inset;
 		}
 
 		.domain-chip.unselected {
-			opacity: 0.38;
+			opacity: 0.46;
 		}
 
 		.arrow-sep {
@@ -1332,37 +1344,61 @@
 		}
 
 		.timing-sep .timing-label {
-			font-size: 9px;
+			font-size: 10px;
 			color: var(--text3);
 			white-space: nowrap;
 		}
 
 		.journey-meta {
-			display: flex;
-			gap: 14px;
+			display: grid;
+			grid-template-columns: repeat(2, minmax(140px, 1fr));
+			gap: 8px;
 			font-size: 12px;
 			color: var(--text2);
-			white-space: nowrap;
-			flex-shrink: 0;
+			min-width: 320px;
+		}
+
+		.journey-meta-pill {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			padding: 7px 9px;
+			border-radius: 9px;
+			background: rgba(15, 23, 42, 0.34);
+			border: 1px solid rgba(148, 163, 184, 0.18);
+		}
+
+		.journey-meta-pill .label {
+			color: var(--text3);
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: .05em;
+		}
+
+		.journey-meta-pill .val {
+			font-weight: 700;
+			color: var(--text);
 		}
 
 		/* row 2: per-domain conv badges */
 		.journey-conv-row {
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: 8px;
 			flex-wrap: wrap;
 			font-size: 11px;
+			padding-top: 2px;
 		}
 
 		.domain-conv-badge {
 			display: inline-flex;
 			align-items: center;
 			gap: 4px;
-			background: rgba(16, 185, 129, 0.08);
+			background: rgba(16, 185, 129, 0.1);
 			border: 1px solid rgba(16, 185, 129, 0.2);
-			border-radius: 4px;
-			padding: 2px 8px;
+			border-radius: 999px;
+			padding: 3px 10px;
 			font-size: 12px;
 			color: var(--text2);
 			font-family: monospace;
@@ -1382,10 +1418,10 @@
 			width: 100%;
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: 7px;
 			flex-wrap: wrap;
-			padding-top: 8px;
-			border-top: 1px solid var(--border);
+			padding-top: 10px;
+			border-top: 1px dashed rgba(148, 163, 184, 0.28);
 		}
 
 		.journey-uid-chip {
@@ -1430,15 +1466,38 @@
 
 		/* filtered-view indicator */
 		.journey-filter-hint {
-			font-size: 10px;
-			color: var(--accent);
+			font-size: 11px;
+			color: var(--accent2);
+			padding: 4px 9px;
+			border-radius: 999px;
+			border: 1px solid rgba(34, 211, 238, 0.32);
+			background: rgba(34, 211, 238, 0.08);
 			margin-left: auto;
 			cursor: pointer;
-			opacity: 0.75;
+			opacity: 0.9;
 		}
 
 		.journey-filter-hint:hover {
 			opacity: 1;
+			background: rgba(34, 211, 238, 0.16);
+		}
+
+		body[data-theme='light'] .journey-item {
+			background:
+				radial-gradient(circle at 10% 12%, rgba(8, 145, 178, 0.08), transparent 36%),
+				radial-gradient(circle at 90% 80%, rgba(79, 70, 229, 0.08), transparent 34%),
+				linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 248, 255, 0.9));
+			border-color: rgba(148, 163, 184, 0.28);
+		}
+
+		body[data-theme='light'] .journey-domains,
+		body[data-theme='light'] .journey-meta-pill {
+			background: rgba(255, 255, 255, 0.78);
+			border-color: rgba(148, 163, 184, 0.28);
+		}
+
+		body[data-theme='light'] .journey-uid-row {
+			border-top-color: rgba(148, 163, 184, 0.36);
 		}
 
 		/* ── SEARCH / JOURNEY MODAL ── */
@@ -2098,6 +2157,15 @@
 		}
 
 		@media (max-width: 600px) {
+			.journey-top-row {
+				grid-template-columns: 1fr;
+			}
+
+			.journey-meta {
+				grid-template-columns: 1fr;
+				min-width: 0;
+			}
+
 			.journey-meta {
 				gap: 5px 20px;
 				flex-shrink: 1;
@@ -4562,18 +4630,12 @@
 				// but we highlight which domains are active
 				const postConv = j.post_journey_converting_users ?? j.post_journey_conversions ?? null;
 				const postRate = j.post_journey_conv_rate ?? null;
-				const postHtml = postConv !== null
-					? `<span title="Unique users who converted after visiting all domains in this journey">
-							${fmtNum(postConv)} post-journey conv.
-							<span style="opacity:.7">(${postRate}%)</span>
-						</span>`
-					: '';
 				const pvLabel = j.pageviews ? ` / ${fmtNum(j.pageviews)} pvs` : '';
 				const metaHtml = `
-					<span>${fmtNum(j.users)} users</span>
-					<span title="Unique users who converted in this journey">${fmtNum(j.converting_users ?? j.conversions)} converted users</span>
-					<span title="Conversions ÷ total pageviews for users in this journey${pvLabel}">${convRateBadge(j.conversion_rate)}</span>
-					${postHtml}`;
+					<span class="journey-meta-pill"><span class="label">Users</span><span class="val">${fmtNum(j.users)}</span></span>
+					<span class="journey-meta-pill" title="Unique users who converted in this journey"><span class="label">Converted users</span><span class="val">${fmtNum(j.converting_users ?? j.conversions)}</span></span>
+					<span class="journey-meta-pill" title="Conversions ÷ total pageviews for users in this journey${pvLabel}"><span class="label">Conversion rate</span><span class="val">${convRateBadge(j.conversion_rate)}</span></span>
+					${postConv !== null ? `<span class="journey-meta-pill" title="Unique users who converted after visiting all domains in this journey"><span class="label">Post-journey conv.</span><span class="val">${fmtNum(postConv)} <span style="opacity:.68;">(${postRate}%)</span></span></span>` : ''}`;
 
 				// ── Conv per domain badges ── (only for selected domains)
 				const convByDomain = j.conv_by_domain || {};
