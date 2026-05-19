@@ -2673,10 +2673,19 @@
 				return result.sort(slotSort);
 			};
 
+			// Aliases for labels that were renamed — maps old label (lowercase) to canonical label.
+			const LABEL_ALIASES = {
+				'buy now physical product': 'Buy Now Physical Book',
+			};
+
 			const normalizeButtonLabel = (label) => {
 				let cleaned = (label || '').trim();
 				if (!cleaned) return '';
 				if (cleaned.startsWith('url_')) cleaned = '/' + cleaned.split('/').slice(1).join('/');
+
+				// Apply label aliases (correcting historically wrong alt texts).
+				const aliased = LABEL_ALIASES[cleaned.toLowerCase()];
+				if (aliased) cleaned = aliased;
 
 				// Ignore generic placeholders so real alt/text labels win in grouping.
 				const low = cleaned.toLowerCase();
