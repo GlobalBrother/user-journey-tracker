@@ -28,6 +28,23 @@
 			--text: #e2e8f0;
 			--text2: #94a3b8;
 			--text3: #64748b;
+			--date-scheme: dark;
+		}
+
+		:root[data-theme='light'] {
+			--bg: #f3f6fb;
+			--surface: #ffffff;
+			--surface2: #eef3fb;
+			--border: #d8e0ef;
+			--accent: #4f46e5;
+			--accent2: #0891b2;
+			--green: #16a34a;
+			--red: #dc2626;
+			--yellow: #ca8a04;
+			--text: #0f172a;
+			--text2: #334155;
+			--text3: #64748b;
+			--date-scheme: light;
 		}
 
 		body {
@@ -42,6 +59,13 @@
 			position: relative;
 		}
 
+		body[data-theme='light'] {
+			background:
+				radial-gradient(circle at top left, rgba(79, 70, 229, 0.1), transparent 26%),
+				radial-gradient(circle at top right, rgba(8, 145, 178, 0.08), transparent 22%),
+				linear-gradient(180deg, #f9fbff 0%, #f3f6fb 45%, #eef2f9 100%);
+		}
+
 		body::before {
 			content: '';
 			position: fixed;
@@ -51,6 +75,11 @@
 			background-size: 38px 38px;
 			opacity: 0.35;
 			mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 92%);
+		}
+
+		body[data-theme='light']::before {
+			background-image: linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+			opacity: 0.5;
 		}
 
 		/* ── HEADER ── */
@@ -66,6 +95,10 @@
 			position: sticky;
 			top: 0;
 			z-index: 100;
+		}
+
+		body[data-theme='light'] header {
+			background: rgba(255, 255, 255, 0.86);
 		}
 
 		.logo {
@@ -122,6 +155,10 @@
 			border-bottom: 1px solid var(--border);
 		}
 
+		body[data-theme='light'] .controls {
+			background: rgba(255, 255, 255, 0.84);
+		}
+
 		.control-group {
 			display: flex;
 			align-items: center;
@@ -147,7 +184,7 @@
 		}
 
 		input[type="date"] {
-			color-scheme: dark;
+			color-scheme: var(--date-scheme);
 		}
 
 		#btnRefresh {
@@ -207,6 +244,10 @@
 		.btn-sm {
 			padding: 4px 10px;
 			font-size: 12px;
+		}
+
+		.theme-toggle {
+			min-width: 94px;
 		}
 
 		.separator {
@@ -1712,6 +1753,7 @@
 		<div class="header-right">
 			<span class="last-updated" id="lastUpdated">—</span>
 			<span class="refresh-ring" id="refreshRing"></span>
+			<button class="btn btn-secondary btn-sm theme-toggle" id="btnTheme" aria-label="Toggle theme">Light mode</button>
 			<button class="btn btn-secondary btn-sm" id="btnRefresh">↻ Refresh</button>
 		</div>
 	</header>
@@ -4441,10 +4483,35 @@
 				.replace(/"/g, '&quot;');
 		}
 
+		const THEME_KEY = 'ujd_theme';
+
+		function applyTheme(theme) {
+			const next = theme === 'light' ? 'light' : 'dark';
+			document.documentElement.setAttribute('data-theme', next);
+			document.body.setAttribute('data-theme', next);
+			const btn = document.getElementById('btnTheme');
+			if (btn) {
+				btn.textContent = next === 'dark' ? 'Light mode' : 'Dark mode';
+			}
+		}
+
+		function initTheme() {
+			const saved = (localStorage.getItem(THEME_KEY) || '').toLowerCase();
+			applyTheme(saved === 'light' ? 'light' : 'dark');
+		}
+
+		function toggleTheme() {
+			const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+			const next = current === 'light' ? 'dark' : 'light';
+			applyTheme(next);
+			localStorage.setItem(THEME_KEY, next);
+		}
+
 		// ════════════════════════════════════════
 		// EVENT LISTENERS
 		// ════════════════════════════════════════
 		document.getElementById('btnRefresh').addEventListener('click', loadStats);
+		document.getElementById('btnTheme').addEventListener('click', toggleTheme);
 		document.getElementById('btnApply').addEventListener('click', () => {
 			_phase2CacheInvalidate();  // filtrii s-au schimbat → forțează re-fetch Faza 2
 			loadStats();
@@ -4536,6 +4603,7 @@
 		// ════════════════════════════════════════
 		// INIT
 		// ════════════════════════════════════════
+		initTheme();
 		initDates();
 		renderFunnelBuilder();
 		initFingerprintSearch();
