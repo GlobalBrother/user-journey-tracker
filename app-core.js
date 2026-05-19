@@ -883,41 +883,51 @@
 	}
 
 	function _computeCheckoutButtonList() {
-		// Leadpages buttons: <a data-widget-link="true" href="checkout-url">
-		// The checkout URL is always in href, not in data-widget-link (which is "true").
-		// Plain image links: <a href="checkout-url"> without data-widget-link.
-		// Both are captured by querying a[href] with checkout URL patterns.
-		const byHref = Array.from(document.querySelectorAll('a[href]')).filter(el => {
-			const u = el.getAttribute('href') || '';
-			return _isCheckoutHref(u);
-		});
-
-		// Exclude sticky CTA — it's tracked separately
-		const all = byHref.filter(el =>
-			!el.classList.contains('aw-sticky-cta-btn') && !el.closest('.aw-sticky-cta-btn')
-		);
-
-		// 3. A/B test deduplication:
-		//    Group buttons by their nearest section ancestor. Within each section,
-		//    keep only visible variants. This ensures that two checkout buttons
-		//    that are A/B variants inside the same section (one hidden, one shown)
-		//    count as ONE logical button position — not two separate ones.
-		//    Buttons in DIFFERENT sections are always independent positions.
-		const sectionMap = new Map(); // section element → [buttons in that section]
-		for (const el of all) {
-			const sec = _nearestSection(el);
-			if (!sectionMap.has(sec)) sectionMap.set(sec, []);
-			sectionMap.get(sec).push(el);
-		}
-
+		// Use structured IDs added to all domain pages:
+		// #buy-button-N containers hold numbered checkout button sections.
+		// #hero-section holds the hero CTA button.
+		// Sticky CTAs (.aw-sticky-cta-btn) are excluded — tracked separately.
 		const result = [];
-		for (const buttons of sectionMap.values()) {
-			const visible = buttons.filter(_isElementVisible);
-			// If at least one variant is visible, include only the visible ones.
-			// If ALL are hidden (shouldn't happen in normal flow) include none.
-			result.push(...visible);
+
+		// Collect from #buy-button-N containers (sorted by N)
+		const buyContainers = Array.from(document.querySelectorAll('[id^="buy-button-"]'))
+			.filter(el => /^buy-button-\d+$/.test(el.id))
+			.sort((a, b) => {
+				const na = parseInt(a.id.replace('buy-button-', ''), 10);
+				const nb = parseInt(b.id.replace('buy-button-', ''), 10);
+				return na - nb;
+			});
+		for (const container of buyContainers) {
+			const links = Array.from(container.querySelectorAll('a[href]'))
+				.filter(el => _isCheckoutHref(el.getAttribute('href') || ''))
+				.filter(_isElementVisible);
+			result.push(...links);
 		}
+
+		// Collect from #hero-section
+		const heroSection = document.getElementById('hero-section');
+		if (heroSection) {
+			const heroLinks = Array.from(heroSection.querySelectorAll('a[href]'))
+				.filter(el => _isCheckoutHref(el.getAttribute('href') || ''))
+				.filter(_isElementVisible);
+			result.push(...heroLinks);
+		}
+
 		return result;
+	}
+
+	function _getButtonPositionFromElement(element) {
+		// Returns { position, isHero } for a checkout button element.
+		// Sticky buttons are not passed here — they are handled separately.
+		const buyContainer = element.closest('[id^="buy-button-"]');
+		if (buyContainer && /^buy-button-\d+$/.test(buyContainer.id)) {
+			return { position: parseInt(buyContainer.id.replace('buy-button-', ''), 10), isHero: false };
+		}
+		const heroSection = element.closest('#hero-section');
+		if (heroSection) {
+			return { position: 'hero', isHero: true };
+		}
+		return { position: null, isHero: false };
 	}
 
 	function _extractProductIdFromCheckoutHref(href) {
@@ -933,13 +943,44 @@
 	}
 
 	function _buildCheckoutButtonsInventory() {
-		const checkoutEls = _computeCheckoutButtonList();
-		const total = checkoutEls.length;
-		return checkoutEls.map((el, idx) => {
+		// Build inventory using structured IDs for deterministic positions.
+		const entries = [];
+
+		// Numbered buy-button sections
+		const buyContainers = Array.from(document.querySelectorAll('[id^="buy-button-"]'))
+			.filter(el => /^buy-button-\d+$/.test(el.id))
+			.sort((a, b) => {
+				const na = parseInt(a.id.replace('buy-button-', ''), 10);
+				const nb = parseInt(b.id.replace('buy-button-', ''), 10);
+				return na - nb;
+			});
+		for (const container of buyContainers) {
+			const pos = parseInt(container.id.replace('buy-button-', ''), 10);
+			const links = Array.from(container.querySelectorAll('a[href]'))
+				.filter(el => _isCheckoutHref(el.getAttribute('href') || ''))
+				.filter(_isElementVisible);
+			for (const el of links) {
+				entries.push({ el, position: pos });
+			}
+		}
+
+		// Hero section
+		const heroSection = document.getElementById('hero-section');
+		if (heroSection) {
+			const heroLinks = Array.from(heroSection.querySelectorAll('a[href]'))
+				.filter(el => _isCheckoutHref(el.getAttribute('href') || ''))
+				.filter(_isElementVisible);
+			for (const el of heroLinks) {
+				entries.push({ el, position: 'hero' });
+			}
+		}
+
+		const total = entries.length;
+		return entries.map(({ el, position }) => {
 			const href = el.getAttribute('href') || el.getAttribute('data-widget-link') || null;
 			const meta = _extractCheckoutButtonLabelAndKind(el);
 			return {
-				position: idx + 1,
+				position: position,
 				total: total,
 				product_id: _extractProductIdFromCheckoutHref(href),
 				button_label: meta.label,
@@ -1106,19 +1147,16 @@
 
 							const clickedButtonText = buttonMeta.label;
 
-						// Always recompute at click time — the DOM is fully rendered at this point.
-						// Pre-computed list (window.load) can miss buttons revealed by LP animations
-						// or dynamic sections that appear after initial render.
-						// Sticky CTA is excluded from the list — clicking it gives position=null.
-						const _allCheckoutEls = _computeCheckoutButtonList();
-						const clickedIndex = (_allCheckoutEls.indexOf(element) + 1) || null;
-						const clickedTotal = _allCheckoutEls.length || null;
-						const clickedDomFingerprint = _domFingerprint(element);
-						// Sticky CTA: excluded from list so clickedIndex is null; detect via CSS class
-						const isStickyClick = !clickedIndex && (
+						// Determine position from structured HTML IDs (#buy-button-N, #hero-section).
+						// Sticky CTA is detected via class and reported with position=null.
+						const isStickyClick = (
 							element.classList.contains('aw-sticky-cta-btn') ||
 							!!element.closest('.aw-sticky-cta-btn')
 						);
+						const _posInfo = isStickyClick ? { position: null } : _getButtonPositionFromElement(element);
+						const clickedIndex = _posInfo.position;
+						const clickedTotal = isStickyClick ? null : _computeCheckoutButtonList().length || null;
+						const clickedDomFingerprint = _domFingerprint(element);
 
 							await trackEvent('checkout_initiated', {
 								product_id: productId,
