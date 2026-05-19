@@ -1371,55 +1371,71 @@
 			cursor: pointer;
 		}
 
-		.slug-atlas {
+		.slug-lab {
 			display: grid;
 			gap: 14px;
-			margin-top: 14px;
+			margin-top: 16px;
 		}
 
-		.slug-atlas-hero {
+		.slug-lab-hero {
 			position: relative;
 			overflow: hidden;
-			border-radius: 22px;
+			border-radius: 24px;
 			padding: 18px;
-			border: 1px solid rgba(148, 163, 184, 0.22);
+			border: 1px solid rgba(148, 163, 184, 0.2);
 			background:
-				radial-gradient(circle at 12% 16%, rgba(34, 211, 238, 0.18), transparent 34%),
-				radial-gradient(circle at 88% 18%, rgba(129, 140, 248, 0.18), transparent 30%),
-				linear-gradient(135deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.58));
-			box-shadow: 0 18px 42px rgba(2, 6, 23, 0.35);
+				radial-gradient(circle at 10% 18%, rgba(34, 211, 238, 0.18), transparent 28%),
+				radial-gradient(circle at 90% 12%, rgba(245, 158, 11, 0.13), transparent 26%),
+				linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.6));
+			box-shadow: 0 18px 42px rgba(2, 6, 23, 0.34);
 			display: grid;
+			grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
 			gap: 14px;
 		}
 
-		.slug-atlas-hero::after {
+		.slug-lab-hero::after {
 			content: '';
 			position: absolute;
-			inset: auto -60px -90px auto;
-			width: 220px;
-			height: 220px;
+			inset: auto -80px -110px auto;
+			width: 240px;
+			height: 240px;
 			border-radius: 50%;
-			background: radial-gradient(circle, rgba(34, 211, 238, 0.18), transparent 68%);
+			background: radial-gradient(circle, rgba(129, 140, 248, 0.18), transparent 68%);
 			pointer-events: none;
 		}
 
-		.slug-atlas-topline {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			gap: 10px;
-			flex-wrap: wrap;
-		}
-
-		.slug-atlas-kicker {
+		.slug-lab-kicker {
 			font-size: 11px;
 			text-transform: uppercase;
-			letter-spacing: .12em;
+			letter-spacing: .14em;
 			font-weight: 800;
 			color: var(--text3);
 		}
 
-		.slug-atlas-pill {
+		.slug-lab-title {
+			margin-top: 8px;
+			font-size: 30px;
+			font-weight: 900;
+			line-height: 1.02;
+			letter-spacing: -0.04em;
+		}
+
+		.slug-lab-copy {
+			margin-top: 10px;
+			max-width: 68ch;
+			color: var(--text2);
+			font-size: 14px;
+			line-height: 1.55;
+		}
+
+		.slug-lab-tags {
+			margin-top: 12px;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+
+		.slug-lab-tag {
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
@@ -1432,176 +1448,263 @@
 			font-weight: 700;
 		}
 
-		.slug-atlas-main {
+		.slug-lab-summary {
 			display: grid;
-			grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
-			gap: 14px;
-			align-items: center;
-		}
-
-		.slug-atlas-title {
-			font-size: 28px;
-			font-weight: 900;
-			line-height: 1.05;
-			letter-spacing: -0.03em;
-		}
-
-		.slug-atlas-copy {
-			margin-top: 8px;
-			color: var(--text2);
-			max-width: 70ch;
-		}
-
-		.slug-atlas-metrics {
-			display: grid;
-			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 10px;
 		}
 
-		.slug-atlas-metric {
-			border-radius: 16px;
+		.slug-lab-metrics {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.slug-lab-metric {
+			border-radius: 18px;
 			padding: 12px;
-			border: 1px solid rgba(148, 163, 184, 0.2);
-			background: rgba(15, 23, 42, 0.36);
+			border: 1px solid rgba(148, 163, 184, 0.18);
+			background: rgba(15, 23, 42, 0.34);
 			display: grid;
 			gap: 4px;
 		}
 
-		.slug-atlas-metric-label {
+		.slug-lab-metric-label {
 			font-size: 10px;
 			text-transform: uppercase;
-			letter-spacing: .08em;
+			letter-spacing: .1em;
 			color: var(--text3);
 			font-weight: 800;
 		}
 
-		.slug-atlas-metric-value {
+		.slug-lab-metric-value {
 			font-size: 22px;
 			font-weight: 900;
 			line-height: 1;
 		}
 
-		.slug-atlas-lead {
-			border-radius: 18px;
+		.slug-lab-panel {
+			border-radius: 20px;
 			padding: 14px;
-			border: 1px solid rgba(148, 163, 184, 0.2);
-			background: rgba(15, 23, 42, 0.34);
+			border: 1px solid rgba(148, 163, 184, 0.18);
+			background: rgba(15, 23, 42, 0.3);
 			display: grid;
 			gap: 10px;
 		}
 
-		.slug-atlas-lead-head {
-			display: flex;
-			justify-content: space-between;
-			gap: 10px;
-			align-items: start;
-		}
-
-		.slug-atlas-lead-name {
-			font-family: monospace;
-			font-size: 14px;
-			font-weight: 800;
-			color: #e2e8f0;
-			word-break: break-word;
-		}
-
-		.slug-atlas-lead-domain {
-			margin-top: 5px;
+		.slug-lab-panel-title {
 			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: .12em;
+			font-weight: 800;
 			color: var(--text3);
 		}
 
-		.slug-atlas-lead-badge {
-			font-size: 12px;
-			font-weight: 900;
-			padding: 5px 10px;
-			border-radius: 999px;
-			white-space: nowrap;
-			border: 1px solid currentColor;
-		}
-
-		.slug-atlas-lead-bars {
+		.slug-lab-leaderboard {
 			display: grid;
 			gap: 8px;
 		}
 
-		.slug-atlas-bar {
-			height: 8px;
-			border-radius: 999px;
-			background: rgba(148, 163, 184, 0.22);
+		.slug-lab-leader {
+			--accent: rgba(34, 211, 238, 0.65);
+			display: grid;
+			grid-template-columns: auto minmax(0, 1fr) auto;
+			gap: 10px;
+			align-items: center;
+			padding: 10px 12px;
+			border-radius: 16px;
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			background: rgba(15, 23, 42, 0.28);
+			position: relative;
 			overflow: hidden;
 		}
 
-		.slug-atlas-bar span {
+		.slug-lab-leader::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			width: 4px;
+			background: var(--accent);
+		}
+
+		.slug-lab-leader-rank {
+			font-size: 11px;
+			font-weight: 900;
+			padding: 4px 8px;
+			border-radius: 999px;
+			border: 1px solid rgba(148, 163, 184, 0.3);
+			color: var(--text2);
+		}
+
+		.slug-lab-leader-main {
+			min-width: 0;
+			display: grid;
+			gap: 4px;
+		}
+
+		.slug-lab-leader-name {
+			font-family: monospace;
+			font-size: 12px;
+			font-weight: 800;
+			color: #e2e8f0;
+			line-height: 1.35;
+			word-break: break-word;
+		}
+
+		.slug-lab-leader-domain {
+			font-size: 10px;
+			color: var(--text3);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.slug-lab-leader-score {
+			font-size: 12px;
+			font-weight: 900;
+			padding: 5px 10px;
+			border-radius: 999px;
+			border: 1px solid currentColor;
+			white-space: nowrap;
+		}
+
+		.slug-lab-leader-bars {
+			display: grid;
+			gap: 6px;
+		}
+
+		.slug-lab-bar {
+			height: 7px;
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.18);
+			overflow: hidden;
+		}
+
+		.slug-lab-bar span {
 			display: block;
 			height: 100%;
 			border-radius: inherit;
 		}
 
-		.slug-atlas-bar.is-abandon span {
+		.slug-lab-bar.is-conv span {
+			background: linear-gradient(90deg, #22d3ee, #22c55e);
+		}
+
+		.slug-lab-bar.is-abandon span {
 			background: linear-gradient(90deg, #f59e0b, #ef4444);
 		}
 
-		.slug-atlas-bar.is-conv span {
-			background: linear-gradient(90deg, #22c55e, #14b8a6);
+		.slug-lab-body {
+			display: grid;
+			grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.55fr);
+			gap: 12px;
+			align-items: start;
 		}
 
-		.slug-atlas-grid {
+		.slug-lab-focus {
+			border-radius: 20px;
+			padding: 16px;
+			border: 1px solid rgba(148, 163, 184, 0.18);
+			background:
+				linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.58));
 			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 10px;
+			box-shadow: 0 12px 28px rgba(2, 6, 23, 0.2);
+		}
+
+		.slug-lab-focus.is-soft {
+			background:
+				linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.44));
+		}
+
+		.slug-lab-focus-kicker {
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: .12em;
+			font-weight: 800;
+			color: var(--text3);
+		}
+
+		.slug-lab-focus-name {
+			font-family: monospace;
+			font-size: 16px;
+			font-weight: 900;
+			color: #e2e8f0;
+			line-height: 1.3;
+			word-break: break-word;
+		}
+
+		.slug-lab-focus-domain {
+			font-size: 11px;
+			color: var(--text3);
+		}
+
+		.slug-lab-focus-note {
+			font-size: 12px;
+			color: var(--text2);
+			line-height: 1.5;
+		}
+
+		.slug-lab-focus-bars {
+			display: grid;
+			gap: 8px;
+		}
+
+		.slug-lab-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
 			gap: 12px;
 		}
 
-		.slug-card {
+		.slug-lab-card {
 			position: relative;
 			overflow: hidden;
 			border-radius: 18px;
 			border: 1px solid rgba(148, 163, 184, 0.18);
 			background:
-				linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.58));
+				linear-gradient(165deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.62));
 			padding: 14px;
 			display: grid;
 			gap: 12px;
 			box-shadow: 0 10px 26px rgba(2, 6, 23, 0.22);
 		}
 
-		.slug-card::before {
+		.slug-lab-card::before {
 			content: '';
 			position: absolute;
-			left: 0;
-			top: 0;
+			inset: 0 auto 0 0;
 			width: 4px;
-			height: 100%;
-			background: var(--accent2);
-			opacity: .9;
+			background: var(--accent, rgba(34, 211, 238, 0.65));
 		}
 
-		.slug-card-head {
+		.slug-lab-card-head {
 			display: flex;
 			justify-content: space-between;
 			gap: 10px;
 			align-items: start;
 		}
 
-		.slug-card-rank {
+		.slug-lab-card-rank {
 			font-size: 11px;
 			font-weight: 900;
 			padding: 4px 8px;
 			border-radius: 999px;
 			border: 1px solid rgba(148, 163, 184, 0.35);
 			color: var(--text2);
+			white-space: nowrap;
 		}
 
-		.slug-card-name {
+		.slug-lab-card-name {
 			font-family: monospace;
-			font-size: 12px;
-			font-weight: 800;
+			font-size: 13px;
+			font-weight: 900;
 			color: var(--accent2);
 			line-height: 1.35;
 			word-break: break-word;
 		}
 
-		.slug-card-domain {
+		.slug-lab-card-domain {
 			font-size: 10px;
 			color: var(--text3);
 			margin-top: 4px;
@@ -1610,22 +1713,57 @@
 			text-overflow: ellipsis;
 		}
 
-		.slug-card-stats {
+		.slug-lab-card-badge {
+			font-size: 11px;
+			font-weight: 900;
+			padding: 5px 10px;
+			border-radius: 999px;
+			border: 1px solid currentColor;
+			white-space: nowrap;
+		}
+
+		.slug-lab-card-bars {
 			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 6px;
+		}
+
+		.slug-lab-card-bar {
+			height: 7px;
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.18);
+			overflow: hidden;
+		}
+
+		.slug-lab-card-bar span {
+			display: block;
+			height: 100%;
+			border-radius: inherit;
+		}
+
+		.slug-lab-card-bar.is-conv span {
+			background: linear-gradient(90deg, #22d3ee, #22c55e);
+		}
+
+		.slug-lab-card-bar.is-abandon span {
+			background: linear-gradient(90deg, #f59e0b, #ef4444);
+		}
+
+		.slug-lab-card-stats {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 8px;
 		}
 
-		.slug-card-stat {
+		.slug-lab-card-stat {
 			padding: 8px;
 			border-radius: 12px;
-			border: 1px solid rgba(148, 163, 184, 0.18);
-			background: rgba(15, 23, 42, 0.32);
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			background: rgba(15, 23, 42, 0.3);
 			display: grid;
 			gap: 4px;
 		}
 
-		.slug-card-stat-label {
+		.slug-lab-card-stat-label {
 			font-size: 10px;
 			text-transform: uppercase;
 			letter-spacing: .06em;
@@ -1633,18 +1771,18 @@
 			font-weight: 800;
 		}
 
-		.slug-card-stat-value {
+		.slug-lab-card-stat-value {
 			font-size: 16px;
 			font-weight: 900;
 			line-height: 1;
 		}
 
-		.slug-card-foot {
+		.slug-lab-card-foot {
 			display: grid;
 			gap: 6px;
 		}
 
-		.slug-card-foot-row {
+		.slug-lab-card-foot-row {
 			display: flex;
 			justify-content: space-between;
 			gap: 8px;
@@ -1652,21 +1790,21 @@
 			color: var(--text2);
 		}
 
-		.slug-card-mini-bar {
+		.slug-lab-card-mini-bar {
 			height: 6px;
 			border-radius: 999px;
 			background: rgba(148, 163, 184, 0.18);
 			overflow: hidden;
 		}
 
-		.slug-card-mini-bar span {
+		.slug-lab-card-mini-bar span {
 			display: block;
 			height: 100%;
 			border-radius: inherit;
 			background: linear-gradient(90deg, #22d3ee, #818cf8);
 		}
 
-		.slug-atlas-empty {
+		.slug-lab-empty {
 			font-size: 12px;
 			color: var(--text3);
 			padding: 12px;
@@ -1675,38 +1813,52 @@
 		}
 
 		@media (max-width: 980px) {
-			.slug-atlas-main {
+			.slug-lab-hero,
+			.slug-lab-body {
 				grid-template-columns: 1fr;
 			}
 
-			.slug-atlas-metrics {
-				grid-template-columns: 1fr;
-			}
-
-			.slug-card-stats {
+			.slug-lab-metrics,
+			.slug-lab-card-stats {
 				grid-template-columns: 1fr;
 			}
 		}
 
-		body[data-theme='light'] .slug-atlas-hero {
+		body[data-theme='light'] .slug-lab-hero {
 			background:
-				radial-gradient(circle at 12% 16%, rgba(8, 145, 178, 0.12), transparent 34%),
-				radial-gradient(circle at 88% 18%, rgba(79, 70, 229, 0.12), transparent 30%),
-				linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 247, 255, 0.92));
+				radial-gradient(circle at 10% 18%, rgba(8, 145, 178, 0.12), transparent 28%),
+				radial-gradient(circle at 90% 12%, rgba(245, 158, 11, 0.1), transparent 26%),
+				linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(242, 247, 255, 0.94));
 		}
 
-		body[data-theme='light'] .slug-atlas-title {
+		body[data-theme='light'] .slug-lab-title {
 			color: #0f172a;
 		}
 
-		body[data-theme='light'] .slug-atlas-lead,
-		body[data-theme='light'] .slug-card {
-			background: rgba(255, 255, 255, 0.82);
-			border-color: rgba(148, 163, 184, 0.28);
+		body[data-theme='light'] .slug-lab-copy,
+		body[data-theme='light'] .slug-lab-focus-note,
+		body[data-theme='light'] .slug-lab-tag,
+		body[data-theme='light'] .slug-lab-metric-label,
+		body[data-theme='light'] .slug-lab-panel-title,
+		body[data-theme='light'] .slug-lab-card-stat-label,
+		body[data-theme='light'] .slug-lab-card-foot-row,
+		body[data-theme='light'] .slug-lab-leader-domain,
+		body[data-theme='light'] .slug-lab-focus-domain {
+			color: #475569;
 		}
 
-		body[data-theme='light'] .slug-card-name,
-		body[data-theme='light'] .slug-atlas-lead-name {
+		body[data-theme='light'] .slug-lab-focus,
+		body[data-theme='light'] .slug-lab-card,
+		body[data-theme='light'] .slug-lab-metric,
+		body[data-theme='light'] .slug-lab-panel,
+		body[data-theme='light'] .slug-lab-leader {
+			background: rgba(255, 255, 255, 0.85);
+			border-color: rgba(148, 163, 184, 0.26);
+		}
+
+		body[data-theme='light'] .slug-lab-card-name,
+		body[data-theme='light'] .slug-lab-leader-name,
+		body[data-theme='light'] .slug-lab-focus-name {
 			color: #0f172a;
 		}
 
@@ -3837,7 +3989,7 @@
 			}
 
 			if (data.by_slug && data.by_slug.length > 0) {
-				const slugRows = data.by_slug.slice(0, 18).map((row, idx) => {
+				const slugRows = data.by_slug.slice(0, 10).map((row, idx) => {
 					const initiated = Number(row.initiated || 0);
 					const abandoned = Number(row.abandoned || 0);
 					const converted = Math.max(0, initiated - abandoned);
@@ -3871,61 +4023,86 @@
 					const bestConv = slugRows.reduce((best, r) => (r.convRate > best.convRate ? r : best), slugRows[0]);
 					const mostRisky = slugRows.reduce((best, r) => (r.abandonRate > best.abandonRate ? r : best), slugRows[0]);
 					const mostUsed = slugRows.reduce((best, r) => (r.initiated > best.initiated ? r : best), slugRows[0]);
+					const podiumRows = [...slugRows]
+						.sort((a, b) => b.convRate - a.convRate || a.abandonRate - b.abandonRate)
+						.slice(0, 3);
 
-					html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin:16px 0 8px;">Ad Slugs Atlas</div>`;
-					html += `<div class="slug-atlas">
-						<div class="slug-atlas-hero">
-							<div class="slug-atlas-topline">
-								<div class="slug-atlas-kicker">Snapshot</div>
-								<div class="slug-atlas-pill">${fmtNum(slugRows.length)} slugs in view</div>
-							</div>
-							<div class="slug-atlas-main">
-								<div>
-									<div class="slug-atlas-title">A cleaner map of ad performance</div>
-									<div class="slug-atlas-copy">See which slug drives the most traffic, which one converts best, and where abandonment is concentrated, all in one visual block.</div>
-								</div>
-								<div class="slug-atlas-metrics">
-									<div class="slug-atlas-metric"><div class="slug-atlas-metric-label">Weighted abandon</div><div class="slug-atlas-metric-value" style="color:${weightedAbandon > 70 ? 'var(--red)' : weightedAbandon > 40 ? 'var(--yellow)' : 'var(--green)'};">${weightedAbandon}%</div></div>
-									<div class="slug-atlas-metric"><div class="slug-atlas-metric-label">Total initiated</div><div class="slug-atlas-metric-value">${fmtNum(totalInitiated)}</div></div>
-									<div class="slug-atlas-metric"><div class="slug-atlas-metric-label">Best converter</div><div class="slug-atlas-metric-value" style="font-size:14px;color:var(--accent2);">${fmtNum(bestConv.convRate)}%</div></div>
+					html += `<div class="slug-lab">
+						<section class="slug-lab-hero">
+							<div>
+								<div class="slug-lab-kicker">Ad Slugs Performance</div>
+								<div class="slug-lab-title">A fresh conversion board for the top 10 slugs</div>
+								<div class="slug-lab-copy">This view is rebuilt to read like a live editorial board: strongest converters, traffic anchors, and risky slugs are separated visually so the story lands in a few seconds.</div>
+								<div class="slug-lab-tags">
+									<span class="slug-lab-tag">${fmtNum(slugRows.length)} slugs in view</span>
+									<span class="slug-lab-tag">Top 10</span>
+									<span class="slug-lab-tag" style="color:${weightedAbandon > 70 ? 'var(--red)' : weightedAbandon > 40 ? 'var(--yellow)' : 'var(--green)'};">${weightedAbandon}% weighted abandon</span>
+									<span class="slug-lab-tag" style="color:var(--accent2);">${fmtNum(bestConv.convRate)}% best conversion</span>
 								</div>
 							</div>
-							<div class="slug-atlas-lead">
-								<div class="slug-atlas-lead-head">
-									<div>
-										<div class="slug-atlas-lead-name">${escHtml(bestConv.slug)}</div>
-										<div class="slug-atlas-lead-domain">${escHtml(bestConv.domainVal)}</div>
+							<div class="slug-lab-summary">
+								<div class="slug-lab-metrics">
+									<div class="slug-lab-metric"><div class="slug-lab-metric-label">Total initiated</div><div class="slug-lab-metric-value">${fmtNum(totalInitiated)}</div></div>
+									<div class="slug-lab-metric"><div class="slug-lab-metric-label">Total converted</div><div class="slug-lab-metric-value" style="color:var(--green);">${fmtNum(slugRows.reduce((sum, r) => sum + r.converted, 0))}</div></div>
+									<div class="slug-lab-metric"><div class="slug-lab-metric-label">Best converter</div><div class="slug-lab-metric-value" style="font-size:14px;color:var(--accent2);">${escHtml(bestConv.slug)}</div></div>
+									<div class="slug-lab-metric"><div class="slug-lab-metric-label">Risk watch</div><div class="slug-lab-metric-value" style="font-size:14px;color:${mostRisky.riskColor};">${fmtNum(mostRisky.abandonRate)}%</div></div>
+								</div>
+								<div class="slug-lab-panel">
+									<div class="slug-lab-panel-title">Conversion podium</div>
+									<div class="slug-lab-leaderboard">
+										${podiumRows.map(item => `<div class="slug-lab-leader" style="--accent:${item.riskTone};">
+											<div class="slug-lab-leader-rank">#${item.rank}</div>
+											<div class="slug-lab-leader-main">
+												<div class="slug-lab-leader-name">${escHtml(item.slug)}</div>
+												<div class="slug-lab-leader-domain">${escHtml(item.domainVal)}</div>
+												<div class="slug-lab-leader-bars">
+													<div class="slug-lab-bar is-conv"><span style="width:${item.convRate}%;"></span></div>
+													<div class="slug-lab-bar is-abandon"><span style="width:${item.abandonRate}%;"></span></div>
+												</div>
+											</div>
+											<div class="slug-lab-leader-score" style="color:${item.riskColor};">${item.convRate}%</div>
+										</div>`).join('')}
 									</div>
-									<div class="slug-atlas-lead-badge" style="color:${bestConv.riskColor};">Top conversion</div>
-								</div>
-								<div class="slug-atlas-lead-bars">
-									<div class="slug-atlas-bar is-abandon"><span style="width:${bestConv.abandonRate}%;"></span></div>
-									<div class="slug-atlas-bar is-conv"><span style="width:${bestConv.convRate}%;"></span></div>
 								</div>
 							</div>
-						</div>
-						<div class="slug-atlas-grid">
-							${slugRows.map(item => `<article class="slug-card">
-								<div class="slug-card-head">
-									<div>
-										<div class="slug-card-name">${escHtml(item.slug)}</div>
-										<div class="slug-card-domain">${escHtml(item.domainVal)}</div>
+						</section>
+						<div class="slug-lab-body">
+							<div class="slug-lab-focus">
+								<div class="slug-lab-focus-kicker">Traffic anchor</div>
+								<div class="slug-lab-focus-name">${escHtml(mostUsed.slug)}</div>
+								<div class="slug-lab-focus-domain">${escHtml(mostUsed.domainVal)}</div>
+								<div class="slug-lab-focus-note">${fmtNum(mostUsed.initiated)} initiated, which is ${totalInitiated ? Math.round((mostUsed.initiated / totalInitiated) * 100) : 0}% of the top 10 sample. Use this as the volume reference against the rest of the board.</div>
+								<div class="slug-lab-focus-bars">
+									<div class="slug-lab-bar is-conv"><span style="width:${mostUsed.convRate}%;"></span></div>
+									<div class="slug-lab-bar is-abandon"><span style="width:${mostUsed.abandonRate}%;"></span></div>
+								</div>
+							</div>
+							<div class="slug-lab-grid">
+								${slugRows.map(item => `<article class="slug-lab-card" style="--accent:${item.riskTone};">
+									<div class="slug-lab-card-head">
+										<div>
+											<div class="slug-lab-card-name">${escHtml(item.slug)}</div>
+											<div class="slug-lab-card-domain">${escHtml(item.domainVal)}</div>
+										</div>
+										<div class="slug-lab-card-rank">#${item.rank}</div>
 									</div>
-									<div class="slug-card-rank">#${item.rank}</div>
-								</div>
-								<div class="slug-card-stats">
-									<div class="slug-card-stat"><div class="slug-card-stat-label">Initiated</div><div class="slug-card-stat-value">${fmtNum(item.initiated)}</div></div>
-									<div class="slug-card-stat"><div class="slug-card-stat-label">Abandoned</div><div class="slug-card-stat-value" style="color:${item.riskColor};">${fmtNum(item.abandoned)}</div></div>
-									<div class="slug-card-stat"><div class="slug-card-stat-label">Converted</div><div class="slug-card-stat-value" style="color:var(--green);">${fmtNum(item.converted)}</div></div>
-									<div class="slug-card-stat"><div class="slug-card-stat-label">Conv. Rate</div><div class="slug-card-stat-value" style="color:var(--accent2);">${item.convRate}%</div></div>
-								</div>
-								<div class="slug-card-foot">
-									<div class="slug-card-foot-row"><span>Traffic share</span><strong>${mostUsed.initiated ? Math.round((item.initiated / totalInitiated) * 100) : 0}%</strong></div>
-									<div class="slug-card-mini-bar"><span style="width:${mostUsed.initiated ? Math.round((item.initiated / totalInitiated) * 100) : 0}%;"></span></div>
-									<div class="slug-card-foot-row"><span>Risk level</span><strong style="color:${item.riskColor};">${item.abandonRate}%</strong></div>
-									<div class="slug-card-mini-bar"><span style="width:${item.abandonRate}%;background:linear-gradient(90deg, ${item.riskColor}, var(--red));"></span></div>
-								</div>
-							</article>`).join('')}
+									<div class="slug-lab-card-bars">
+										<div class="slug-lab-card-bar is-conv"><span style="width:${item.convRate}%;"></span></div>
+										<div class="slug-lab-card-bar is-abandon"><span style="width:${item.abandonRate}%;"></span></div>
+									</div>
+									<div class="slug-lab-card-stats">
+										<div class="slug-lab-card-stat"><div class="slug-lab-card-stat-label">Initiated</div><div class="slug-lab-card-stat-value">${fmtNum(item.initiated)}</div></div>
+										<div class="slug-lab-card-stat"><div class="slug-lab-card-stat-label">Converted</div><div class="slug-lab-card-stat-value" style="color:var(--green);">${fmtNum(item.converted)}</div></div>
+										<div class="slug-lab-card-stat"><div class="slug-lab-card-stat-label">Conv. rate</div><div class="slug-lab-card-stat-value" style="color:var(--accent2);">${item.convRate}%</div></div>
+									</div>
+									<div class="slug-lab-card-foot">
+										<div class="slug-lab-card-foot-row"><span>Traffic share</span><strong>${totalInitiated ? Math.round((item.initiated / totalInitiated) * 100) : 0}%</strong></div>
+										<div class="slug-lab-card-mini-bar"><span style="width:${totalInitiated ? Math.round((item.initiated / totalInitiated) * 100) : 0}%;"></span></div>
+										<div class="slug-lab-card-foot-row"><span>Risk level</span><strong style="color:${item.riskColor};">${item.abandonRate}%</strong></div>
+										<div class="slug-lab-card-mini-bar"><span style="width:${item.abandonRate}%;background:linear-gradient(90deg, ${item.riskColor}, var(--red));"></span></div>
+									</div>
+								</article>`).join('')}
+							</div>
 						</div>
 					</div>`;
 				}
