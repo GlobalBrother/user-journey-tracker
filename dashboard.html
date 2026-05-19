@@ -2499,15 +2499,18 @@
 
 						// Build a label dictionary per product_id so old "no text" rows can reuse
 						// the best known label (including newly captured alt text) in the same range.
+						// Keep sticky and non-sticky separate to avoid leaking sticky copy into page slots.
 						const preferredLabelByProduct = new Map();
 						for (const btn of validButtons) {
 							const pid = btn.product_id || '';
 							if (!pid) continue;
+							const scope = btn.position === 'sticky' ? 'sticky' : 'non_sticky';
+							const labelKey = `${pid}||${scope}`;
 							const normalized = normalizeButtonLabel(btn.label || '');
 							if (!normalized) continue;
 							const clicks = Number(btn.clicks || 0);
-							if (!preferredLabelByProduct.has(pid) || clicks > preferredLabelByProduct.get(pid).clicks) {
-								preferredLabelByProduct.set(pid, { label: normalized, clicks: clicks });
+							if (!preferredLabelByProduct.has(labelKey) || clicks > preferredLabelByProduct.get(labelKey).clicks) {
+								preferredLabelByProduct.set(labelKey, { label: normalized, clicks: clicks });
 							}
 						}
 
@@ -2516,8 +2519,10 @@
 							totalButtonClicks += Number(btn.clicks || 0);
 							const normalizedLabel = normalizeButtonLabel(btn.label || '');
 							const pid = btn.product_id || '';
-							const inferredLabel = (!normalizedLabel && pid && preferredLabelByProduct.has(pid))
-								? preferredLabelByProduct.get(pid).label
+							const scope = btn.position === 'sticky' ? 'sticky' : 'non_sticky';
+							const labelKey = `${pid}||${scope}`;
+							const inferredLabel = (!normalizedLabel && pid && preferredLabelByProduct.has(labelKey))
+								? preferredLabelByProduct.get(labelKey).label
 								: '';
 							const effectiveLabel = normalizedLabel || inferredLabel;
 							const key = `${effectiveLabel}||${pid}`;
