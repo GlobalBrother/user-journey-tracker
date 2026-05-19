@@ -2159,6 +2159,17 @@
 			</div>
 		</div>
 
+		<!-- Scroll Behavior Heatmap -->
+		<div class="panel" style="margin-bottom:24px;">
+			<div class="panel-header">
+				<span class="panel-title">Scroll Behavior Heatmap (LP vs Upsell)</span>
+				<span style="font-size:12px;color:var(--text3);">Lazy loaded panel, segmented by page type with domain/slug/country snapshots</span>
+			</div>
+			<div class="panel-body" id="scrollBehaviorPanel">
+				<div class="loading"><span class="spinner"></span> Loading…</div>
+			</div>
+		</div>
+
 		<!-- Conversion Funnel -->
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
@@ -2305,6 +2316,7 @@
 		// Last good panel payloads (scoped by current filter key) used as fallback on transient 5xx.
 		const _panelLastGood = {
 			abandonRate: null,
+			scrollBehavior: null,
 			recentConversions: null,
 			ltv: null,
 			productRetention: null,
@@ -2539,6 +2551,19 @@
 			const end = document.getElementById('endDate').value;
 			const params = new URLSearchParams({ start_date: start, end_date: end });
 			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/product-retention?${params}`, { headers: HEADERS, signal });
+			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+			return res.json();
+		}
+
+		async function fetchScrollBehavior(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
+			const domain = document.getElementById('domainFilter').value.trim();
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			if (slug) params.set('slug', slug);
+			if (domain) params.set('domain', domain);
+			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/behavior/scroll-depth?${params}`, { headers: HEADERS, signal });
 			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
 			return res.json();
 		}
@@ -2799,6 +2824,86 @@
 					btn.textContent = isOpen ? 'Hide button slot map' : 'Show button slot map';
 				});
 			});
+		}
+
+		function renderScrollBehavior(data) {
+			const el = document.getElementById('scrollBehaviorPanel');
+			if (!data || !Array.isArray(data.by_page_type)) {
+				el.innerHTML = '<p style="color:var(--text3);">No scroll behavior data in this period.</p>';
+				return;
+			}
+
+			const rowFor = (name) => data.by_page_type.find(r => r.segment === name) || null;
+			const lp = rowFor('lp');
+			const upsell = rowFor('upsell');
+			const totalSessions = (data?.totals?.scroll_sessions || 0);
+
+			const renderHeatRow = (row) => {
+				if (!row || !Array.isArray(row.bands)) {
+					return '<tr><td colspan="8" style="padding:8px;color:var(--text3);">No data</td></tr>';
+				}
+				const m = row.milestone_reach_pct || {};
+				const bandMap = new Map((row.bands || []).map(b => [b.band, b]));
+				const bandVal = (k) => {
+					const b = bandMap.get(k);
+					return b ? `${b.pct}%` : '0%';
+				};
+				return `<tr>
+					<td style="padding:8px;font-weight:700;color:var(--accent2);text-transform:uppercase;">${escHtml(row.segment)}</td>
+					<td style="padding:8px;text-align:right;">${fmtNum(row.sessions || 0)}</td>
+					<td style="padding:8px;text-align:right;">${row.avg_max_scroll_pct || 0}%</td>
+					<td style="padding:8px;text-align:right;">${m['25'] || 0}%</td>
+					<td style="padding:8px;text-align:right;">${m['50'] || 0}%</td>
+					<td style="padding:8px;text-align:right;">${m['75'] || 0}%</td>
+					<td style="padding:8px;text-align:right;">${m['90'] || 0}%</td>
+					<td style="padding:8px;text-align:right;font-family:monospace;">${bandVal('90-100%')}</td>
+				</tr>`;
+			};
+
+			const topDomains = (data.by_domain || []).slice(0, 5).map(r =>
+				`<span class="abx-chip" style="margin-right:6px;margin-bottom:6px;display:inline-block;">${escHtml(r.segment)}: ${fmtNum(r.sessions || 0)}</span>`
+			).join('') || '<span style="color:var(--text3);">No domain sample</span>';
+
+			const topSlugs = (data.by_slug || []).slice(0, 5).map(r =>
+				`<span class="abx-chip" style="margin-right:6px;margin-bottom:6px;display:inline-block;">${escHtml(r.segment)}: ${fmtNum(r.sessions || 0)}</span>`
+			).join('') || '<span style="color:var(--text3);">No ad slug sample</span>';
+
+			const topCountries = (data.by_country || []).slice(0, 5).map(r =>
+				`<span class="abx-chip" style="margin-right:6px;margin-bottom:6px;display:inline-block;">${escHtml(r.segment)}: ${fmtNum(r.sessions || 0)}</span>`
+			).join('') || '<span style="color:var(--text3);">No country sample</span>';
+
+			el.innerHTML = `
+				<div class="abx-overview" style="margin-bottom:12px;">
+					<div class="abx-overview-card"><div class="abx-overview-label">Scroll Sessions</div><div class="abx-overview-value">${fmtNum(totalSessions)}</div></div>
+					<div class="abx-overview-card"><div class="abx-overview-label">LP Avg Max Scroll</div><div class="abx-overview-value">${lp ? (lp.avg_max_scroll_pct || 0) : 0}%</div></div>
+					<div class="abx-overview-card"><div class="abx-overview-label">Upsell Avg Max Scroll</div><div class="abx-overview-value">${upsell ? (upsell.avg_max_scroll_pct || 0) : 0}%</div></div>
+				</div>
+				<div class="table-wrap" style="overflow:auto;">
+					<table style="width:100%;border-collapse:collapse;font-size:12px;">
+						<thead>
+							<tr style="border-bottom:1px solid var(--border);color:var(--text3);">
+								<th style="padding:8px;text-align:left;">Page Type</th>
+								<th style="padding:8px;text-align:right;">Sessions</th>
+								<th style="padding:8px;text-align:right;">Avg Max</th>
+								<th style="padding:8px;text-align:right;">25%</th>
+								<th style="padding:8px;text-align:right;">50%</th>
+								<th style="padding:8px;text-align:right;">75%</th>
+								<th style="padding:8px;text-align:right;">90%</th>
+								<th style="padding:8px;text-align:right;">Deep Scroll</th>
+							</tr>
+						</thead>
+						<tbody>
+							${renderHeatRow(lp)}
+							${renderHeatRow(upsell)}
+						</tbody>
+					</table>
+				</div>
+				<div style="margin-top:10px;font-size:12px;color:var(--text2);">
+					<div style="margin-bottom:6px;"><strong style="color:var(--text);">Top Domains:</strong> ${topDomains}</div>
+					<div style="margin-bottom:6px;"><strong style="color:var(--text);">Top Ad Slugs:</strong> ${topSlugs}</div>
+					<div><strong style="color:var(--text);">Top Countries:</strong> ${topCountries}</div>
+				</div>
+			`;
 		}
 
 		function escHtml(s) {
@@ -4119,6 +4224,14 @@
 							if (cachedPanel) renderAbandonRate(cachedPanel);
 							console.warn('abandon-rate fetch failed', err);
 						});
+					fetchScrollBehavior(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('scrollBehavior', d); renderScrollBehavior(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('scrollBehavior');
+							if (cachedPanel) renderScrollBehavior(cachedPanel);
+							console.warn('scroll-behavior fetch failed', err);
+						});
 					fetchLtv(signal)
 						.then(d => { if (!signal.aborted) { _panelCacheSet('ltv', d); renderLtv(d); } })
 						.catch(err => {
@@ -4166,6 +4279,14 @@
 							const cachedPanel = _panelCacheGet('abandonRate');
 							if (cachedPanel) renderAbandonRate(cachedPanel);
 							console.warn('abandon-rate fetch failed', err);
+						});
+					fetchScrollBehavior(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('scrollBehavior', d); renderScrollBehavior(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('scrollBehavior');
+							if (cachedPanel) renderScrollBehavior(cachedPanel);
+							console.warn('scroll-behavior fetch failed', err);
 						});
 					fetchLtv(signal)
 						.then(d => { if (!signal.aborted) { _panelCacheSet('ltv', d); renderLtv(d); } })

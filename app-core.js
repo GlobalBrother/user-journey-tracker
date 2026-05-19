@@ -202,6 +202,11 @@
 	let fingerprintType = null; // 'persistent' = din localStorage, 'new' = generat acum
 	let pageviewSent = false;
 	let pageLoadStartTime = null;
+	let scrollTrackingInitialized = false;
+	let scrollSummarySent = false;
+	let maxScrollPercent = 0;
+	const scrollMilestoneTargets = [25, 50, 75, 90];
+	const scrollMilestonesHit = new Set();
 
 	/**
 	 * Obține sau creează user ID.
@@ -571,6 +576,84 @@
 				new Blob([payload], { type: 'application/json' })
 			);
 		} catch (e) { /* silently fail — page is being hidden */ }
+	}
+
+	function _detectPageType() {
+		const path = (window.location.pathname || '').toLowerCase();
+		if (/(upsell|downsell|oto|thank-you|thankyou)/.test(path)) return 'upsell';
+		if (/(\/book\/|\/book$|\/lp\/|\/lander\/)/.test(path)) return 'lp';
+		return 'other';
+	}
+
+	function _computeScrollPercent() {
+		const doc = document.documentElement;
+		const body = document.body;
+		const viewport = Math.max(window.innerHeight || 0, doc ? doc.clientHeight : 0);
+		const scrollTop = Math.max(window.pageYOffset || 0, doc ? doc.scrollTop || 0 : 0);
+		const scrollHeight = Math.max(
+			doc ? doc.scrollHeight || 0 : 0,
+			body ? body.scrollHeight || 0 : 0,
+			viewport
+		);
+
+		if (!scrollHeight || scrollHeight <= viewport + 4) return 100;
+		const pct = Math.round(((scrollTop + viewport) / scrollHeight) * 100);
+		return Math.max(0, Math.min(100, pct));
+	}
+
+	function _updateScrollTracking() {
+		const pct = _computeScrollPercent();
+		if (pct > maxScrollPercent) {
+			maxScrollPercent = pct;
+			scrollMilestoneTargets.forEach((target) => {
+				if (pct >= target) scrollMilestonesHit.add(target);
+			});
+		}
+	}
+
+	function _sendScrollBehaviorSummary() {
+		if (scrollSummarySent || !pageLoadStartTime || !CONFIG.API_KEY) return;
+		scrollSummarySent = true;
+
+		const uid = localStorage.getItem(STORAGE_KEY);
+		if (!uid) return;
+
+		_updateScrollTracking();
+		const secs = Math.max(1, Math.round((Date.now() - pageLoadStartTime) / 1000));
+		const firstTouch = getTrafficSource();
+		const payload = {
+			user_id: uid,
+			event_type: 'custom_event',
+			event_name: 'scroll_behavior_summary',
+			domain: window.location.hostname,
+			url: window.location.href,
+			slug: firstTouch.slug,
+			timestamp: new Date().toISOString(),
+			metadata: {
+				event_name: 'scroll_behavior_summary',
+				page_type: _detectPageType(),
+				max_scroll_percent: maxScrollPercent,
+				milestones_hit: Array.from(scrollMilestonesHit).sort((a, b) => a - b),
+				time_on_page_seconds: secs
+			}
+		};
+
+		if (!sendEventBeacon('/api/actions', payload)) {
+			sendEventPixel('/api/actions', payload);
+		}
+	}
+
+	function initScrollBehaviorTracking() {
+		if (scrollTrackingInitialized) return;
+		scrollTrackingInitialized = true;
+
+		_updateScrollTracking();
+		window.addEventListener('scroll', _updateScrollTracking, { passive: true });
+		window.addEventListener('resize', _updateScrollTracking, { passive: true });
+		window.addEventListener('pagehide', _sendScrollBehaviorSummary, { once: true });
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'hidden') _sendScrollBehaviorSummary();
+		}, { passive: true });
 	}
 
 	/**
@@ -1244,6 +1327,9 @@
 
 		// 3. Retry failed events
 		await retryFailedEvents();
+
+		// 3.1 Track lightweight page scroll behavior summary (for heatmap-style analytics)
+		initScrollBehaviorTracking();
 
 		// 4. Enhance checkout links
 		await enhanceCheckoutLinks();
