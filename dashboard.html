@@ -756,25 +756,19 @@
 			gap: 14px;
 		}
 
-		.scrollhm-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-			gap: 12px;
-		}
-
-		.scrollhm-card {
-			border: 1px solid rgba(148, 163, 184, 0.2);
-			border-radius: 14px;
-			padding: 12px;
-			background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
-		}
-
-		.scrollhm-head {
+		.scrollhm-top {
 			display: flex;
 			justify-content: space-between;
-			align-items: baseline;
-			gap: 8px;
-			margin-bottom: 10px;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+		}
+
+		.scrollhm-title-wrap {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
 		}
 
 		.scrollhm-title {
@@ -785,37 +779,104 @@
 			color: var(--text2);
 		}
 
-		.scrollhm-sessions {
+		.scrollhm-sessions,
+		.scrollhm-subtitle {
 			font-size: 12px;
 			color: var(--text3);
 		}
 
-		.scrollhm-matrix {
+		.scrollhm-toggle {
+			display: inline-flex;
+			gap: 4px;
+			padding: 4px;
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.12);
+			border: 1px solid rgba(148, 163, 184, 0.2);
+		}
+
+		.scrollhm-toggle button {
+			appearance: none;
+			border: none;
+			background: transparent;
+			color: var(--text2);
+			font-size: 12px;
+			font-weight: 700;
+			padding: 6px 10px;
+			border-radius: 999px;
+			cursor: pointer;
+			transition: all .16s ease;
+		}
+
+		.scrollhm-toggle button.active {
+			background: rgba(34, 211, 238, 0.2);
+			color: var(--text);
+		}
+
+		.scrollhm-sparkline {
+			width: 220px;
+			height: 54px;
+			display: block;
+			border-radius: 10px;
+			background: rgba(15, 23, 42, 0.28);
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			padding: 4px;
+		}
+
+		.scrollhm-board {
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 14px;
+			padding: 12px;
+			background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+		}
+
+		.scrollhm-grid {
 			display: grid;
-			grid-template-columns: repeat(5, minmax(0, 1fr));
+			grid-template-columns: 110px repeat(5, minmax(0, 1fr));
 			gap: 8px;
+			align-items: center;
+		}
+
+		.scrollhm-colhead {
+			font-size: 11px;
+			font-weight: 700;
+			text-align: center;
+			color: var(--text3);
+			text-transform: uppercase;
+			letter-spacing: .05em;
+		}
+
+		.scrollhm-rowhead {
+			font-size: 12px;
+			font-weight: 800;
+			letter-spacing: .04em;
+			text-transform: uppercase;
+			color: var(--text2);
 		}
 
 		.scrollhm-cell {
-			border-radius: 10px;
-			padding: 10px 8px;
-			min-height: 68px;
+			border-radius: 8px;
+			min-height: 48px;
 			display: flex;
-			flex-direction: column;
-			justify-content: space-between;
+			align-items: center;
+			justify-content: center;
 			border: 1px solid rgba(255, 255, 255, 0.08);
+			font-size: 13px;
+			font-weight: 800;
+			letter-spacing: .02em;
 		}
 
-		.scrollhm-cell-name {
-			font-size: 11px;
-			font-weight: 700;
-			line-height: 1.15;
+		.scrollhm-cell.enter {
+			opacity: 0;
+			transform: translateY(7px) scale(0.98);
+			animation: scrollCellIn .38s ease forwards;
+			animation-delay: var(--delay, 0ms);
 		}
 
-		.scrollhm-cell-val {
-			font-size: 18px;
-			font-weight: 900;
-			line-height: 1;
+		@keyframes scrollCellIn {
+			to {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
 		}
 
 		.scrollhm-legend {
@@ -839,6 +900,51 @@
 			display: grid;
 			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 			gap: 10px;
+		}
+
+		.scrollhm-stats {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+			gap: 10px;
+		}
+
+		.scrollhm-stat {
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 10px;
+			padding: 10px;
+			background: rgba(15, 23, 42, 0.24);
+		}
+
+		.scrollhm-stat-title {
+			font-size: 12px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .06em;
+			color: var(--text3);
+			margin-bottom: 6px;
+		}
+
+		.scrollhm-stat-row {
+			display: grid;
+			grid-template-columns: 56px 1fr auto;
+			gap: 8px;
+			align-items: center;
+			font-size: 12px;
+			padding: 4px 0;
+		}
+
+		.scrollhm-stat-bar {
+			height: 7px;
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.2);
+			overflow: hidden;
+		}
+
+		.scrollhm-stat-bar > span {
+			display: block;
+			height: 100%;
+			border-radius: 999px;
+			background: linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #84cc16 70%, #22c55e 100%);
 		}
 
 		.scrollhm-insight {
@@ -897,12 +1003,18 @@
 		}
 
 		@media (max-width: 900px) {
-			.scrollhm-matrix {
-				grid-template-columns: repeat(2, minmax(0, 1fr));
+			.scrollhm-grid {
+				grid-template-columns: 80px repeat(5, minmax(0, 1fr));
 			}
 
 			.scrollhm-cell {
-				min-height: 62px;
+				min-height: 42px;
+				font-size: 11px;
+			}
+
+			.scrollhm-sparkline {
+				width: 100%;
+				max-width: 260px;
 			}
 		}
 
@@ -3098,6 +3210,7 @@
 			const upsell = rowFor('upsell');
 			const totalSessions = (data?.totals?.scroll_sessions || 0);
 
+			const currentView = (window._scrollHeatViewMode === 'milestones') ? 'milestones' : 'bands';
 			const bandOrder = ['0-24%', '25-49%', '50-74%', '75-89%', '90-100%'];
 			const milestoneOrder = ['25', '50', '75', '90'];
 			const pctSafe = (v) => Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
@@ -3108,7 +3221,7 @@
 				const light = 17 + Math.round((p / 100) * 30);
 				return `hsl(${hue} ${sat}% ${light}%)`;
 			};
-			const textColorFromPct = (pct) => pctSafe(pct) >= 48 ? '#062014' : '#f8fafc';
+			const textColorFromPct = (pct) => pctSafe(pct) >= 45 ? '#062014' : '#f8fafc';
 			const bandMapFor = (row) => new Map((row?.bands || []).map(b => [b.band, pctSafe(b.pct)]));
 
 			const deepPct = (row) => {
@@ -3126,35 +3239,59 @@
 				return 'Weak engagement';
 			};
 
-			const renderSegmentCard = (row, label) => {
-				if (!row) {
-					return `<div class="scrollhm-card"><div class="scrollhm-title">${escHtml(label)}</div><div style="color:var(--text3);font-size:12px;">No data in selected period.</div></div>`;
+			const metricLabels = currentView === 'bands'
+				? bandOrder
+				: milestoneOrder.map(k => `M${k}`);
+
+			const valueFor = (row, label) => {
+				if (!row) return 0;
+				if (currentView === 'bands') {
+					return bandMapFor(row).get(label) || 0;
 				}
-				const bandMap = bandMapFor(row);
-				const milestones = row.milestone_reach_pct || {};
-				const blocks = [
-					...bandOrder.map(k => ({ name: k, value: bandMap.get(k) || 0 })),
-					...milestoneOrder.map(k => ({ name: `M${k}`, value: pctSafe(milestones[k]) })),
-				];
-				const cellsHtml = blocks.map(block => {
-					const bg = colorFromPct(block.value);
-					return `<div class="scrollhm-cell" style="background:${bg};color:${textColorFromPct(block.value)};">
-						<div class="scrollhm-cell-name">${escHtml(block.name)}</div>
-						<div class="scrollhm-cell-val">${block.value}%</div>
+				const m = row.milestone_reach_pct || {};
+				return pctSafe(m[label.replace('M', '')]);
+			};
+
+			const renderHeatmapRow = (row, rowLabel, rowIdx) => {
+				const cells = metricLabels.map((label, idx) => {
+					const value = valueFor(row, label);
+					const bg = colorFromPct(value);
+					const delay = (rowIdx * 5 + idx) * 38;
+					return `<div class="scrollhm-cell enter" style="background:${bg};color:${textColorFromPct(value)};--delay:${delay}ms;" title="${escHtml(rowLabel)} - ${escHtml(label)}: ${value}%">${value}%</div>`;
+				}).join('');
+				return `<div class="scrollhm-rowhead">${escHtml(rowLabel)}</div>${cells}`;
+			};
+
+			const sparklineSvg = () => {
+				const xLabels = ['M25', 'M50', 'M75', 'M90'];
+				const lpSeries = xLabels.map(k => valueFor(lp, k));
+				const upSeries = xLabels.map(k => valueFor(upsell, k));
+				const w = 212;
+				const h = 46;
+				const p = 6;
+				const step = (w - p * 2) / Math.max(1, (xLabels.length - 1));
+				const toY = (v) => (h - p) - ((pctSafe(v) / 100) * (h - p * 2));
+				const points = (arr) => arr.map((v, i) => `${(p + i * step).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+				const dots = (arr, color) => arr.map((v, i) => `<circle cx="${(p + i * step).toFixed(1)}" cy="${toY(v).toFixed(1)}" r="2.3" fill="${color}" />`).join('');
+				return `<svg class="scrollhm-sparkline" viewBox="0 0 ${w} ${h}" role="img" aria-label="LP vs Upsell milestone trend">
+					<line x1="${p}" y1="${h - p}" x2="${w - p}" y2="${h - p}" stroke="rgba(148,163,184,.35)" stroke-width="1" />
+					<polyline fill="none" stroke="#22c55e" stroke-width="2.2" points="${points(lpSeries)}" />
+					<polyline fill="none" stroke="#22d3ee" stroke-width="2.2" points="${points(upSeries)}" />
+					${dots(lpSeries, '#22c55e')}
+					${dots(upSeries, '#22d3ee')}
+				</svg>`;
+			};
+
+			const renderStatsRows = (row, rowLabel) => {
+				if (!row) return `<div style="color:var(--text3);font-size:12px;">No ${escHtml(rowLabel)} data.</div>`;
+				return metricLabels.map(label => {
+					const value = valueFor(row, label);
+					return `<div class="scrollhm-stat-row">
+						<span>${escHtml(label)}</span>
+						<div class="scrollhm-stat-bar"><span style="width:${value}%;"></span></div>
+						<strong>${value}%</strong>
 					</div>`;
 				}).join('');
-
-				return `<div class="scrollhm-card">
-					<div class="scrollhm-head">
-						<div class="scrollhm-title">${escHtml(label)}</div>
-						<div class="scrollhm-sessions">${fmtNum(row.sessions || 0)} sessions</div>
-					</div>
-					<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;">
-						<div style="font-size:12px;color:var(--text2);">Avg max scroll: <strong style="color:var(--text);font-size:17px;">${pctSafe(row.avg_max_scroll_pct)}%</strong></div>
-						<div style="font-size:12px;color:var(--text2);">${segmentQuality(row)}</div>
-					</div>
-					<div class="scrollhm-matrix">${cellsHtml}</div>
-				</div>`;
 			};
 
 			const sortBySessions = (arr) => [...(arr || [])].sort((a, b) => (b.sessions || 0) - (a.sessions || 0));
@@ -3215,6 +3352,18 @@
 
 			el.innerHTML = `
 				<div class="scrollhm-wrap">
+					<div class="scrollhm-top">
+						<div class="scrollhm-title-wrap">
+							<div class="scrollhm-title">LP vs Upsell Scroll Heatmap</div>
+							<div class="scrollhm-subtitle">${currentView === 'bands' ? 'View by Bands' : 'View by Milestones'} • ${fmtNum(totalSessions)} sessions</div>
+							<div class="scrollhm-toggle">
+								<button data-heat-view="bands" class="${currentView === 'bands' ? 'active' : ''}">View by Bands</button>
+								<button data-heat-view="milestones" class="${currentView === 'milestones' ? 'active' : ''}">View by Milestones</button>
+							</div>
+						</div>
+						${sparklineSvg()}
+					</div>
+
 					<div class="abx-overview" style="margin-bottom:2px;">
 						<div class="abx-overview-card"><div class="abx-overview-label">Scroll Sessions</div><div class="abx-overview-value">${fmtNum(totalSessions)}</div></div>
 						<div class="abx-overview-card"><div class="abx-overview-label">LP Avg Max Scroll</div><div class="abx-overview-value">${lpAvg}%</div></div>
@@ -3228,9 +3377,24 @@
 						<span>High engagement</span>
 					</div>
 
-					<div class="scrollhm-grid">
-						${renderSegmentCard(lp, 'LP')}
-						${renderSegmentCard(upsell, 'Upsell')}
+					<div class="scrollhm-board">
+						<div class="scrollhm-grid">
+							<div></div>
+							${metricLabels.map(lbl => `<div class="scrollhm-colhead">${escHtml(lbl)}</div>`).join('')}
+							${renderHeatmapRow(lp, 'LP', 0)}
+							${renderHeatmapRow(upsell, 'Upsell', 1)}
+						</div>
+					</div>
+
+					<div class="scrollhm-stats">
+						<div class="scrollhm-stat">
+							<div class="scrollhm-stat-title">LP Percent Breakdown</div>
+							${renderStatsRows(lp, 'LP')}
+						</div>
+						<div class="scrollhm-stat">
+							<div class="scrollhm-stat-title">Upsell Percent Breakdown</div>
+							${renderStatsRows(upsell, 'Upsell')}
+						</div>
 					</div>
 
 					<div class="scrollhm-insights">
@@ -3272,6 +3436,16 @@
 					</div>
 				</div>
 			`;
+
+			el.querySelectorAll('[data-heat-view]').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					const nextView = btn.getAttribute('data-heat-view') === 'milestones' ? 'milestones' : 'bands';
+					if (window._scrollHeatViewMode !== nextView) {
+						window._scrollHeatViewMode = nextView;
+						renderScrollBehavior(data);
+					}
+				});
+			});
 		}
 
 		function renderBreakdownSafe(data) {
