@@ -2302,6 +2302,24 @@
 		let chartRevenue = null;
 		let chartConvRate = null;
 		let chartTrend = null;
+		// Last good panel payloads (scoped by current filter key) used as fallback on transient 5xx.
+		const _panelLastGood = {
+			abandonRate: null,
+			recentConversions: null,
+			ltv: null,
+			productRetention: null,
+		};
+
+		function _panelCacheGet(panelName) {
+			const entry = _panelLastGood[panelName];
+			if (!entry) return null;
+			if (entry.key !== _phase2CacheKey()) return null;
+			return entry.data;
+		}
+
+		function _panelCacheSet(panelName, data) {
+			_panelLastGood[panelName] = { key: _phase2CacheKey(), data: data };
+		}
 
 		// ════════════════════════════════════════
 		// DATE HELPERS
@@ -2321,19 +2339,33 @@
 		// ════════════════════════════════════════
 		// API CALLS
 		// ════════════════════════════════════════
-		// Retry wrapper — retries on network errors (TypeError / "Failed to fetch") but not AbortError.
-		// Azure App Service can take ~10s to come back after a restart/deploy.
-		async function fetchWithRetry(url, options, maxRetries = 3) {
+		// Retry wrapper — retries on transient network and HTTP errors (5xx/429), but not AbortError.
+		const _TRANSIENT_HTTP = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+		async function fetchWithRetry(url, options, maxRetries = 4) {
 			let lastErr;
+			let lastRes;
 			for (let attempt = 0; attempt < maxRetries; attempt++) {
 				if (options.signal && options.signal.aborted) throw new DOMException('Aborted', 'AbortError');
 				try {
-					return await fetch(url, options);
+					const res = await fetch(url, options);
+					if (_TRANSIENT_HTTP.has(res.status) && attempt < maxRetries - 1) {
+						lastRes = res;
+						const delay = 900 * Math.pow(2, attempt) + Math.floor(Math.random() * 220);
+						await new Promise((resDelay, rej) => {
+							const t = setTimeout(resDelay, delay);
+							if (options.signal) {
+								options.signal.addEventListener('abort', () => { clearTimeout(t); rej(new DOMException('Aborted', 'AbortError')); }, { once: true });
+							}
+						});
+						continue;
+					}
+					return res;
 				} catch (err) {
 					if (err.name === 'AbortError') throw err;
 					lastErr = err;
 					if (attempt < maxRetries - 1) {
-						const delay = 800 * Math.pow(2, attempt); // 800ms, 1600ms
+						const delay = 900 * Math.pow(2, attempt) + Math.floor(Math.random() * 220);
 						await new Promise((res, rej) => {
 							const t = setTimeout(res, delay);
 							if (options.signal) {
@@ -2343,6 +2375,7 @@
 					}
 				}
 			}
+			if (lastRes) return lastRes;
 			throw lastErr;
 		}
 
@@ -4078,9 +4111,30 @@
 						.then(cohorts => { if (!signal.aborted) renderCohorts(cohorts); })
 						.catch(() => null);
 					// Noile panouri independente
-					fetchAbandonRate(signal).then(d => { if (!signal.aborted) renderAbandonRate(d); }).catch(() => null);
-					fetchLtv(signal).then(d => { if (!signal.aborted) renderLtv(d); }).catch(() => null);
-					fetchProductRetention(signal).then(d => { if (!signal.aborted) renderProductRetention(d); }).catch(() => null);
+					fetchAbandonRate(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('abandonRate', d); renderAbandonRate(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('abandonRate');
+							if (cachedPanel) renderAbandonRate(cachedPanel);
+							console.warn('abandon-rate fetch failed', err);
+						});
+					fetchLtv(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('ltv', d); renderLtv(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('ltv');
+							if (cachedPanel) renderLtv(cachedPanel);
+							console.warn('ltv fetch failed', err);
+						});
+					fetchProductRetention(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('productRetention', d); renderProductRetention(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('productRetention');
+							if (cachedPanel) renderProductRetention(cachedPanel);
+							console.warn('product-retention fetch failed', err);
+						});
 				} else {
 					const prev = getPreviousPeriod(start, end);
 					const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
@@ -4105,9 +4159,30 @@
 						})
 						.catch(() => null);
 					// Noile panouri independente
-					fetchAbandonRate(signal).then(d => { if (!signal.aborted) renderAbandonRate(d); }).catch(() => null);
-					fetchLtv(signal).then(d => { if (!signal.aborted) renderLtv(d); }).catch(() => null);
-					fetchProductRetention(signal).then(d => { if (!signal.aborted) renderProductRetention(d); }).catch(() => null);
+					fetchAbandonRate(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('abandonRate', d); renderAbandonRate(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('abandonRate');
+							if (cachedPanel) renderAbandonRate(cachedPanel);
+							console.warn('abandon-rate fetch failed', err);
+						});
+					fetchLtv(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('ltv', d); renderLtv(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('ltv');
+							if (cachedPanel) renderLtv(cachedPanel);
+							console.warn('ltv fetch failed', err);
+						});
+					fetchProductRetention(signal)
+						.then(d => { if (!signal.aborted) { _panelCacheSet('productRetention', d); renderProductRetention(d); } })
+						.catch(err => {
+							if (err?.name === 'AbortError' || signal.aborted) return;
+							const cachedPanel = _panelCacheGet('productRetention');
+							if (cachedPanel) renderProductRetention(cachedPanel);
+							console.warn('product-retention fetch failed', err);
+						});
 				}
 
 				// ── Faza 1: KPIs + Trend + RecentConvs — render independent la sosire ──
@@ -4135,8 +4210,16 @@
 				}).catch(err => { if (err?.name !== 'AbortError') console.warn('trend fetch failed', err); });
 
 				fetchRecentConversions(signal).then(recentConvs => {
-					if (!signal.aborted) renderRecentConversions(recentConvs);
-				}).catch(err => { if (err?.name !== 'AbortError') console.warn('recentConvs fetch failed', err); });
+					if (!signal.aborted) {
+						_panelCacheSet('recentConversions', recentConvs);
+						renderRecentConversions(recentConvs);
+					}
+				}).catch(err => {
+					if (err?.name === 'AbortError' || signal.aborted) return;
+					const cachedPanel = _panelCacheGet('recentConversions');
+					if (cachedPanel) renderRecentConversions(cachedPanel);
+					console.warn('recentConvs fetch failed', err);
+				});
 
 				// Așteptăm stats (necesar pentru re-render KPI delta în Faza 2)
 				const stats = await statsPromise;
