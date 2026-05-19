@@ -638,8 +638,21 @@
 			}
 		};
 
-		if (!sendEventBeacon('/api/actions', payload)) {
-			sendEventPixel('/api/actions', payload);
+		// Use fetch with keepalive=true — designed for pagehide/unload scenarios, works cross-origin.
+		// sendEventBeacon is skipped for cross-origin and sendEventPixel fails during DOM freeze on pagehide.
+		const beaconUrl = `${CONFIG.API_ENDPOINT}/api/b?api_key=${encodeURIComponent(CONFIG.API_KEY)}`;
+		try {
+			fetch(beaconUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+				keepalive: true,
+			}).catch(() => {});
+		} catch (_e) {
+			// Last-resort: direct beacon (may fail cross-origin on some browsers)
+			try {
+				navigator.sendBeacon && navigator.sendBeacon(beaconUrl, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+			} catch (_e2) {}
 		}
 	}
 
@@ -654,6 +667,14 @@
 		document.addEventListener('visibilitychange', () => {
 			if (document.visibilityState === 'hidden') _sendScrollBehaviorSummary();
 		}, { passive: true });
+
+		// Periodic early-capture: send scroll summary after 30s if user is still on page.
+		// This ensures data is captured even when pagehide/visibilitychange don't fire reliably (mobile bfcache).
+		setTimeout(() => {
+			if (!scrollSummarySent && pageLoadStartTime) {
+				_sendScrollBehaviorSummary();
+			}
+		}, 30000);
 	}
 
 	/**
