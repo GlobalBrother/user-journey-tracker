@@ -2673,6 +2673,29 @@
 				return result.sort(slotSort);
 			};
 
+			const detectDominantLayoutTotal = (buttons) => {
+				const totalClicks = new Map();
+				for (const btn of buttons || []) {
+					if (btn.position === 'sticky') continue;
+					const pos = Number(btn.position);
+					const total = Number(btn.total);
+					if (!Number.isInteger(pos) || !Number.isInteger(total) || total <= 0) continue;
+					const clicks = Number(btn.clicks || 0);
+					totalClicks.set(total, (totalClicks.get(total) || 0) + clicks);
+				}
+				if (!totalClicks.size) return null;
+
+				let bestTotal = null;
+				let bestClicks = -1;
+				for (const [total, clicks] of totalClicks) {
+					if (clicks > bestClicks || (clicks === bestClicks && total > bestTotal)) {
+						bestTotal = total;
+						bestClicks = clicks;
+					}
+				}
+				return bestTotal;
+			};
+
 			// Aliases for labels that were renamed — maps old label (lowercase) to canonical label.
 			const LABEL_ALIASES = {
 				'buy now physical product': 'Buy Now Physical Book',
@@ -2752,10 +2775,16 @@
 					let domainSlots = [];
 
 					if (hasButtons) {
-						// Filter out legacy buttons (those without proper position data)
+						// Use one canonical non-sticky layout total per domain to avoid mixed snapshots (e.g. 3-of-6 and 3-of-4 together).
+						const domainLayoutTotal = detectDominantLayoutTotal(row.buttons);
 						const validButtons = row.buttons.filter(btn => {
 							const key = slotPosKey(btn);
 							if (key.startsWith('legacy:')) return false;
+
+							if (btn.position !== 'sticky' && domainLayoutTotal != null) {
+								const total = Number(btn.total);
+								if (Number.isInteger(total) && total !== domainLayoutTotal) return false;
+							}
 							return true;
 						});
 
@@ -2787,9 +2816,15 @@
 								? preferredLabelByProduct.get(labelKey).label
 								: '';
 							const effectiveLabel = normalizedLabel || inferredLabel;
-							const key = `${effectiveLabel}||${pid}`;
+							const key = `${scope}||${effectiveLabel}||${pid}`;
 							if (!groupMap.has(key)) {
-								groupMap.set(key, { label: effectiveLabel, product_id: btn.product_id, clicks: 0, items: [] });
+								groupMap.set(key, {
+									label: effectiveLabel,
+									product_id: btn.product_id,
+									scope: scope,
+									clicks: 0,
+									items: []
+								});
 							}
 							const group = groupMap.get(key);
 							group.clicks += Number(btn.clicks || 0);
