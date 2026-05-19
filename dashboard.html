@@ -2608,20 +2608,38 @@
 				const aLegacy = a.key.startsWith('legacy:') ? 1 : 0;
 				const bLegacy = b.key.startsWith('legacy:') ? 1 : 0;
 				if (aLegacy !== bLegacy) return aLegacy - bLegacy;
-				const aPos = a.key.startsWith('pos:') ? Number(a.key.slice(4)) : Number.MAX_SAFE_INTEGER;
-				const bPos = b.key.startsWith('pos:') ? Number(b.key.slice(4)) : Number.MAX_SAFE_INTEGER;
-				return aPos - bPos;
+				const parseSlot = (key) => {
+					const match = /^pos:(\d+)(?:\|total:(\d+|na))?$/.exec(key || '');
+					if (!match) return { pos: Number.MAX_SAFE_INTEGER, total: Number.MAX_SAFE_INTEGER };
+					return {
+						pos: Number(match[1]),
+						total: match[2] && match[2] !== 'na' ? Number(match[2]) : Number.MAX_SAFE_INTEGER,
+					};
+				};
+				const aSlot = parseSlot(a.key);
+				const bSlot = parseSlot(b.key);
+				if (aSlot.pos !== bSlot.pos) return aSlot.pos - bSlot.pos;
+				return aSlot.total - bSlot.total;
 			};
 
 			const slotKeyFromButton = (btn) => {
 				if (btn.position === 'sticky') return 'sticky';
-				if (btn.position != null) return `pos:${btn.position}`;
+				if (btn.position != null) {
+					const total = btn.total != null ? btn.total : 'na';
+					return `pos:${btn.position}|total:${total}`;
+				}
 				return `legacy:${btn.product_id || btn.label || 'unknown'}`;
 			};
 
 			const slotLabel = (key) => {
 				if (key === 'sticky') return 'Sticky';
-				if (key.startsWith('pos:')) return `Button ${key.slice(4)}`;
+				if (key.startsWith('pos:')) {
+					const match = /^pos:(\d+)(?:\|total:(\d+|na))?$/.exec(key);
+					if (!match) return 'Legacy';
+					const pos = match[1];
+					const total = match[2] && match[2] !== 'na' ? match[2] : '';
+					return total ? `Button ${pos} of ${total}` : `Button ${pos}`;
+				}
 				return 'Legacy';
 			};
 
