@@ -3274,7 +3274,7 @@
 				const cells = metricLabels.map((label, idx) => {
 					const value = valueFor(row, label);
 					const bg = colorFromPct(value);
-					const pointSize = 24 + Math.round((value / 100) * 22);
+					const pointSize = 30 + Math.round((value / 100) * 22);
 					const delay = (rowIdx * metricCount + idx) * 38;
 					return `<div class="scrollhm-point enter" style="--point:${bg};--size:${pointSize}px;--delay:${delay}ms;color:${textColorFromPct(value)};" title="${escHtml(rowLabel)} - ${escHtml(label)}: ${value}%">${value}%</div>`;
 				}).join('');
