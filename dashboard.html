@@ -751,6 +751,161 @@
 			background: rgba(255, 255, 255, 0.02);
 		}
 
+		.scrollhm-wrap {
+			display: grid;
+			gap: 14px;
+		}
+
+		.scrollhm-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+			gap: 12px;
+		}
+
+		.scrollhm-card {
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 14px;
+			padding: 12px;
+			background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+		}
+
+		.scrollhm-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+			gap: 8px;
+			margin-bottom: 10px;
+		}
+
+		.scrollhm-title {
+			font-weight: 800;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+			font-size: 12px;
+			color: var(--text2);
+		}
+
+		.scrollhm-sessions {
+			font-size: 12px;
+			color: var(--text3);
+		}
+
+		.scrollhm-matrix {
+			display: grid;
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			gap: 8px;
+		}
+
+		.scrollhm-cell {
+			border-radius: 10px;
+			padding: 10px 8px;
+			min-height: 68px;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			border: 1px solid rgba(255, 255, 255, 0.08);
+		}
+
+		.scrollhm-cell-name {
+			font-size: 11px;
+			font-weight: 700;
+			line-height: 1.15;
+		}
+
+		.scrollhm-cell-val {
+			font-size: 18px;
+			font-weight: 900;
+			line-height: 1;
+		}
+
+		.scrollhm-legend {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			flex-wrap: wrap;
+			font-size: 11px;
+			color: var(--text3);
+		}
+
+		.scrollhm-legend-bar {
+			width: 180px;
+			height: 8px;
+			border-radius: 999px;
+			background: linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #84cc16 70%, #22c55e 100%);
+			border: 1px solid rgba(148, 163, 184, 0.25);
+		}
+
+		.scrollhm-insights {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 10px;
+		}
+
+		.scrollhm-insight {
+			padding: 10px;
+			border-radius: 10px;
+			background: rgba(15, 23, 42, 0.32);
+			border: 1px solid rgba(148, 163, 184, 0.2);
+		}
+
+		.scrollhm-insight-label {
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--text3);
+			margin-bottom: 4px;
+		}
+
+		.scrollhm-insight-value {
+			font-size: 18px;
+			font-weight: 800;
+		}
+
+		.scrollhm-list-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 10px;
+		}
+
+		.scrollhm-list {
+			border-radius: 12px;
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			padding: 10px;
+			background: rgba(15, 23, 42, 0.28);
+		}
+
+		.scrollhm-list h5 {
+			font-size: 12px;
+			font-weight: 700;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+			margin-bottom: 8px;
+			color: var(--text2);
+		}
+
+		.scrollhm-row {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 8px;
+			font-size: 12px;
+			padding: 6px 0;
+			border-bottom: 1px dashed rgba(148, 163, 184, 0.16);
+		}
+
+		.scrollhm-row:last-child {
+			border-bottom: none;
+		}
+
+		@media (max-width: 900px) {
+			.scrollhm-matrix {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.scrollhm-cell {
+				min-height: 62px;
+			}
+		}
+
 		.abx-group-top {
 			display: flex;
 			justify-content: space-between;
@@ -2163,7 +2318,7 @@
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
 				<span class="panel-title">Scroll Behavior Heatmap (LP vs Upsell)</span>
-				<span style="font-size:12px;color:var(--text3);">Lazy loaded panel, segmented by page type with domain/slug/country snapshots</span>
+				<span style="font-size:12px;color:var(--text3);">Engagement matrix with color intensity, funnel drop-off and geo quality</span>
 			</div>
 			<div class="panel-body" id="scrollBehaviorPanel">
 				<div class="loading"><span class="spinner"></span> Loading…</div>
@@ -2943,70 +3098,178 @@
 			const upsell = rowFor('upsell');
 			const totalSessions = (data?.totals?.scroll_sessions || 0);
 
-			const renderHeatRow = (row) => {
-				if (!row || !Array.isArray(row.bands)) {
-					return '<tr><td colspan="8" style="padding:8px;color:var(--text3);">No data</td></tr>';
-				}
-				const m = row.milestone_reach_pct || {};
-				const bandMap = new Map((row.bands || []).map(b => [b.band, b]));
-				const bandVal = (k) => {
-					const b = bandMap.get(k);
-					return b ? `${b.pct}%` : '0%';
-				};
-				return `<tr>
-					<td style="padding:8px;font-weight:700;color:var(--accent2);text-transform:uppercase;">${escHtml(row.segment)}</td>
-					<td style="padding:8px;text-align:right;">${fmtNum(row.sessions || 0)}</td>
-					<td style="padding:8px;text-align:right;">${row.avg_max_scroll_pct || 0}%</td>
-					<td style="padding:8px;text-align:right;">${m['25'] || 0}%</td>
-					<td style="padding:8px;text-align:right;">${m['50'] || 0}%</td>
-					<td style="padding:8px;text-align:right;">${m['75'] || 0}%</td>
-					<td style="padding:8px;text-align:right;">${m['90'] || 0}%</td>
-					<td style="padding:8px;text-align:right;font-family:monospace;">${bandVal('90-100%')}</td>
-				</tr>`;
+			const bandOrder = ['0-24%', '25-49%', '50-74%', '75-89%', '90-100%'];
+			const milestoneOrder = ['25', '50', '75', '90'];
+			const pctSafe = (v) => Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
+			const colorFromPct = (pct) => {
+				const p = pctSafe(pct);
+				const hue = Math.round((p / 100) * 120);
+				const sat = 82;
+				const light = 17 + Math.round((p / 100) * 30);
+				return `hsl(${hue} ${sat}% ${light}%)`;
+			};
+			const textColorFromPct = (pct) => pctSafe(pct) >= 48 ? '#062014' : '#f8fafc';
+			const bandMapFor = (row) => new Map((row?.bands || []).map(b => [b.band, pctSafe(b.pct)]));
+
+			const deepPct = (row) => {
+				const m = row?.milestone_reach_pct || {};
+				return pctSafe(m['90']);
 			};
 
-			const topDomains = (data.by_domain || []).slice(0, 5).map(r =>
-				`<span class="abx-chip" style="margin-right:6px;margin-bottom:6px;display:inline-block;">${escHtml(r.segment)}: ${fmtNum(r.sessions || 0)}</span>`
-			).join('') || '<span style="color:var(--text3);">No domain sample</span>';
+			const segmentQuality = (row) => {
+				if (!row) return 'No data';
+				const avg = pctSafe(row.avg_max_scroll_pct);
+				const d90 = deepPct(row);
+				if (avg >= 78 && d90 >= 42) return 'Excellent retention';
+				if (avg >= 62 && d90 >= 28) return 'Healthy depth';
+				if (avg >= 45) return 'Medium engagement';
+				return 'Weak engagement';
+			};
 
-			const topSlugs = (data.by_slug || []).slice(0, 5).map(r =>
-				`<span class="abx-chip" style="margin-right:6px;margin-bottom:6px;display:inline-block;">${escHtml(r.segment)}: ${fmtNum(r.sessions || 0)}</span>`
-			).join('') || '<span style="color:var(--text3);">No ad slug sample</span>';
+			const renderSegmentCard = (row, label) => {
+				if (!row) {
+					return `<div class="scrollhm-card"><div class="scrollhm-title">${escHtml(label)}</div><div style="color:var(--text3);font-size:12px;">No data in selected period.</div></div>`;
+				}
+				const bandMap = bandMapFor(row);
+				const milestones = row.milestone_reach_pct || {};
+				const blocks = [
+					...bandOrder.map(k => ({ name: k, value: bandMap.get(k) || 0 })),
+					...milestoneOrder.map(k => ({ name: `M${k}`, value: pctSafe(milestones[k]) })),
+				];
+				const cellsHtml = blocks.map(block => {
+					const bg = colorFromPct(block.value);
+					return `<div class="scrollhm-cell" style="background:${bg};color:${textColorFromPct(block.value)};">
+						<div class="scrollhm-cell-name">${escHtml(block.name)}</div>
+						<div class="scrollhm-cell-val">${block.value}%</div>
+					</div>`;
+				}).join('');
 
-			const topCountries = (data.by_country || []).slice(0, 5).map(r =>
-				`<span class="abx-chip" style="margin-right:6px;margin-bottom:6px;display:inline-block;">${escHtml(r.segment)}: ${fmtNum(r.sessions || 0)}</span>`
-			).join('') || '<span style="color:var(--text3);">No country sample</span>';
+				return `<div class="scrollhm-card">
+					<div class="scrollhm-head">
+						<div class="scrollhm-title">${escHtml(label)}</div>
+						<div class="scrollhm-sessions">${fmtNum(row.sessions || 0)} sessions</div>
+					</div>
+					<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;">
+						<div style="font-size:12px;color:var(--text2);">Avg max scroll: <strong style="color:var(--text);font-size:17px;">${pctSafe(row.avg_max_scroll_pct)}%</strong></div>
+						<div style="font-size:12px;color:var(--text2);">${segmentQuality(row)}</div>
+					</div>
+					<div class="scrollhm-matrix">${cellsHtml}</div>
+				</div>`;
+			};
+
+			const sortBySessions = (arr) => [...(arr || [])].sort((a, b) => (b.sessions || 0) - (a.sessions || 0));
+
+			const listRows = (arr, emptyLabel) => {
+				if (!arr.length) return `<div style="color:var(--text3);font-size:12px;">${escHtml(emptyLabel)}</div>`;
+				return arr.map(r => `<div class="scrollhm-row"><span>${escHtml(r.segment)}</span><strong>${fmtNum(r.sessions || 0)}</strong></div>`).join('');
+			};
+
+			const topDomains = sortBySessions(data.by_domain).slice(0, 8);
+			const topSlugs = sortBySessions(data.by_slug).slice(0, 8);
+
+			const knownCountries = sortBySessions(data.by_country).filter(r => {
+				const seg = String(r.segment || '').trim().toUpperCase();
+				return seg && seg !== 'UNKNOWN' && seg !== 'N/A';
+			});
+
+			const unknownCountrySessions = sortBySessions(data.by_country)
+				.filter(r => String(r.segment || '').trim().toUpperCase() === 'UNKNOWN')
+				.reduce((s, r) => s + (r.sessions || 0), 0);
+
+			const inferCountryFromDomain = (domain) => {
+				const d = String(domain || '').toLowerCase();
+				if (!d) return 'UNKNOWN';
+				if (d.endsWith('.co.uk') || d.endsWith('.uk')) return 'GB';
+				if (d.endsWith('.ro')) return 'RO';
+				if (d.endsWith('.fr')) return 'FR';
+				if (d.endsWith('.de')) return 'DE';
+				if (d.endsWith('.es')) return 'ES';
+				if (d.endsWith('.it')) return 'IT';
+				if (d.endsWith('.nl')) return 'NL';
+				if (d.endsWith('.be')) return 'BE';
+				if (d.endsWith('.pl')) return 'PL';
+				if (d.endsWith('.ca')) return 'CA';
+				if (d.endsWith('.au')) return 'AU';
+				if (d.endsWith('.nz')) return 'NZ';
+				if (d.endsWith('.us')) return 'US';
+				if (d.endsWith('.com')) return 'US';
+				return 'UNKNOWN';
+			};
+
+			const inferredCountryMap = new Map();
+			topDomains.forEach(d => {
+				const cc = inferCountryFromDomain(d.segment);
+				if (cc === 'UNKNOWN') return;
+				inferredCountryMap.set(cc, (inferredCountryMap.get(cc) || 0) + (d.sessions || 0));
+			});
+			const inferredCountries = [...inferredCountryMap.entries()]
+				.map(([segment, sessions]) => ({ segment, sessions }))
+				.sort((a, b) => b.sessions - a.sessions)
+				.slice(0, 8);
+
+			const lpAvg = pctSafe(lp?.avg_max_scroll_pct);
+			const upAvg = pctSafe(upsell?.avg_max_scroll_pct);
+			const deepGap = deepPct(lp) - deepPct(upsell);
+			const avgGap = lpAvg - upAvg;
+			const unknownShare = totalSessions > 0 ? Math.round((unknownCountrySessions / totalSessions) * 100) : 0;
 
 			el.innerHTML = `
-				<div class="abx-overview" style="margin-bottom:12px;">
-					<div class="abx-overview-card"><div class="abx-overview-label">Scroll Sessions</div><div class="abx-overview-value">${fmtNum(totalSessions)}</div></div>
-					<div class="abx-overview-card"><div class="abx-overview-label">LP Avg Max Scroll</div><div class="abx-overview-value">${lp ? (lp.avg_max_scroll_pct || 0) : 0}%</div></div>
-					<div class="abx-overview-card"><div class="abx-overview-label">Upsell Avg Max Scroll</div><div class="abx-overview-value">${upsell ? (upsell.avg_max_scroll_pct || 0) : 0}%</div></div>
-				</div>
-				<div class="table-wrap" style="overflow:auto;">
-					<table style="width:100%;border-collapse:collapse;font-size:12px;">
-						<thead>
-							<tr style="border-bottom:1px solid var(--border);color:var(--text3);">
-								<th style="padding:8px;text-align:left;">Page Type</th>
-								<th style="padding:8px;text-align:right;">Sessions</th>
-								<th style="padding:8px;text-align:right;">Avg Max</th>
-								<th style="padding:8px;text-align:right;">25%</th>
-								<th style="padding:8px;text-align:right;">50%</th>
-								<th style="padding:8px;text-align:right;">75%</th>
-								<th style="padding:8px;text-align:right;">90%</th>
-								<th style="padding:8px;text-align:right;">Deep Scroll</th>
-							</tr>
-						</thead>
-						<tbody>
-							${renderHeatRow(lp)}
-							${renderHeatRow(upsell)}
-						</tbody>
-					</table>
-				</div>
-				<div style="margin-top:10px;font-size:12px;color:var(--text2);">
-					<div style="margin-bottom:6px;"><strong style="color:var(--text);">Top Domains:</strong> ${topDomains}</div>
-					<div style="margin-bottom:6px;"><strong style="color:var(--text);">Top Ad Slugs:</strong> ${topSlugs}</div>
-					<div><strong style="color:var(--text);">Top Countries:</strong> ${topCountries}</div>
+				<div class="scrollhm-wrap">
+					<div class="abx-overview" style="margin-bottom:2px;">
+						<div class="abx-overview-card"><div class="abx-overview-label">Scroll Sessions</div><div class="abx-overview-value">${fmtNum(totalSessions)}</div></div>
+						<div class="abx-overview-card"><div class="abx-overview-label">LP Avg Max Scroll</div><div class="abx-overview-value">${lpAvg}%</div></div>
+						<div class="abx-overview-card"><div class="abx-overview-label">Upsell Avg Max Scroll</div><div class="abx-overview-value">${upAvg}%</div></div>
+						<div class="abx-overview-card"><div class="abx-overview-label">Unknown Country Share</div><div class="abx-overview-value" style="color:${unknownShare > 35 ? 'var(--yellow)' : 'var(--green)'};">${unknownShare}%</div></div>
+					</div>
+
+					<div class="scrollhm-legend">
+						<span>Low engagement</span>
+						<div class="scrollhm-legend-bar"></div>
+						<span>High engagement</span>
+					</div>
+
+					<div class="scrollhm-grid">
+						${renderSegmentCard(lp, 'LP')}
+						${renderSegmentCard(upsell, 'Upsell')}
+					</div>
+
+					<div class="scrollhm-insights">
+						<div class="scrollhm-insight">
+							<div class="scrollhm-insight-label">Avg Scroll Gap (LP vs Upsell)</div>
+							<div class="scrollhm-insight-value" style="color:${avgGap >= 0 ? 'var(--green)' : 'var(--red)'};">${avgGap >= 0 ? '+' : ''}${avgGap}%</div>
+						</div>
+						<div class="scrollhm-insight">
+							<div class="scrollhm-insight-label">Deep Scroll Gap (M90)</div>
+							<div class="scrollhm-insight-value" style="color:${deepGap >= 0 ? 'var(--green)' : 'var(--red)'};">${deepGap >= 0 ? '+' : ''}${deepGap}%</div>
+						</div>
+						<div class="scrollhm-insight">
+							<div class="scrollhm-insight-label">LP Behavior</div>
+							<div class="scrollhm-insight-value" style="font-size:16px;">${escHtml(segmentQuality(lp))}</div>
+						</div>
+						<div class="scrollhm-insight">
+							<div class="scrollhm-insight-label">Upsell Behavior</div>
+							<div class="scrollhm-insight-value" style="font-size:16px;">${escHtml(segmentQuality(upsell))}</div>
+						</div>
+					</div>
+
+					<div class="scrollhm-list-grid">
+						<div class="scrollhm-list">
+							<h5>Top Domains</h5>
+							${listRows(topDomains, 'No domain sample')}
+						</div>
+						<div class="scrollhm-list">
+							<h5>Top Ad Slugs</h5>
+							${listRows(topSlugs, 'No slug sample')}
+						</div>
+						<div class="scrollhm-list">
+							<h5>Measured Countries</h5>
+							${listRows(knownCountries.slice(0, 8), 'No measured country sample')}
+						</div>
+						<div class="scrollhm-list">
+							<h5>Estimated Geo From Domains</h5>
+							${listRows(inferredCountries, 'No inferred country sample')}
+						</div>
+					</div>
 				</div>
 			`;
 		}
