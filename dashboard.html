@@ -2563,9 +2563,32 @@
 			const params = new URLSearchParams({ start_date: start, end_date: end });
 			if (slug) params.set('slug', slug);
 			if (domain) params.set('domain', domain);
-			const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/behavior/scroll-depth?${params}`, { headers: HEADERS, signal });
-			if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-			return res.json();
+			try {
+				const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/behavior/scroll-depth?${params}`, { headers: HEADERS, signal });
+				if (!res.ok) return null;
+				return res.json();
+			} catch (err) {
+				if (err?.name !== 'AbortError') console.warn('scroll-behavior fetch failed', err);
+				return null;
+			}
+		}
+
+		async function fetchBreakdownBestEffort(signal) {
+			const start = document.getElementById('startDate').value;
+			const end = document.getElementById('endDate').value;
+			const slug = document.getElementById('slugFilter').value.trim();
+			const domain = document.getElementById('domainFilter').value.trim();
+			const params = new URLSearchParams({ start_date: start, end_date: end });
+			if (slug) params.set('slug', slug);
+			if (domain) params.set('domain', domain);
+			try {
+				const res = await fetchWithRetry(`${API_ENDPOINT}/api/analytics/breakdown?${params}`, { headers: HEADERS, signal });
+				if (!res.ok) return null;
+				return res.json();
+			} catch (err) {
+				if (err?.name !== 'AbortError') console.warn('breakdown fetch failed', err);
+				return null;
+			}
 		}
 
 		function renderAbandonRate(data) {
@@ -2904,6 +2927,19 @@
 					<div><strong style="color:var(--text);">Top Countries:</strong> ${topCountries}</div>
 				</div>
 			`;
+		}
+
+		function renderBreakdownSafe(data) {
+			if (data) {
+				renderBreakdown(data);
+				return true;
+			}
+			const cached = _phase2CacheGet();
+			if (cached?.breakdown) {
+				renderBreakdown(cached.breakdown);
+				return true;
+			}
+			return false;
 		}
 
 		function escHtml(s) {
@@ -4254,16 +4290,23 @@
 					if (slug) prevParams.set('slug', slug);
 					if (domain) prevParams.set('domain', domain);
 
-					// Pornim cele 3 cereri Faza 2 simultan (fără cohorts — poate fi lent)
+					// Pornim cererile Faza 2 în mod best-effort: un 503 pe breakdown
+					// sau domains nu mai blochează întreg dashboard-ul.
 					p2Promise = Promise.all([
-						fetchBreakdown(signal),
-						fetchDomains(signal),
+						fetchBreakdownBestEffort(signal),
+						fetchDomains(signal).catch(err => {
+							if (err?.name !== 'AbortError') console.warn('domains fetch failed', err);
+							return _phase2CacheGet()?.domains || null;
+						}),
 						fetchWithRetry(`${API_ENDPOINT}/api/analytics/stats?${prevParams}`, { headers: HEADERS, signal })
 							.then(r => r.ok ? r.json() : null)
-							.catch(() => null),
+							.catch(() => _phase2CacheGet()?.prevStats || null),
 					]).then(([breakdown, domains, prevStats]) => {
-						_phase2CacheSet({ breakdown, domains, prevStats });
-						return { breakdown, domains, prevStats };
+						const safeBreakdown = breakdown || _phase2CacheGet()?.breakdown || null;
+						const safeDomains = domains || _phase2CacheGet()?.domains || null;
+						const safePrevStats = prevStats || _phase2CacheGet()?.prevStats || null;
+						_phase2CacheSet({ breakdown: safeBreakdown, domains: safeDomains, prevStats: safePrevStats });
+						return { breakdown: safeBreakdown, domains: safeDomains, prevStats: safePrevStats };
 					});
 					// Cohorts rulează independent — nu blochează restul dashboard-ului
 					fetchCohorts(signal)
@@ -4281,12 +4324,11 @@
 							console.warn('abandon-rate fetch failed', err);
 						});
 					fetchScrollBehavior(signal)
-						.then(d => { if (!signal.aborted) { _panelCacheSet('scrollBehavior', d); renderScrollBehavior(d); } })
+						.then(d => { if (!signal.aborted && d) { _panelCacheSet('scrollBehavior', d); renderScrollBehavior(d); } })
 						.catch(err => {
 							if (err?.name === 'AbortError' || signal.aborted) return;
 							const cachedPanel = _panelCacheGet('scrollBehavior');
 							if (cachedPanel) renderScrollBehavior(cachedPanel);
-							console.warn('scroll-behavior fetch failed', err);
 						});
 					fetchLtv(signal)
 						.then(d => { if (!signal.aborted) { _panelCacheSet('ltv', d); renderLtv(d); } })
@@ -4354,7 +4396,10 @@
 				prevStatsData = prevStats;
 				renderKPIs(stats, prevStats);    // re-render KPIs cu delta calculat corect
 				renderDomainTable(domains || []);
-				renderBreakdown(breakdown);
+				if (!renderBreakdownSafe(breakdown)) {
+					const breakdownEl = document.getElementById('breakdownBody');
+					if (breakdownEl) breakdownEl.innerHTML = '<p style="color:var(--text3);">Breakdown temporarily unavailable. Refresh if needed.</p>';
+				}
 
 			} catch (err) {
 				if (err.name === 'AbortError') return;
