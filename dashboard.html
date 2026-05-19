@@ -1720,6 +1720,242 @@
 			white-space: nowrap;
 		}
 
+		.adslug-performance {
+			padding: 12px;
+			display: grid;
+			gap: 12px;
+		}
+
+		.adslug-sortbar {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+
+		.adslug-sort-btn {
+			border: 1px solid rgba(148, 163, 184, 0.24);
+			background: rgba(15, 23, 42, 0.34);
+			color: var(--text2);
+			font-size: 11px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .05em;
+			padding: 7px 10px;
+			border-radius: 999px;
+			cursor: pointer;
+			transition: background .16s ease, border-color .16s ease, color .16s ease;
+		}
+
+		.adslug-sort-btn:hover {
+			color: var(--text);
+			border-color: rgba(34, 211, 238, 0.35);
+		}
+
+		.adslug-sort-btn.sort-asc,
+		.adslug-sort-btn.sort-desc {
+			border-color: rgba(34, 211, 238, 0.55);
+			background: rgba(34, 211, 238, 0.14);
+			color: var(--accent2);
+		}
+
+		.adslug-sort-btn.sort-asc::after {
+			content: ' ↑';
+		}
+
+		.adslug-sort-btn.sort-desc::after {
+			content: ' ↓';
+		}
+
+		.adslug-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 10px;
+		}
+
+		.adslug-item {
+			position: relative;
+			overflow: hidden;
+			border-radius: 16px;
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			background: linear-gradient(165deg, rgba(15, 23, 42, 0.84), rgba(15, 23, 42, 0.56));
+			padding: 12px;
+			display: grid;
+			gap: 10px;
+		}
+
+		.adslug-item::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			width: 4px;
+			background: var(--accent2);
+			opacity: 0.9;
+		}
+
+		.adslug-head {
+			display: flex;
+			justify-content: space-between;
+			gap: 8px;
+			align-items: start;
+		}
+
+		.adslug-name {
+			font-family: monospace;
+			font-size: 12px;
+			font-weight: 800;
+			line-height: 1.35;
+			word-break: break-word;
+		}
+
+		.adslug-name a {
+			color: var(--accent2);
+			text-decoration: none;
+		}
+
+		.adslug-name a:hover {
+			text-decoration: underline;
+		}
+
+		.adslug-domain {
+			font-size: 10px;
+			color: var(--text3);
+			margin-top: 3px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.adslug-badge {
+			font-size: 10px;
+			font-weight: 800;
+			padding: 3px 8px;
+			border-radius: 999px;
+			border: 1px solid rgba(148, 163, 184, 0.28);
+			color: var(--text2);
+			white-space: nowrap;
+		}
+
+		.adslug-metrics {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 8px;
+		}
+
+		.adslug-metric {
+			border-radius: 10px;
+			border: 1px solid rgba(148, 163, 184, 0.16);
+			background: rgba(15, 23, 42, 0.3);
+			padding: 8px;
+			display: grid;
+			gap: 4px;
+		}
+
+		.adslug-metric-label {
+			font-size: 10px;
+			color: var(--text3);
+			text-transform: uppercase;
+			letter-spacing: .05em;
+			font-weight: 700;
+		}
+
+		.adslug-metric-value {
+			font-size: 15px;
+			font-weight: 900;
+			line-height: 1;
+		}
+
+		.adslug-bars {
+			display: grid;
+			gap: 6px;
+		}
+
+		.adslug-bar {
+			height: 6px;
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.2);
+			overflow: hidden;
+		}
+
+		.adslug-bar span {
+			display: block;
+			height: 100%;
+			border-radius: inherit;
+		}
+
+		.adslug-bar.is-conv span {
+			background: linear-gradient(90deg, #22d3ee, #22c55e);
+		}
+
+		.adslug-bar.is-users span {
+			background: linear-gradient(90deg, #60a5fa, #818cf8);
+		}
+
+		.adslug-actions {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.slug-filter-btn {
+			padding: 4px 9px;
+			font-size: 11px;
+			font-weight: 700;
+			border: 1px solid rgba(148, 163, 184, 0.28);
+			border-radius: 999px;
+			background: rgba(148, 163, 184, 0.08);
+			color: var(--text2);
+			cursor: pointer;
+		}
+
+		.slug-filter-btn:hover {
+			border-color: rgba(34, 211, 238, 0.5);
+			background: rgba(34, 211, 238, 0.16);
+			color: var(--accent2);
+		}
+
+		.adslug-ads-btn {
+			font-size: 13px;
+			font-weight: 700;
+			text-decoration: none;
+			color: var(--text2);
+			opacity: 0.85;
+		}
+
+		.adslug-ads-btn:hover {
+			opacity: 1;
+			color: var(--accent2);
+		}
+
+		.adslug-empty {
+			padding: 16px;
+			text-align: center;
+			font-size: 13px;
+			color: var(--text3);
+			border-radius: 12px;
+			border: 1px dashed rgba(148, 163, 184, 0.3);
+		}
+
+		body[data-theme='light'] .adslug-sort-btn,
+		body[data-theme='light'] .adslug-item,
+		body[data-theme='light'] .adslug-metric {
+			background: rgba(255, 255, 255, 0.86);
+			border-color: rgba(148, 163, 184, 0.28);
+		}
+
+		body[data-theme='light'] .adslug-name a,
+		body[data-theme='light'] .adslug-metric-value {
+			color: #0f172a;
+		}
+
+		body[data-theme='light'] .adslug-sort-btn.sort-asc,
+		body[data-theme='light'] .adslug-sort-btn.sort-desc {
+			background: rgba(8, 145, 178, 0.12);
+			color: #0f766e;
+		}
+
 		.badge {
 			display: inline-block;
 			padding: 2px 8px;
@@ -2914,27 +3150,19 @@
 				<span class="panel-title">Ad Slugs Performance</span>
 				<span id="slugCount" style="font-size:12px;color:var(--text3);">—</span>
 			</div>
-			<div class="table-wrap">
-				<table>
-					<thead>
-						<tr>
-							<th data-col="slug">Slug / utm_content</th>
-							<th data-col="top_domain">Top Domain</th>
-							<th data-col="users">Users</th>
-							<th data-col="pageviews">Pageviews</th>
-							<th data-col="conversions">Conversions</th>
-							<th data-col="revenue">Revenue</th>
-							<th data-col="conversion_rate">Conv. Rate</th>
-							<th style="width:44px;text-align:center;cursor:default;">Filter</th>
-							<th style="width:60px;text-align:center;cursor:default;">Ads Mgr</th>
-						</tr>
-					</thead>
-					<tbody id="slugTableBody">
-						<tr>
-							<td colspan="9" class="loading"><span class="spinner"></span> Loading…</td>
-						</tr>
-					</tbody>
-				</table>
+			<div class="adslug-performance">
+				<div id="slugSortBar" class="adslug-sortbar">
+					<button class="adslug-sort-btn" data-col="slug" type="button">Slug</button>
+					<button class="adslug-sort-btn" data-col="top_domain" type="button">Domain</button>
+					<button class="adslug-sort-btn" data-col="users" type="button">Users</button>
+					<button class="adslug-sort-btn" data-col="pageviews" type="button">Pageviews</button>
+					<button class="adslug-sort-btn" data-col="conversions" type="button">Conversions</button>
+					<button class="adslug-sort-btn" data-col="revenue" type="button">Revenue</button>
+					<button class="adslug-sort-btn" data-col="conversion_rate" type="button">Conv. Rate</button>
+				</div>
+				<div id="slugTableBody" class="adslug-grid">
+					<div class="loading" style="grid-column:1/-1;"><span class="spinner"></span> Loading…</div>
+				</div>
 			</div>
 		</div>
 
@@ -4767,20 +4995,22 @@
 				return sortDir === 'asc' ? av - bv : bv - av;
 			});
 
-			// Update sort indicators
-			document.querySelectorAll('thead th[data-col]').forEach(th => {
-				th.classList.remove('sort-asc', 'sort-desc');
-				if (th.dataset.col === sortCol) {
-					th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+			// Update sort indicators for slug board controls.
+			document.querySelectorAll('#slugSortBar .adslug-sort-btn[data-col]').forEach(btn => {
+				btn.classList.remove('sort-asc', 'sort-desc');
+				if (btn.dataset.col === sortCol) {
+					btn.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
 				}
 			});
 
 			const tbody = document.getElementById('slugTableBody');
 
 			if (sorted.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="9" class="empty">No data for this period.</td></tr>';
+				tbody.innerHTML = '<div class="adslug-empty">No data for this period.</div>';
 				return;
 			}
+
+			const maxUsers = Math.max(...sorted.map(s => Number(s.users || 0)), 1);
 
 			tbody.innerHTML = sorted.map(s => {
 				const adInfo = _adsMap.get((s.slug || '').toLowerCase());
@@ -4789,33 +5019,45 @@
 					? `${s.slug || ''}&#10;Format: ${adInfo.format || '—'}&#10;Adset: ${adInfo.adset || '—'}&#10;Campaign: ${adInfo.campaign || '—'}`
 					: escHtml(s.slug || '');
 				const formatBadge = adInfo?.format
-					? ` <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text3);vertical-align:middle;">${escHtml(adInfo.format)}</span>`
+					? `<span class="adslug-badge">${escHtml(adInfo.format)}</span>`
 					: '';
 				const adIcon = adInfo?.preview_url
-					? `<span title="Facebook Ad Preview available" style="margin-right:5px;font-size:11px;opacity:0.75;">📢</span>`
+					? `<span title="Facebook Ad Preview available" style="margin-right:4px;font-size:11px;opacity:0.75;">📢</span>`
 					: '';
 				const slugCell = adInfo?.preview_url
-					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;" title="${slugTitle}">${adIcon}${slugLabel}${formatBadge} <span style="font-size:11px;">↗</span></a>`
+					? `<a href="${escHtml(adInfo.preview_url)}" target="_blank" rel="noopener" title="${slugTitle}">${adIcon}${slugLabel} <span style="font-size:11px;">↗</span></a>`
 					: `<span title="${slugTitle}">${slugLabel}</span>`;
 				const amsCell = adInfo?.ad_id
-					? `<a href="https://adsmanager.facebook.com/adsmanager/manage/ads?selected_ad_ids=${adInfo.ad_id}" target="_blank" rel="noopener" title="Open in Facebook Ads Manager" style="font-size:16px;text-decoration:none;opacity:0.8;">📊</a>`
-					: '<span style="color:var(--text3);font-size:11px;">—</span>';
+					? `<a class="adslug-ads-btn" href="https://adsmanager.facebook.com/adsmanager/manage/ads?selected_ad_ids=${adInfo.ad_id}" target="_blank" rel="noopener" title="Open in Facebook Ads Manager">Open Ads</a>`
+					: '<span style="color:var(--text3);font-size:11px;">No ad</span>';
 				const filterBtn = s.slug
-					? `<button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug" style="padding:2px 7px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);color:var(--text3);cursor:pointer;">⊕</button>`
+					? `<button class="slug-filter-btn" data-slug="${escHtml(s.slug)}" title="Filter by this slug">Filter</button>`
 					: '';
+				const usersPct = Math.round((Number(s.users || 0) / maxUsers) * 100);
 				return `
-    <tr data-slug="${escHtml(s.slug || '')}">
-      <td class="td-slug">${slugCell}</td>
-      <td style="font-size:11px;color:var(--text2);">${escHtml(s.top_domain || '—')}</td>
-      <td>${fmtNum(s.users)}</td>
-      <td>${fmtNum(s.pageviews)}</td>
-      <td>${fmtNum(s.conversions)}</td>
-      <td>${fmtEUR(s.revenue)}</td>
-      <td>${convRateBadge(s.conversion_rate)}</td>
-      <td style="text-align:center;">${filterBtn}</td>
-      <td style="text-align:center;">${amsCell}</td>
-    </tr>
-  `;
+	<article class="adslug-item" data-slug="${escHtml(s.slug || '')}">
+	  <div class="adslug-head">
+		<div>
+		  <div class="adslug-name">${slugCell}</div>
+		  <div class="adslug-domain">${escHtml(s.top_domain || '—')}</div>
+		</div>
+		${formatBadge}
+	  </div>
+	  <div class="adslug-metrics">
+		<div class="adslug-metric"><div class="adslug-metric-label">Users</div><div class="adslug-metric-value">${fmtNum(s.users)}</div></div>
+		<div class="adslug-metric"><div class="adslug-metric-label">Pageviews</div><div class="adslug-metric-value">${fmtNum(s.pageviews)}</div></div>
+		<div class="adslug-metric"><div class="adslug-metric-label">Revenue</div><div class="adslug-metric-value">${fmtEUR(s.revenue)}</div></div>
+	  </div>
+	  <div class="adslug-bars">
+		<div class="adslug-bar is-users"><span style="width:${usersPct}%;"></span></div>
+		<div class="adslug-bar is-conv"><span style="width:${Math.max(0, Math.min(100, Number(s.conversion_rate || 0)))}%;"></span></div>
+	  </div>
+	  <div class="adslug-actions">
+		<div style="display:flex;align-items:center;gap:8px;">${filterBtn}${amsCell}</div>
+		<div>${convRateBadge(s.conversion_rate)}</div>
+	  </div>
+	</article>
+	`;
 			}).join('');
 		}
 
@@ -6099,9 +6341,9 @@
 		});
 
 		// Sort by column
-		document.querySelectorAll('thead th[data-col]').forEach(th => {
-			th.addEventListener('click', () => {
-				const col = th.dataset.col;
+		document.querySelectorAll('#slugSortBar .adslug-sort-btn[data-col]').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const col = btn.dataset.col;
 				if (sortCol === col) {
 					sortDir = sortDir === 'desc' ? 'asc' : 'desc';
 				} else {
