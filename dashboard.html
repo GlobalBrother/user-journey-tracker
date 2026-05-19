@@ -2622,12 +2622,9 @@
 				return aSlot.total - bSlot.total;
 			};
 
-			const slotKeyFromButton = (btn) => {
+			const slotPosKey = (btn) => {
 				if (btn.position === 'sticky') return 'sticky';
-				if (btn.position != null) {
-					const total = btn.total != null ? btn.total : 'na';
-					return `pos:${btn.position}|total:${total}`;
-				}
+				if (btn.position != null) return `pos:${btn.position}`;
 				return `legacy:${btn.product_id || btn.label || 'unknown'}`;
 			};
 
@@ -2644,13 +2641,36 @@
 			};
 
 			const summarizeSlots = (buttons) => {
-				const slotMap = new Map();
+				// Key by position only; track clicks per total to pick dominant total per position.
+				const slotMap = new Map(); // posKey -> { clicks, totalClicks: Map<total, clicks> }
 				for (const btn of buttons || []) {
-					const key = slotKeyFromButton(btn);
-					if (!slotMap.has(key)) slotMap.set(key, { key: key, clicks: 0 });
-					slotMap.get(key).clicks += Number(btn.clicks || 0);
+					const posKey = slotPosKey(btn);
+					const clicks = Number(btn.clicks || 0);
+					if (!slotMap.has(posKey)) slotMap.set(posKey, { clicks: 0, totalClicks: new Map() });
+					const entry = slotMap.get(posKey);
+					entry.clicks += clicks;
+					if (posKey.startsWith('pos:') && btn.total != null) {
+						const t = String(btn.total);
+						entry.totalClicks.set(t, (entry.totalClicks.get(t) || 0) + clicks);
+					}
 				}
-				return Array.from(slotMap.values()).sort(slotSort);
+				// Build final entries with a display key that includes the dominant total.
+				const result = [];
+				for (const [posKey, entry] of slotMap) {
+					let displayKey = posKey;
+					if (posKey.startsWith('pos:') && entry.totalClicks.size > 0) {
+						// Pick the total with the most clicks (ties broken by largest total value).
+						let bestTotal = null, bestClicks = -1;
+						for (const [t, c] of entry.totalClicks) {
+							if (c > bestClicks || (c === bestClicks && Number(t) > Number(bestTotal))) {
+								bestTotal = t; bestClicks = c;
+							}
+						}
+						displayKey = `${posKey}|total:${bestTotal}`;
+					}
+					result.push({ key: displayKey, clicks: entry.clicks });
+				}
+				return result.sort(slotSort);
 			};
 
 			const normalizeButtonLabel = (label) => {
@@ -2725,7 +2745,7 @@
 					if (hasButtons) {
 						// Filter out legacy buttons (those without proper position data)
 						const validButtons = row.buttons.filter(btn => {
-							const key = slotKeyFromButton(btn);
+							const key = slotPosKey(btn);
 							if (key.startsWith('legacy:')) return false;
 							return true;
 						});
