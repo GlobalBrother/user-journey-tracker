@@ -2432,6 +2432,24 @@
 			</div>
 		</div>
 
+		<!-- User Journey Lookup -->
+		<div class="panel">
+			<div class="panel-header">
+				<span class="panel-title">User Journey Lookup</span>
+				<span style="font-size:12px;color:var(--text3);">Search by fingerprint ID — type to see matching users</span>
+			</div>
+			<div class="panel-body" style="max-height:700px;overflow-y:auto;">
+				<div class="search-bar" id="journeySearchBar">
+					<input type="text" id="userIdInput" placeholder="Type fingerprint ID…"
+						style="font-family:monospace;font-size:12px;" autocomplete="off" />
+					<button class="btn btn-primary" id="btnLookup">Look up</button>
+					<button class="btn" id="btnLookupReset" style="display:none;">✕ Reset</button>
+					<div id="searchSuggestions" class="search-suggestions" style="display:none;"></div>
+				</div>
+				<div id="journeyResult"></div>
+			</div>
+		</div>
+
 		<!-- Checkout Abandon Rate -->
 		<div class="panel" style="margin-bottom:24px;">
 			<div class="panel-header">
@@ -2504,23 +2522,7 @@
 			</div>
 		</div>
 
-		<!-- User Journey Lookup -->
-		<div class="panel">
-			<div class="panel-header">
-				<span class="panel-title">User Journey Lookup</span>
-				<span style="font-size:12px;color:var(--text3);">Search by fingerprint ID — type to see matching users</span>
-			</div>
-			<div class="panel-body" style="max-height:700px;overflow-y:auto;">
-				<div class="search-bar" id="journeySearchBar">
-					<input type="text" id="userIdInput" placeholder="Type fingerprint ID…"
-						style="font-family:monospace;font-size:12px;" autocomplete="off" />
-					<button class="btn btn-primary" id="btnLookup">Look up</button>
-					<button class="btn" id="btnLookupReset" style="display:none;">✕ Reset</button>
-					<div id="searchSuggestions" class="search-suggestions" style="display:none;"></div>
-				</div>
-				<div id="journeyResult"></div>
-			</div>
-		</div>
+
 
 	</main>
 
