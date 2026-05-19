@@ -828,18 +828,41 @@
 
 		.scrollhm-board {
 			border: 1px solid rgba(148, 163, 184, 0.2);
-			border-radius: 14px;
-			padding: 12px;
-			background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+			border-radius: 16px;
+			padding: 14px;
+			background:
+				radial-gradient(circle at 14% 24%, rgba(34, 211, 238, 0.09), transparent 34%),
+				radial-gradient(circle at 86% 78%, rgba(132, 204, 22, 0.08), transparent 36%),
+				linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+			overflow: hidden;
+			position: relative;
 		}
 
-		.scrollhm-grid {
+		.scrollhm-board::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+			background-size: 26px 26px;
+			opacity: 0.35;
+		}
+
+		.scrollhm-lane-grid {
 			display: grid;
-			gap: 8px;
-			align-items: center;
+			grid-template-columns: 88px 1fr;
+			gap: 10px 12px;
+			position: relative;
+			z-index: 1;
 		}
 
-		.scrollhm-colhead {
+		.scrollhm-scale {
+			display: grid;
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			gap: 8px;
+		}
+
+		.scrollhm-scale-label {
 			font-size: 11px;
 			font-weight: 700;
 			text-align: center;
@@ -848,29 +871,61 @@
 			letter-spacing: .05em;
 		}
 
-		.scrollhm-rowhead {
+		.scrollhm-lane-name {
 			font-size: 12px;
 			font-weight: 800;
 			letter-spacing: .04em;
 			text-transform: uppercase;
 			color: var(--text2);
+			align-self: center;
 		}
 
-		.scrollhm-cell {
-			border-radius: 8px;
-			min-height: 48px;
+		.scrollhm-lane-track {
+			border: 1px solid rgba(148, 163, 184, 0.22);
+			border-radius: 999px;
+			min-height: 66px;
+			padding: 10px 14px;
+			background: rgba(15, 23, 42, 0.34);
+			display: grid;
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			gap: 6px;
+			align-items: center;
+			position: relative;
+		}
+
+		.scrollhm-lane-track::before {
+			content: '';
+			position: absolute;
+			left: 14px;
+			right: 14px;
+			top: 50%;
+			height: 2px;
+			border-radius: 999px;
+			transform: translateY(-50%);
+			background: linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #84cc16 70%, #22c55e 100%);
+			opacity: 0.5;
+		}
+
+		.scrollhm-point {
+			width: var(--size, 24px);
+			height: var(--size, 24px);
+			border-radius: 999px;
+			justify-self: center;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			border: 1px solid rgba(255, 255, 255, 0.08);
-			font-size: 13px;
+			font-size: 10px;
 			font-weight: 800;
-			letter-spacing: .02em;
+			letter-spacing: .01em;
+			color: #f8fafc;
+			background: var(--point, rgba(148, 163, 184, 0.4));
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.6), 0 8px 20px rgba(0, 0, 0, 0.3);
 		}
 
-		.scrollhm-cell.enter {
+		.scrollhm-point.enter {
 			opacity: 0;
-			transform: translateY(7px) scale(0.98);
+			transform: translateY(7px) scale(0.72);
 			animation: scrollCellIn .38s ease forwards;
 			animation-delay: var(--delay, 0ms);
 		}
@@ -903,51 +958,6 @@
 			display: grid;
 			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 			gap: 10px;
-		}
-
-		.scrollhm-stats {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-			gap: 10px;
-		}
-
-		.scrollhm-stat {
-			border: 1px solid rgba(148, 163, 184, 0.2);
-			border-radius: 10px;
-			padding: 10px;
-			background: rgba(15, 23, 42, 0.24);
-		}
-
-		.scrollhm-stat-title {
-			font-size: 12px;
-			font-weight: 700;
-			text-transform: uppercase;
-			letter-spacing: .06em;
-			color: var(--text3);
-			margin-bottom: 6px;
-		}
-
-		.scrollhm-stat-row {
-			display: grid;
-			grid-template-columns: 56px 1fr auto;
-			gap: 8px;
-			align-items: center;
-			font-size: 12px;
-			padding: 4px 0;
-		}
-
-		.scrollhm-stat-bar {
-			height: 7px;
-			border-radius: 999px;
-			background: rgba(148, 163, 184, 0.2);
-			overflow: hidden;
-		}
-
-		.scrollhm-stat-bar > span {
-			display: block;
-			height: 100%;
-			border-radius: 999px;
-			background: linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #84cc16 70%, #22c55e 100%);
 		}
 
 		.scrollhm-insight {
@@ -1006,9 +1016,17 @@
 		}
 
 		@media (max-width: 900px) {
-			.scrollhm-cell {
-				min-height: 42px;
-				font-size: 11px;
+			.scrollhm-lane-grid {
+				grid-template-columns: 74px 1fr;
+			}
+
+			.scrollhm-lane-track {
+				min-height: 58px;
+				padding: 8px 10px;
+			}
+
+			.scrollhm-point {
+				font-size: 9px;
 			}
 
 			.scrollhm-sparkline {
@@ -3256,10 +3274,11 @@
 				const cells = metricLabels.map((label, idx) => {
 					const value = valueFor(row, label);
 					const bg = colorFromPct(value);
+					const pointSize = 18 + Math.round((value / 100) * 20);
 					const delay = (rowIdx * metricCount + idx) * 38;
-					return `<div class="scrollhm-cell enter" style="background:${bg};color:${textColorFromPct(value)};--delay:${delay}ms;" title="${escHtml(rowLabel)} - ${escHtml(label)}: ${value}%">${value}%</div>`;
+					return `<div class="scrollhm-point enter" style="--point:${bg};--size:${pointSize}px;--delay:${delay}ms;color:${textColorFromPct(value)};" title="${escHtml(rowLabel)} - ${escHtml(label)}: ${value}%">${value}%</div>`;
 				}).join('');
-				return `<div class="scrollhm-rowhead">${escHtml(rowLabel)}</div>${cells}`;
+				return `<div class="scrollhm-lane-name">${escHtml(rowLabel)}</div><div class="scrollhm-lane-track">${cells}</div>`;
 			};
 
 			const sparklineSvg = () => {
@@ -3284,18 +3303,6 @@
 					${dots(lpSeries, '#22c55e')}
 					${dots(upSeries, '#22d3ee')}
 				</svg>`;
-			};
-
-			const renderStatsRows = (row, rowLabel) => {
-				if (!row) return `<div style="color:var(--text3);font-size:12px;">No ${escHtml(rowLabel)} data.</div>`;
-				return metricLabels.map(label => {
-					const value = valueFor(row, label);
-					return `<div class="scrollhm-stat-row">
-						<span>${escHtml(label)}</span>
-						<div class="scrollhm-stat-bar"><span style="width:${value}%;"></span></div>
-						<strong>${value}%</strong>
-					</div>`;
-				}).join('');
 			};
 
 			const sortBySessions = (arr) => [...(arr || [])].sort((a, b) => (b.sessions || 0) - (a.sessions || 0));
@@ -3382,22 +3389,11 @@
 					</div>
 
 					<div class="scrollhm-board">
-						<div class="scrollhm-grid" style="grid-template-columns: 110px repeat(${metricCount}, minmax(0, 1fr));">
+						<div class="scrollhm-lane-grid">
 							<div></div>
-							${metricLabels.map(lbl => `<div class="scrollhm-colhead">${escHtml(lbl)}</div>`).join('')}
+							<div class="scrollhm-scale">${metricLabels.map(lbl => `<div class="scrollhm-scale-label">${escHtml(lbl)}</div>`).join('')}</div>
 							${renderHeatmapRow(lp, 'LP', 0)}
 							${renderHeatmapRow(upsell, 'Upsell', 1)}
-						</div>
-					</div>
-
-					<div class="scrollhm-stats">
-						<div class="scrollhm-stat">
-							<div class="scrollhm-stat-title">LP Percent Breakdown</div>
-							${renderStatsRows(lp, 'LP')}
-						</div>
-						<div class="scrollhm-stat">
-							<div class="scrollhm-stat-title">Upsell Percent Breakdown</div>
-							${renderStatsRows(upsell, 'Upsell')}
 						</div>
 					</div>
 
