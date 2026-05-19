@@ -2435,6 +2435,16 @@
 				if (!cleaned) return '';
 				if (cleaned.startsWith('url_')) cleaned = '/' + cleaned.split('/').slice(1).join('/');
 
+				// Ignore generic placeholders so real alt/text labels win in grouping.
+				const low = cleaned.toLowerCase();
+				if (
+					low === 'image cta' ||
+					low === 'checkout button' ||
+					low === 'sticky cta'
+				) {
+					return '';
+				}
+
 				// Drop machine-like tokens captured as labels (long base64/url-safe strings).
 				const looksLikeMachineToken =
 					cleaned.length >= 35 &&
