@@ -613,8 +613,9 @@
 
 		/* ── Checkout Abandon Rate (card mode) ── */
 		.abx-wrap {
-			display: grid;
+			display: flex;
 			gap: 14px;
+			flex-wrap: wrap;
 		}
 
 		.abx-overview {
@@ -651,6 +652,7 @@
 			background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
 			overflow: hidden;
 			animation: riseIn .45s ease both;
+			width: calc(50% - 8px);
 		}
 
 		.abx-domain-head {
@@ -831,7 +833,6 @@
 
 		.scrollhm-grid {
 			display: grid;
-			grid-template-columns: 110px repeat(5, minmax(0, 1fr));
 			gap: 8px;
 			align-items: center;
 		}
@@ -1003,10 +1004,6 @@
 		}
 
 		@media (max-width: 900px) {
-			.scrollhm-grid {
-				grid-template-columns: 80px repeat(5, minmax(0, 1fr));
-			}
-
 			.scrollhm-cell {
 				min-height: 42px;
 				font-size: 11px;
@@ -3242,6 +3239,7 @@
 			const metricLabels = currentView === 'bands'
 				? bandOrder
 				: milestoneOrder.map(k => `M${k}`);
+			const metricCount = metricLabels.length;
 
 			const valueFor = (row, label) => {
 				if (!row) return 0;
@@ -3256,20 +3254,24 @@
 				const cells = metricLabels.map((label, idx) => {
 					const value = valueFor(row, label);
 					const bg = colorFromPct(value);
-					const delay = (rowIdx * 5 + idx) * 38;
+					const delay = (rowIdx * metricCount + idx) * 38;
 					return `<div class="scrollhm-cell enter" style="background:${bg};color:${textColorFromPct(value)};--delay:${delay}ms;" title="${escHtml(rowLabel)} - ${escHtml(label)}: ${value}%">${value}%</div>`;
 				}).join('');
 				return `<div class="scrollhm-rowhead">${escHtml(rowLabel)}</div>${cells}`;
 			};
 
 			const sparklineSvg = () => {
-				const xLabels = ['M25', 'M50', 'M75', 'M90'];
-				const lpSeries = xLabels.map(k => valueFor(lp, k));
-				const upSeries = xLabels.map(k => valueFor(upsell, k));
+				const xKeys = ['25', '50', '75', '90'];
+				const milestoneValue = (row, key) => {
+					const m = row?.milestone_reach_pct || {};
+					return pctSafe(m[key]);
+				};
+				const lpSeries = xKeys.map(k => milestoneValue(lp, k));
+				const upSeries = xKeys.map(k => milestoneValue(upsell, k));
 				const w = 212;
 				const h = 46;
 				const p = 6;
-				const step = (w - p * 2) / Math.max(1, (xLabels.length - 1));
+				const step = (w - p * 2) / Math.max(1, (xKeys.length - 1));
 				const toY = (v) => (h - p) - ((pctSafe(v) / 100) * (h - p * 2));
 				const points = (arr) => arr.map((v, i) => `${(p + i * step).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
 				const dots = (arr, color) => arr.map((v, i) => `<circle cx="${(p + i * step).toFixed(1)}" cy="${toY(v).toFixed(1)}" r="2.3" fill="${color}" />`).join('');
@@ -3378,7 +3380,7 @@
 					</div>
 
 					<div class="scrollhm-board">
-						<div class="scrollhm-grid">
+						<div class="scrollhm-grid" style="grid-template-columns: 110px repeat(${metricCount}, minmax(0, 1fr));">
 							<div></div>
 							${metricLabels.map(lbl => `<div class="scrollhm-colhead">${escHtml(lbl)}</div>`).join('')}
 							${renderHeatmapRow(lp, 'LP', 0)}
