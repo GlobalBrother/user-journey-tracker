@@ -1905,6 +1905,24 @@
 			gap: 6px;
 		}
 
+		.adslug-bar-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 8px;
+			font-size: 10px;
+			color: var(--text3);
+			text-transform: uppercase;
+			letter-spacing: .05em;
+			font-weight: 700;
+		}
+
+		.adslug-bar-row strong {
+			font-size: 10px;
+			color: var(--text2);
+			font-weight: 800;
+		}
+
 		.adslug-bar {
 			height: 6px;
 			border-radius: 999px;
@@ -1983,6 +2001,14 @@
 		body[data-theme='light'] .adslug-name a,
 		body[data-theme='light'] .adslug-metric-value {
 			color: #0f172a;
+		}
+
+		body[data-theme='light'] .adslug-bar-row {
+			color: #64748b;
+		}
+
+		body[data-theme='light'] .adslug-bar-row strong {
+			color: #334155;
 		}
 
 		body[data-theme='light'] .adslug-order-btn {
@@ -3357,7 +3383,7 @@
 		</div>
 
 		<!-- User Journey Lookup -->
-		<div class="panel">
+		<div class="panel" style="margin-bottom: 20px">
 			<div class="panel-header">
 				<span class="panel-title">User Journey Lookup</span>
 				<span style="font-size:12px;color:var(--text3);">Search by fingerprint ID — type to see matching users</span>
@@ -5094,7 +5120,9 @@
 		<div class="adslug-metric"><div class="adslug-metric-label">Revenue</div><div class="adslug-metric-value">${fmtEUR(s.revenue)}</div></div>
 	  </div>
 	  <div class="adslug-bars">
+		<div class="adslug-bar-row"><span>Users share vs top slug</span><strong>${usersPct}%</strong></div>
 		<div class="adslug-bar is-users"><span style="width:${usersPct}%;"></span></div>
+		<div class="adslug-bar-row"><span>Conversion rate</span><strong>${Math.max(0, Math.min(100, Number(s.conversion_rate || 0))).toFixed(1)}%</strong></div>
 		<div class="adslug-bar is-conv"><span style="width:${Math.max(0, Math.min(100, Number(s.conversion_rate || 0)))}%;"></span></div>
 	  </div>
 	  <div class="adslug-actions">
