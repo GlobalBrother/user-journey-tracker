@@ -4095,6 +4095,10 @@
 							const key = slotPosKey(btn);
 							if (key.startsWith('legacy:')) return false;
 
+							// Skip buttons flagged as stale by the backend (not seen in last 24h inventory
+							// while the domain had sufficient traffic — e.g. losing A/B test variant).
+							if (btn.active === false) return false;
+
 							if (btn.position !== 'sticky' && domainLayoutTotal != null) {
 								const total = Number(btn.total);
 								if (Number.isInteger(total) && total !== domainLayoutTotal) return false;
