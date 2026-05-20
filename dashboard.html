@@ -1765,22 +1765,6 @@
 			padding: 7px 10px;
 		}
 
-		.adslug-order-btn {
-			border: 1px solid rgba(148, 163, 184, 0.28);
-			background: rgba(148, 163, 184, 0.08);
-			color: var(--text2);
-			font-size: 12px;
-			font-weight: 700;
-			padding: 7px 10px;
-			border-radius: 10px;
-			cursor: pointer;
-		}
-
-		.adslug-order-btn:hover {
-			border-color: rgba(34, 211, 238, 0.45);
-			background: rgba(34, 211, 238, 0.12);
-			color: var(--accent2);
-		}
 
 		.adslug-legend {
 			display: inline-flex;
@@ -2011,10 +1995,6 @@
 			color: #334155;
 		}
 
-		body[data-theme='light'] .adslug-order-btn {
-			background: rgba(8, 145, 178, 0.12);
-			color: #0f766e;
-		}
 
 		.badge {
 			display: inline-block;
@@ -3324,15 +3304,12 @@
 					<div class="adslug-toolbar-left">
 						<span class="adslug-toolbar-label">Sort cards by</span>
 						<select id="slugSortSelect" class="adslug-sort-select" aria-label="Sort ad slug cards">
-							<option value="revenue">Revenue</option>
-							<option value="conversion_rate">Conversion rate</option>
-							<option value="conversions">Conversions</option>
-							<option value="users">Users</option>
-							<option value="pageviews">Pageviews</option>
-							<option value="top_domain">Top domain</option>
-							<option value="slug">Slug name</option>
+							<option value="revenue">Revenue (best first)</option>
+							<option value="conversion_rate">Conversion rate (best first)</option>
+							<option value="conversions">Conversions (best first)</option>
+							<option value="users">Users (best first)</option>
+							<option value="pageviews">Pageviews (best first)</option>
 						</select>
-						<button id="slugSortDirBtn" class="adslug-order-btn" type="button" aria-label="Toggle sort order">Order: Desc</button>
 					</div>
 					<div class="adslug-legend"><b>Card shows:</b> Users, Pageviews, Revenue, Conversion Rate, Filter, Ads link</div>
 				</div>
@@ -3617,7 +3594,6 @@
 		let sortColD = 'revenue';
 		let sortDirD = 'desc';
 		let sortCol = 'revenue';
-		let sortDir = 'desc';
 		let refreshTimer = null;
 		let _loadAbort = null;   // AbortController for in-flight loadStats requests
 
@@ -5167,16 +5143,13 @@
 			document.getElementById('slugCount').textContent = slugs.length + ' slugs';
 
 			const sorted = [...slugs].sort((a, b) => {
-				const av = a[sortCol] ?? 0;
-				const bv = b[sortCol] ?? 0;
-				if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-				return sortDir === 'asc' ? av - bv : bv - av;
+				const av = Number(a[sortCol] ?? 0);
+				const bv = Number(b[sortCol] ?? 0);
+				return bv - av;
 			});
 
 			const sortSelect = document.getElementById('slugSortSelect');
-			const sortDirBtn = document.getElementById('slugSortDirBtn');
 			if (sortSelect && sortSelect.value !== sortCol) sortSelect.value = sortCol;
-			if (sortDirBtn) sortDirBtn.textContent = `Order: ${sortDir === 'asc' ? 'Asc' : 'Desc'}`;
 
 			const tbody = document.getElementById('slugTableBody');
 
@@ -6519,14 +6492,7 @@
 
 		// Sort by column
 		document.getElementById('slugSortSelect')?.addEventListener('change', e => {
-			const col = e.target.value;
-			sortCol = col;
-			sortDir = col === 'slug' || col === 'top_domain' ? 'asc' : 'desc';
-			if (statsData) renderSlugTable(statsData.by_slug || []);
-		});
-
-		document.getElementById('slugSortDirBtn')?.addEventListener('click', () => {
-			sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+			sortCol = e.target.value;
 			if (statsData) renderSlugTable(statsData.by_slug || []);
 		});
 
