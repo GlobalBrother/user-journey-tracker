@@ -3541,6 +3541,14 @@
 
 		// Invalideaza cache-ul Faza 2 (apelat la schimbarea filtrelor)
 		function _phase2CacheInvalidate() { _phase2Cache = null; }
+
+		// Delay helper — returns a Promise that resolves after `ms` ms (respects abort signal)
+		function _delay(ms, signal) {
+			return new Promise((resolve, reject) => {
+				const t = setTimeout(resolve, ms);
+				signal?.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+			});
+		}
 		let chartRevenue = null;
 		let chartConvRate = null;
 		let chartTrend = null;
@@ -5862,6 +5870,8 @@
 				if (cached) {
 					// Faza 2 instant din cache — nu mai trimitem cereri
 					p2Promise = Promise.resolve(cached);
+					// Panouri secundare: delay 2s ca Stats să fie prima pe DB (cache e gol sau date noi)
+					_delay(2000, signal).then(() => {
 					// Cohorts rulează întotdeauna independent (nu e în cache)
 					fetchCohorts(signal)
 						.then(cohorts => { if (!signal.aborted) renderCohorts(cohorts); })
@@ -5899,6 +5909,7 @@
 							if (cachedPanel) renderProductRetention(cachedPanel);
 							console.warn('product-retention fetch failed', err);
 						});
+					}).catch(() => null); // ignore AbortError from delay
 				} else {
 					const prev = getPreviousPeriod(start, end);
 					const prevParams = new URLSearchParams({ start_date: prev.start, end_date: prev.end });
@@ -5923,6 +5934,8 @@
 						_phase2CacheSet({ breakdown: safeBreakdown, domains: safeDomains, prevStats: safePrevStats });
 						return { breakdown: safeBreakdown, domains: safeDomains, prevStats: safePrevStats };
 					});
+					// Panouri secundare grele: delay 2s ca Stats să ia resursele DB primul
+					_delay(2000, signal).then(() => {
 					// Cohorts rulează independent — nu blochează restul dashboard-ului
 					fetchCohorts(signal)
 						.then(cohorts => {
@@ -5961,6 +5974,7 @@
 							if (cachedPanel) renderProductRetention(cachedPanel);
 							console.warn('product-retention fetch failed', err);
 						});
+				}).catch(() => null); // ignore AbortError from delay
 				}
 
 				// ── Faza 1: KPIs + Trend + RecentConvs — render independent la sosire ──
