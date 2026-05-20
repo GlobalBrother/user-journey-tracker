@@ -234,6 +234,8 @@
 
 		main {
 			padding: 18px 22px 28px;
+			margin: auto;
+			max-width: 2000px;
 		}
 
 		body[data-theme='light'] header {
@@ -1781,6 +1783,7 @@
 			padding: 12px;
 			display: grid;
 			gap: 10px;
+			width: calc(25% - 10px);
 		}
 
 		.adslug-item::before {
@@ -2930,6 +2933,13 @@
 		[data-tip] {
 			position: relative;
 			cursor: default;
+		}
+		#slugTableBody {
+			max-height: 900px;
+			height: 730px;
+			overflow: auto;
+			display: flex;
+			flex-wrap: wrap;
 		}
 
 		[data-tip]::after {
