@@ -2808,13 +2808,115 @@
 			margin-top: 2px;
 		}
 
+		.product-retention-wrap {
+			display: grid;
+			gap: 16px;
+		}
+
+		.product-retention-card {
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 14px;
+			background: rgba(15, 23, 42, 0.26);
+			overflow: hidden;
+		}
+
+		.product-retention-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+			gap: 10px;
+			flex-wrap: wrap;
+			padding: 14px 16px;
+			border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+			background: rgba(255, 255, 255, 0.02);
+		}
+
+		.product-retention-title {
+			font-weight: 700;
+			font-size: 16px;
+			line-height: 1.35;
+		}
+
+		.product-retention-meta {
+			font-size: 12px;
+			color: var(--text3);
+		}
+
+		.product-retention-body {
+			padding: 10px 12px 12px;
+		}
+
+		.product-retention-empty {
+			font-size: 13px;
+			color: var(--text3);
+			padding: 14px;
+		}
+
+		.product-retention-table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 13px;
+		}
+
+		.product-retention-table thead tr {
+			color: var(--text3);
+			border-bottom: 1px solid var(--border);
+		}
+
+		.product-retention-table th {
+			padding: 10px 10px;
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: .05em;
+		}
+
+		.product-retention-table td {
+			padding: 10px 10px;
+			line-height: 1.4;
+		}
+
+		.product-retention-table tbody tr {
+			border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+		}
+
+		.product-retention-table tbody tr:last-child {
+			border-bottom: none;
+		}
+
+		body[data-theme='light'] .product-retention-card {
+			background: rgba(255, 255, 255, 0.88);
+			border-color: rgba(148, 163, 184, 0.28);
+		}
+
+		body[data-theme='light'] .product-retention-head {
+			background: rgba(240, 247, 255, 0.75);
+		}
+
 		/* ── LOADING & EMPTY ── */
 		.loading {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			padding: 40px;
+			gap: 10px;
+			width: 100%;
+			min-height: 180px;
+			padding: 40px 20px;
+			box-sizing: border-box;
+			text-align: center;
 			color: var(--text3);
+		}
+
+		td.loading {
+			display: table-cell;
+			width: auto;
+			min-height: 0;
+			padding: 28px 12px;
+			text-align: center;
+		}
+
+		td.loading .spinner {
+			display: inline-block;
+			vertical-align: middle;
 		}
 
 		.spinner {
@@ -4552,34 +4654,36 @@
 			if (!data || !data.products || data.products.length === 0) {
 				el.innerHTML = '<p style="color:var(--text3);">No product data in this period.</p>'; return;
 			}
-			let html = '';
+			let html = '<div class="product-retention-wrap">';
 			for (const prod of data.products) {
-				html += `<div style="margin-bottom:20px;">
-					<div style="font-weight:600;margin-bottom:8px;">
-						${_productLink(prod.product_id, prod.product_name, prod.top_url)}
-						<span style="font-size:11px;color:var(--text3);margin-left:8px;">${fmtNum(prod.total_buyers)} buyers · ${fmtEUR(prod.total_revenue)}</span>
-					</div>`;
+				html += `<section class="product-retention-card">
+					<div class="product-retention-head">
+						<div class="product-retention-title">${_productLink(prod.product_id, prod.product_name, prod.top_url)}</div>
+						<div class="product-retention-meta">${fmtNum(prod.total_buyers)} buyers · ${fmtEUR(prod.total_revenue)}</div>
+					</div>
+					<div class="product-retention-body">`;
 				if (prod.cross_sells.length === 0) {
-					html += `<div style="font-size:12px;color:var(--text3);padding-left:12px;">No cross-sell data for this period.</div>`;
+					html += `<div class="product-retention-empty">No cross-sell data for this period.</div>`;
 				} else {
-					html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
-						<thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">
-							<th style="text-align:left;padding:4px 8px;">Also Bought</th>
-							<th style="text-align:right;padding:4px 8px;">Buyers</th>
-							<th style="text-align:right;padding:4px 8px;">Cross-sell Rate</th>
+					html += `<table class="product-retention-table">
+						<thead><tr>
+							<th style="text-align:left;">Also Bought</th>
+							<th style="text-align:right;">Buyers</th>
+							<th style="text-align:right;">Cross-sell Rate</th>
 						</tr></thead><tbody>`;
 					for (const cs of prod.cross_sells) {
 						const csColor = cs.cross_sell_rate_pct >= 30 ? 'var(--green)' : cs.cross_sell_rate_pct >= 10 ? 'var(--yellow)' : 'var(--text2)';
-						html += `<tr style="border-bottom:1px solid var(--border);">
-							<td style="padding:4px 8px;">${_productLink(cs.product_id, cs.product_name, cs.top_url)}</td>
-							<td style="text-align:right;padding:4px 8px;">${fmtNum(cs.also_bought)}</td>
-							<td style="text-align:right;padding:4px 8px;font-weight:700;color:${csColor};">${cs.cross_sell_rate_pct}%</td>
+						html += `<tr>
+							<td>${_productLink(cs.product_id, cs.product_name, cs.top_url)}</td>
+							<td style="text-align:right;">${fmtNum(cs.also_bought)}</td>
+							<td style="text-align:right;font-weight:700;color:${csColor};">${cs.cross_sell_rate_pct}%</td>
 						</tr>`;
 					}
 					html += `</tbody></table>`;
 				}
-				html += `</div>`;
+				html += `</div></section>`;
 			}
+			html += '</div>';
 			el.innerHTML = html;
 		}
 
