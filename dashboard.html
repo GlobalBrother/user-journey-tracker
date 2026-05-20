@@ -3310,6 +3310,7 @@
 							<option value="users">Users (best first)</option>
 							<option value="pageviews">Pageviews (best first)</option>
 						</select>
+						<button id="btnLoadAdPreviews" class="btn" style="margin-left:8px;padding:6px 10px;font-size:12px;">Load ad previews</button>
 					</div>
 					<div class="adslug-legend"><b>Card shows:</b> Users, Pageviews, Revenue, Conversion Rate, Filter, Ads link</div>
 				</div>
@@ -3590,6 +3591,9 @@
 		let statsData = null;
 		let prevStatsData = null;
 		let _adsMap = new Map(); // slug_lower → {preview_shareable_link, ad_format, adset_name, campaign_name}
+		let _adsMissing = new Set(); // slug_lower values confirmed as missing in ADS API
+		let _adsPreviewLoading = false;
+		let _adsPreviewLoadedKey = null;
 		let _ltvData = null;     // LTV data — re-render after _adsMap is populated
 		let sortColD = 'revenue';
 		let sortDirD = 'desc';
@@ -5125,14 +5129,19 @@
 
 		async function fetchAdsMap(slugs) {
 			// Only fetch slugs that look like real Facebook ad names
-			const candidates = slugs
+			const allCandidates = slugs
 				.map(s => s.slug)
 				.filter(sl => sl && !sl.startsWith('fb-noutm-') && sl !== '(direct)' && sl !== 'fbclid');
+
+			// Keep this bounded so ad enrichment never slows down the dashboard.
+			const candidates = [...new Set(allCandidates)].slice(0, 20);
 
 			if (candidates.length === 0) return;
 
 			const results = await Promise.allSettled(
 				candidates.map(async slug => {
+					const slugKey = slug.toLowerCase();
+					if (_adsMap.has(slugKey) || _adsMissing.has(slugKey)) return null;
 					// Race all variants in parallel — first 200 wins, no sequential 404 waits
 					const variantResults = await Promise.allSettled(
 						_slugVariants(slug).map(v => _fetchAd(v))
@@ -5140,11 +5149,12 @@
 					for (const r of variantResults) {
 						if (r.status === 'fulfilled' && r.value) return r.value;
 					}
+					_adsMissing.add(slugKey);
 					return null;
 				})
 			);
 
-			const newMap = new Map();
+			const newMap = new Map(_adsMap);
 			results.forEach((res, i) => {
 				if (res.status === 'fulfilled' && res.value?.data) {
 					const d = res.value.data;
@@ -5158,6 +5168,30 @@
 				}
 			});
 			_adsMap = newMap;
+		}
+
+		async function loadAdPreviewsForCurrentStats() {
+			if (!statsData || _adsPreviewLoading) return;
+			const btn = document.getElementById('btnLoadAdPreviews');
+			const key = _phase2CacheKey();
+			if (_adsPreviewLoadedKey === key) return;
+			_adsPreviewLoading = true;
+			if (btn) {
+				btn.disabled = true;
+				btn.textContent = 'Loading previews...';
+			}
+			try {
+				await fetchAdsMap(statsData.by_slug || []);
+				if (statsData) renderSlugTable(statsData.by_slug || []);
+				if (_ltvData) renderLtv(_ltvData);
+				_adsPreviewLoadedKey = key;
+			} finally {
+				_adsPreviewLoading = false;
+				if (btn) {
+					btn.disabled = false;
+					btn.textContent = 'Load ad previews';
+				}
+			}
 		}
 
 		function renderSlugTable(slugs) {
@@ -6016,10 +6050,7 @@
 					renderJourneys(stats.top_journeys || []);
 					document.getElementById('lastUpdated').textContent =
 						'Updated ' + new Date().toLocaleTimeString('en-GB');
-					fetchAdsMap(stats.by_slug || []).then(() => {
-						if (!signal.aborted && statsData) renderSlugTable(statsData.by_slug || []);
-						if (!signal.aborted && _ltvData) renderLtv(_ltvData);
-					}).catch(() => null);
+					_adsPreviewLoadedKey = null;
 					return stats;
 				});
 
@@ -6515,6 +6546,10 @@
 		document.getElementById('slugSortSelect')?.addEventListener('change', e => {
 			sortCol = e.target.value;
 			if (statsData) renderSlugTable(statsData.by_slug || []);
+		});
+
+		document.getElementById('btnLoadAdPreviews')?.addEventListener('click', () => {
+			loadAdPreviewsForCurrentStats().catch(() => null);
 		});
 
 		// Sort domain table columns
