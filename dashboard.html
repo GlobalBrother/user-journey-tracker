@@ -3594,6 +3594,8 @@
 		let _adsMissing = new Set(); // slug_lower values confirmed as missing in ADS API
 		let _adsPreviewLoading = false;
 		let _adsPreviewLoadedKey = null;
+		let _slugShowAll = false;  // true after user clicks "Show all slugs"
+		const SLUG_INITIAL_COUNT = 20;
 		let _ltvData = null;     // LTV data — re-render after _adsMap is populated
 		let sortColD = 'revenue';
 		let sortDirD = 'desc';
@@ -5215,7 +5217,10 @@
 
 			const maxUsers = Math.max(...sorted.map(s => Number(s.users || 0)), 1);
 
-			tbody.innerHTML = sorted.map(s => {
+			const visible = _slugShowAll ? sorted : sorted.slice(0, SLUG_INITIAL_COUNT);
+			const hasMore = !_slugShowAll && sorted.length > SLUG_INITIAL_COUNT;
+
+			tbody.innerHTML = visible.map(s => {
 				const adInfo = _adsMap.get((s.slug || '').toLowerCase());
 				const slugLabel = escHtml(s.slug || '(direct)');
 				const slugTitle = adInfo
@@ -5263,7 +5268,17 @@
 	  </div>
 	</article>
 	`;
-			}).join('');
+			}).join('')
+				+ (hasMore
+					? `<div style="text-align:center;padding:16px 0;grid-column:1/-1;"><button id="slugShowAllBtn" style="background:var(--accent1,#6366f1);color:#fff;border:none;padding:9px 24px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;">Show all ${sorted.length} slugs</button></div>`
+					: '');
+
+			if (hasMore) {
+				document.getElementById('slugShowAllBtn').onclick = () => {
+					_slugShowAll = true;
+					renderSlugTable(slugs);
+				};
+			}
 		}
 
 		// ════════════════════════════════════════
@@ -6043,6 +6058,7 @@
 				const statsPromise = fetchStats(signal).then(stats => {
 					if (signal.aborted) return null;
 					statsData = stats;
+					_slugShowAll = false;  // reset pagination on new data
 					renderKPIs(stats, prevStatsData);
 					renderCharts(stats.by_slug || []);
 					renderSlugTable(stats.by_slug || []);
@@ -6545,6 +6561,7 @@
 		// Sort by column
 		document.getElementById('slugSortSelect')?.addEventListener('change', e => {
 			sortCol = e.target.value;
+			_slugShowAll = false;  // collapse back to top 20 on sort change
 			if (statsData) renderSlugTable(statsData.by_slug || []);
 		});
 
