@@ -4474,15 +4474,26 @@
 			const avgGap = lpAvg - upAvg;
 			const unknownShare = totalSessions > 0 ? Math.round((unknownCountrySessions / totalSessions) * 100) : 0;
 
+			// Detect J-curve: 90-100% band higher than 75-89% for LP (normal behaviour)
+				const lpBandMap = bandMapFor(lp);
+				const lpB75 = lpBandMap.get('75-89%') || 0;
+				const lpB90 = lpBandMap.get('90-100%') || 0;
+				const hasJCurve = currentView === 'bands' && lp && lpB90 > lpB75 && lpB90 >= 2;
+
 			el.innerHTML = `
 				<div class="scrollhm-wrap">
 					<div class="scrollhm-top">
 						<div class="scrollhm-title-wrap">
 							<div class="scrollhm-title">LP vs Upsell Scroll Heatmap</div>
-							<div class="scrollhm-subtitle">${currentView === 'bands' ? 'View by Bands' : 'View by Milestones'} • ${fmtNum(totalSessions)} sessions</div>
+							<div class="scrollhm-subtitle">${fmtNum(totalSessions)} sessions analizate</div>
 							<div class="scrollhm-toggle">
-								<button data-heat-view="bands" class="${currentView === 'bands' ? 'active' : ''}">View by Bands</button>
-								<button data-heat-view="milestones" class="${currentView === 'milestones' ? 'active' : ''}">View by Milestones</button>
+								<button data-heat-view="bands" class="${currentView === 'bands' ? 'active' : ''}">Bands</button>
+								<button data-heat-view="milestones" class="${currentView === 'milestones' ? 'active' : ''}">Milestones</button>
+							</div>
+							<div style="margin-top:6px;font-size:11px;color:var(--text3);line-height:1.5;max-width:480px;">
+								${currentView === 'bands'
+									? '<strong style="color:var(--text2);">Bands</strong> — fiecare sesiune e încadrată într-o singură bandă, în funcție de cât de departe a scrollat. Procentul arată <em>câte sesiuni s-au oprit în acea zonă</em> (max scroll în acel interval).'
+									: '<strong style="color:var(--text2);">Milestones</strong> — procentul arată câte sesiuni au atins <em>cel puțin</em> acel prag de scroll. M25=25%, M50=50% etc. Sunt cumulative: M50 e întotdeauna ≤ M25.'}
 							</div>
 						</div>
 						${sparklineSvg()}
@@ -4509,6 +4520,12 @@
 							${renderHeatmapRow(upsell, 'Upsell', 1)}
 						</div>
 					</div>
+
+					${hasJCurve ? `
+					<div style="margin:10px 0 4px;padding:10px 14px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:8px;font-size:12px;line-height:1.6;color:var(--text2);">
+						<strong style="color:var(--yellow);">ℹ️ De ce 90–100% > 75–89%?</strong>
+						Aceasta e o formă normală numită <em>J-curve</em>: userii care scrollează până la 75%+ sunt deja foarte implicați și aproape toți continuă direct până la capătul paginii (unde se află CTA-ul/butonul de cumpărare). Practic nimeni nu se oprește deliberat la 75–89%. Banda 90–100% captează vizitatorii care citesc tot și vor să cumpere.
+					</div>` : ''}
 
 					<div class="scrollhm-insights">
 						<div class="scrollhm-insight">
