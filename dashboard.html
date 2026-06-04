@@ -4050,8 +4050,6 @@
 					let domainSlots = [];
 
 					if (hasButtons) {
-						// Use one canonical non-sticky layout total per domain to avoid mixed snapshots (e.g. 3-of-6 and 3-of-4 together).
-						const domainLayoutTotal = detectDominantLayoutTotal(row.buttons);
 						const validButtons = row.buttons.filter(btn => {
 							const key = slotPosKey(btn);
 							if (key.startsWith('legacy:')) return false;
@@ -4059,11 +4057,6 @@
 							// Skip buttons flagged as stale by the backend (not seen in last 24h inventory
 							// while the domain had sufficient traffic — e.g. losing A/B test variant).
 							if (btn.active === false) return false;
-
-							if (btn.position !== 'sticky' && domainLayoutTotal != null) {
-								const total = Number(btn.total);
-								if (Number.isInteger(total) && total !== domainLayoutTotal) return false;
-							}
 							return true;
 						});
 
@@ -4097,8 +4090,6 @@
 							const labelKey = `${pid}||${scope}`;
 							const inferredLabel = (!normalizedLabel && pid && preferredLabelByProduct.has(labelKey))
 								? preferredLabelByProduct.get(labelKey).label
-								: (!normalizedLabel && pid && preferredLabelByProductAnyScope.has(pid))
-									? preferredLabelByProductAnyScope.get(pid).label
 								: '';
 							const effectiveLabel = normalizedLabel || inferredLabel;
 							const key = `${scope}||${effectiveLabel}||${pid}`;
