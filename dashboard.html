@@ -4063,7 +4063,13 @@
 							group.clicks += Number(btn.clicks || 0);
 							group.items.push(btn);
 						}
-						buttonGroups = Array.from(groupMap.values()).sort((a, b) => b.clicks - a.clicks);
+						buttonGroups = Array.from(groupMap.values())
+							// Only show groups with a real captured label. Per the tracking
+							// contract, every valid button has either visible <a> text or an
+							// <img alt> — empty-label groups are historical noise and must be
+							// hidden so they don't appear as anonymous "Button X of Y" tiles.
+							.filter(g => g.label && g.label.length > 0)
+							.sort((a, b) => b.clicks - a.clicks);
 						domainSlots = summarizeSlots(validButtons);
 					}
 
