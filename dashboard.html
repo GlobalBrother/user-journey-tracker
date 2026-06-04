@@ -3944,6 +3944,7 @@
 				let cleaned = (label || '').trim();
 				if (!cleaned) return '';
 				if (cleaned.startsWith('url_')) cleaned = '/' + cleaned.split('/').slice(1).join('/');
+				if (/^#\d{5,}$/.test(cleaned)) return '';
 
 				// Apply label aliases (correcting historically wrong alt texts).
 				const aliased = LABEL_ALIASES[cleaned.toLowerCase()];
@@ -4001,7 +4002,21 @@
 						: '';
 					return escHtml(btnLabel) + suffix;
 				}
-				return inferLabelFromUrl((group.items && group.items[0] && group.items[0].url) || '');
+				const fromUrl = inferLabelFromUrl((group.items && group.items[0] && group.items[0].url) || '');
+				if (fromUrl) return escHtml(fromUrl);
+				const slotLike = Array.isArray(group.items) ? group.items.find(item => Number.isInteger(item.position)) : null;
+				if (slotLike) {
+					const pos = Number(slotLike.position);
+					const total = Number.isInteger(Number(slotLike.total)) ? Number(slotLike.total) : null;
+					if (Number.isInteger(pos) && total) {
+						return `Button ${escHtml(String(pos))} of ${escHtml(String(total))}`;
+					}
+					if (Number.isInteger(pos)) {
+						return `Button ${escHtml(String(pos))}`;
+					}
+				}
+				if (group.product_id) return `#${escHtml(String(group.product_id))}`;
+				return '';
 			};
 
 			const ovCards = [
