@@ -3935,62 +3935,40 @@
 				return bestTotal;
 			};
 
-			// Aliases for labels that were renamed — maps old label (lowercase) to canonical label.
-			const LABEL_ALIASES = {
-				'buy now physical product': 'Buy Now Physical Book',
-			};
-
 			const normalizeButtonLabel = (label) => {
 				let cleaned = (label || '').trim();
 				if (!cleaned) return '';
 				if (cleaned.startsWith('url_')) cleaned = '/' + cleaned.split('/').slice(1).join('/');
 				if (/^#\d{5,}$/.test(cleaned)) return '';
 
-				// Apply label aliases (correcting historically wrong alt texts).
-				const aliased = LABEL_ALIASES[cleaned.toLowerCase()];
-				if (aliased) cleaned = aliased;
-
-				// Ignore generic placeholders so real alt/text labels win in grouping.
+				// Reject historical garbage from older tracker versions: generic
+				// placeholders, CSS blobs and base64 tokens that ended up as labels.
 				const low = cleaned.toLowerCase();
 				if (
 					low === 'image cta' ||
 					low === 'checkout button' ||
-					low === 'sticky cta'
+					low === 'sticky cta' ||
+					low === 'image' ||
+					low === 'here' ||
+					low === 'click here' ||
+					low === 'tap here'
 				) {
 					return '';
 				}
-
-				// Drop machine-like tokens captured as labels (long base64/url-safe strings).
+				if (/[{}]|@media|\bdisplay\s*:|\bmax-width\s*:|\.css-[a-z0-9]+/i.test(cleaned)) {
+					return '';
+				}
 				const looksLikeMachineToken =
 					cleaned.length >= 35 &&
 					!/\s/.test(cleaned) &&
 					/^[A-Za-z0-9+/_=-]+$/.test(cleaned);
-
 				if (looksLikeMachineToken) return '';
 				return cleaned;
 			};
 
-			const inferLabelFromUrl = (url) => {
-				if (!url) return '';
-				try {
-					const parsed = new URL(url, window.location.origin);
-					const p = (parsed.pathname || '').toLowerCase();
-					if (p.includes('/answer/')) {
-						if (p.endsWith('/yes')) return 'Yes';
-						if (p.endsWith('/no')) return 'No, thanks';
-						return 'Answer link';
-					}
-				} catch (_err) {
-					return '';
-				}
-				return '';
-			};
-
 			const renderButtonLabel = (group) => {
 				const itemLabels = Array.isArray(group.items)
-					? group.items
-						.map(item => normalizeButtonLabel(item.label || '') || inferLabelFromUrl(item.url || ''))
-						.filter(Boolean)
+					? group.items.map(item => normalizeButtonLabel(item.label || '')).filter(Boolean)
 					: [];
 				let btnLabel = normalizeButtonLabel(group.label || '');
 				if (!btnLabel && itemLabels.length > 0) {
@@ -4002,8 +3980,6 @@
 						: '';
 					return escHtml(btnLabel) + suffix;
 				}
-				const fromUrl = inferLabelFromUrl((group.items && group.items[0] && group.items[0].url) || '');
-				if (fromUrl) return escHtml(fromUrl);
 				const slotLike = Array.isArray(group.items) ? group.items.find(item => Number.isInteger(item.position)) : null;
 				if (slotLike) {
 					const pos = Number(slotLike.position);
@@ -4057,45 +4033,26 @@
 							// Skip buttons flagged as stale by the backend (not seen in last 24h inventory
 							// while the domain had sufficient traffic — e.g. losing A/B test variant).
 							if (btn.active === false) return false;
+
+							// Drop buttons without a product_id. Real checkout buttons always
+							// carry product_id (parsed from /checkout/<pid> URLs). No product_id
+							// means the link is generic noise that ended up inside a buy-button-N
+							// or hero-section wrapper (e.g. "click here" inline links, /answer/
+							// links on non-upsell pages, CSS blobs captured as text, etc.).
+							if (!btn.product_id) return false;
 							return true;
 						});
-
-						// Build a label dictionary per product_id so old "no text" rows can reuse
-						// the best known label (including newly captured alt text) in the same range.
-						// Keep sticky and non-sticky separate to avoid leaking sticky copy into page slots.
-						const preferredLabelByProduct = new Map();
-						const preferredLabelByProductAnyScope = new Map();
-						for (const btn of validButtons) {
-							const pid = btn.product_id || '';
-							if (!pid) continue;
-							const scope = btn.position === 'sticky' ? 'sticky' : 'non_sticky';
-							const labelKey = `${pid}||${scope}`;
-							const normalized = normalizeButtonLabel(btn.label || '') || inferLabelFromUrl(btn.url || '');
-							if (!normalized) continue;
-							const clicks = Number(btn.clicks || 0);
-							if (!preferredLabelByProduct.has(labelKey) || clicks > preferredLabelByProduct.get(labelKey).clicks) {
-								preferredLabelByProduct.set(labelKey, { label: normalized, clicks: clicks });
-							}
-							if (!preferredLabelByProductAnyScope.has(pid) || clicks > preferredLabelByProductAnyScope.get(pid).clicks) {
-								preferredLabelByProductAnyScope.set(pid, { label: normalized, clicks: clicks });
-							}
-						}
 
 						const groupMap = new Map();
 						for (const btn of validButtons) {
 							totalButtonClicks += Number(btn.clicks || 0);
-							const normalizedLabel = normalizeButtonLabel(btn.label || '') || inferLabelFromUrl(btn.url || '');
+							const normalizedLabel = normalizeButtonLabel(btn.label || '');
 							const pid = btn.product_id || '';
 							const scope = btn.position === 'sticky' ? 'sticky' : 'non_sticky';
-							const labelKey = `${pid}||${scope}`;
-							const inferredLabel = (!normalizedLabel && pid && preferredLabelByProduct.has(labelKey))
-								? preferredLabelByProduct.get(labelKey).label
-								: '';
-							const effectiveLabel = normalizedLabel || inferredLabel;
-							const key = `${scope}||${effectiveLabel}||${pid}`;
+							const key = `${scope}||${normalizedLabel}||${pid}`;
 							if (!groupMap.has(key)) {
 								groupMap.set(key, {
-									label: effectiveLabel,
+									label: normalizedLabel,
 									product_id: btn.product_id,
 									scope: scope,
 									clicks: 0,

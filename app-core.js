@@ -1126,70 +1126,46 @@
 	}
 
 	function _extractCheckoutButtonLabelAndKind(el) {
-		const getVisibleText = (node) => {
-			if (node.nodeType === Node.TEXT_NODE) return node.textContent;
-			if (node.nodeType !== Node.ELEMENT_NODE) return '';
-			const tag = node.tagName.toUpperCase();
-			if (tag === 'STYLE' || tag === 'SCRIPT') return '';
-			return Array.from(node.childNodes).map(getVisibleText).join(' ');
-		};
+		// STRICT extraction — only two scenarios are valid:
+		//   1. <a>plain text</a> → use own visible text content as the label.
+		//   2. <a><img alt="…"></a> → use the image's alt as the label.
+		// No aria-label, no title, no src filenames, no parent/sibling fallbacks.
 
-		const cleanLabel = (value) => {
+		const clean = (value) => {
 			const text = (value || '').replace(/\s+/g, ' ').trim();
 			if (!text) return null;
-			const low = text.toLowerCase();
-			if (
-				low === 'image cta' ||
-				low === 'checkout button' ||
-				low === 'sticky cta'
-			) {
-				return null;
-			}
-			if (/@media|\{|\}/i.test(text)) return null;
-			if (text.length >= 35 && !/\s/.test(text) && /^[A-Za-z0-9+/_=-]+$/.test(text)) return null;
 			return text.slice(0, 100);
 		};
 
-		const fromText = (node) => {
-			return cleanLabel(getVisibleText(node));
-		};
-
-		const directText = fromText(el);
-		const ariaTitle = cleanLabel(el.getAttribute('aria-label') || el.getAttribute('title') || '');
-
-		const imageEl = el.querySelector('img, picture img, svg');
-		if (imageEl) {
-			const imgLabel = cleanLabel(
-				imageEl.getAttribute('alt') ||
-				imageEl.getAttribute('aria-label') ||
-				imageEl.getAttribute('title') ||
-				''
-			);
-			if (directText) return { label: directText, kind: 'text' };
-			if (ariaTitle) return { label: ariaTitle, kind: 'label' };
-			if (imgLabel) {
-				return { label: imgLabel.slice(0, 100), kind: 'image' };
-			}
-			const src = imageEl.getAttribute && imageEl.getAttribute('src');
-			if (src) {
-				try {
-					const pathPart = new URL(src, window.location.href).pathname.split('/').pop() || 'image';
-					return { label: pathPart.replace(/\.(png|jpe?g|webp|gif|svg)$/i, ''), kind: 'image' };
-				} catch (_err) {
-					return { label: 'image', kind: 'image' };
+		// Direct text content of the <a> (excluding any nested <img>/<svg>/<style>/<script>).
+		const ownText = (() => {
+			let acc = '';
+			const walk = (node) => {
+				if (!node) return;
+				if (node.nodeType === Node.TEXT_NODE) {
+					acc += node.textContent + ' ';
+					return;
 				}
+				if (node.nodeType !== Node.ELEMENT_NODE) return;
+				const tag = node.tagName.toUpperCase();
+				if (tag === 'IMG' || tag === 'SVG' || tag === 'PICTURE' || tag === 'STYLE' || tag === 'SCRIPT') return;
+				Array.from(node.childNodes).forEach(walk);
+			};
+			Array.from(el.childNodes).forEach(walk);
+			return clean(acc);
+		})();
+
+		if (ownText) {
+			return { label: ownText, kind: 'text' };
+		}
+
+		const imageEl = el.querySelector('img');
+		if (imageEl) {
+			const altLabel = clean(imageEl.getAttribute('alt') || '');
+			if (altLabel) {
+				return { label: altLabel, kind: 'image' };
 			}
-			// Image exists but no label — return 'image', DON'T search for text in parents/siblings
-			return { label: 'image', kind: 'image' };
-		}
-
-		// Only if NO image exists, search for text label
-		if (directText) {
-			return { label: directText, kind: 'text' };
-		}
-
-		if (ariaTitle) {
-			return { label: ariaTitle.slice(0, 100), kind: 'label' };
+			return { label: null, kind: 'image' };
 		}
 
 		return { label: null, kind: 'unknown' };
@@ -1235,13 +1211,19 @@
 			const isCheckoutLink = _isCheckoutHref(href);
 
 			if (isCheckoutLink) {
+				const buttonIndicator = _getCheckoutContainerIndicator(element);
+				// Only track buttons inside one of the three approved containers:
+				//   - parent #buy-button-N
+				//   - parent #hero-section
+				//   - element with class .aw-sticky-cta-btn
+				// Anything else is noise and must be ignored.
+				if (!buttonIndicator.container_type) return;
 				try {
 					const url = new URL(href, window.location.origin);
 
 					// Extrage product_id din URL (ex: /product/640053/ → 640053)
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
 					const productId = productIdMatch ? productIdMatch[1] : null;
-					const buttonIndicator = _getCheckoutContainerIndicator(element);
 
 					// Adaugă user_id în 'custom' parameter (Digistore24 format)
 					// Format: user_id---existing_custom_data
