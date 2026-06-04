@@ -1093,7 +1093,10 @@
 			}
 		}
 
-		const total = entries.length;
+		// total = number of distinct buy-button sections/containers on the page
+		// (not the raw count of individual links, which would be inflated when
+		// a single container holds links for multiple products)
+		const total = new Set(entries.map(e => e.position)).size;
 		return entries.map(({ el, position }) => {
 			const href = el.getAttribute('href') || el.getAttribute('data-widget-link') || null;
 			const meta = _extractCheckoutButtonLabelAndKind(el);
@@ -1273,7 +1276,11 @@
 						);
 						const _posInfo = isStickyClick ? { position: null } : _getButtonPositionFromElement(element);
 						const clickedIndex = _posInfo.position;
-						const clickedTotal = isStickyClick ? null : _computeCheckoutButtonList().length || null;
+						const clickedTotal = isStickyClick ? null : (() => {
+						// Count distinct buy-button sections (matches inventory total logic)
+						const seenPos = new Set(_computeCheckoutButtonList().map(el => _getButtonPositionFromElement(el).position).filter(p => p !== null));
+						return seenPos.size || null;
+					})();
 						const clickedDomFingerprint = _domFingerprint(element);
 
 							await trackEvent('checkout_initiated', {
