@@ -3880,6 +3880,14 @@
 			};
 
 			const summarizeSlots = (buttons) => {
+				// Effective total = distinct non-sticky position count in this view.
+				// More reliable than btn.total which is inflated when a single
+				// #buy-button-N section contains links for multiple products
+				// (e.g. physical + digital book in the same container → total=4 instead of 2).
+				const _effectiveTotal = new Set(
+					(buttons || []).filter(b => b.position !== 'sticky' && b.position != null).map(b => b.position)
+				).size || null;
+
 				// Key by position only; track clicks per total to pick dominant total per position.
 				const slotMap = new Map(); // posKey -> { clicks, totalClicks: Map<total, clicks> }
 				for (const btn of buttons || []) {
@@ -3888,9 +3896,9 @@
 					if (!slotMap.has(posKey)) slotMap.set(posKey, { clicks: 0, totalClicks: new Map() });
 					const entry = slotMap.get(posKey);
 					entry.clicks += clicks;
-					if (posKey.startsWith('pos:') && btn.total != null) {
-						const t = String(btn.total);
-						entry.totalClicks.set(t, (entry.totalClicks.get(t) || 0) + clicks);
+					if (posKey.startsWith('pos:')) {
+						const t = _effectiveTotal != null ? String(_effectiveTotal) : (btn.total != null ? String(btn.total) : null);
+						if (t) entry.totalClicks.set(t, (entry.totalClicks.get(t) || 0) + clicks);
 					}
 				}
 				// Build final entries with a display key that includes the dominant total.
