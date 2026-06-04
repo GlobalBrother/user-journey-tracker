@@ -1117,24 +1117,42 @@
 			return Array.from(node.childNodes).map(getVisibleText).join(' ');
 		};
 
+		const cleanLabel = (value) => {
+			const text = (value || '').replace(/\s+/g, ' ').trim();
+			if (!text) return null;
+			const low = text.toLowerCase();
+			if (
+				low === 'image cta' ||
+				low === 'checkout button' ||
+				low === 'sticky cta' ||
+				low === 'here' ||
+				low === 'click here' ||
+				low === 'tap here'
+			) {
+				return null;
+			}
+			if (/@media|\{|\}/i.test(text)) return null;
+			if (text.length >= 35 && !/\s/.test(text) && /^[A-Za-z0-9+/_=-]+$/.test(text)) return null;
+			return text.slice(0, 100);
+		};
+
 		const fromText = (node) => {
-			const text = getVisibleText(node).replace(/\s+/g, ' ').trim();
-			return text ? text.slice(0, 100) : null;
+			return cleanLabel(getVisibleText(node));
 		};
 
 		const directText = fromText(el);
+		const ariaTitle = cleanLabel(el.getAttribute('aria-label') || el.getAttribute('title') || '');
 
 		const imageEl = el.querySelector('img, picture img, svg');
 		if (imageEl) {
-			const imgLabel = (
+			const imgLabel = cleanLabel(
 				imageEl.getAttribute('alt') ||
 				imageEl.getAttribute('aria-label') ||
 				imageEl.getAttribute('title') ||
 				''
-			).trim();
-			if (directText) {
-				return { label: directText, kind: 'text' };
-			}
+			);
+			if (directText) return { label: directText, kind: 'text' };
+			if (ariaTitle) return { label: ariaTitle, kind: 'label' };
 			if (imgLabel) {
 				return { label: imgLabel.slice(0, 100), kind: 'image' };
 			}
@@ -1156,7 +1174,6 @@
 			return { label: directText, kind: 'text' };
 		}
 
-		const ariaTitle = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
 		if (ariaTitle) {
 			return { label: ariaTitle.slice(0, 100), kind: 'label' };
 		}

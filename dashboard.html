@@ -3970,17 +3970,20 @@
 			};
 
 			const renderButtonLabel = (group) => {
+				const itemLabels = Array.isArray(group.items)
+					? group.items.map(item => normalizeButtonLabel(item.label || '')).filter(Boolean)
+					: [];
 				let btnLabel = normalizeButtonLabel(group.label || '');
+				if (!btnLabel && itemLabels.length > 0) {
+					btnLabel = itemLabels.slice().sort((a, b) => b.length - a.length)[0];
+				}
 				if (btnLabel) {
 					const suffix = (group.product_id && !btnLabel.includes('#' + group.product_id))
 						? ` <span style="opacity:.5;">- #${escHtml(String(group.product_id))}</span>`
 						: '';
 					return escHtml(btnLabel) + suffix;
 				}
-				if (group.product_id) {
-					return `<span style="opacity:.9;">Checkout button</span> <span style="opacity:.55;">#${escHtml(String(group.product_id))}</span> <span style="opacity:.45;">(no text captured)</span>`;
-				}
-				return '<span style="opacity:.45;">-</span>';
+				return '';
 			};
 
 			const ovCards = [
@@ -5883,6 +5886,7 @@
 							if (err?.name === 'AbortError' || signal.aborted) return;
 							const cachedPanel = _panelCacheGet('abandonRate');
 							if (cachedPanel) renderAbandonRate(cachedPanel);
+							else renderAbandonRate(null);
 							console.warn('abandon-rate fetch failed', err);
 						});
 					fetchScrollBehavior(signal)
@@ -5891,6 +5895,7 @@
 							if (err?.name === 'AbortError' || signal.aborted) return;
 							const cachedPanel = _panelCacheGet('scrollBehavior');
 							if (cachedPanel) renderScrollBehavior(cachedPanel);
+							else renderScrollBehavior(null);
 							console.warn('scroll-behavior fetch failed', err);
 						});
 					fetchLtv(signal)
@@ -5949,14 +5954,20 @@
 							if (err?.name === 'AbortError' || signal.aborted) return;
 							const cachedPanel = _panelCacheGet('abandonRate');
 							if (cachedPanel) renderAbandonRate(cachedPanel);
+							else renderAbandonRate(null);
 							console.warn('abandon-rate fetch failed', err);
 						});
 					fetchScrollBehavior(signal)
-						.then(d => { if (!signal.aborted && d) { _panelCacheSet('scrollBehavior', d); renderScrollBehavior(d); } })
+						.then(d => {
+							if (signal.aborted) return;
+							_panelCacheSet('scrollBehavior', d);
+							renderScrollBehavior(d);
+						})
 						.catch(err => {
 							if (err?.name === 'AbortError' || signal.aborted) return;
 							const cachedPanel = _panelCacheGet('scrollBehavior');
 							if (cachedPanel) renderScrollBehavior(cachedPanel);
+							else renderScrollBehavior(null);
 						});
 					fetchLtv(signal)
 						.then(d => { if (!signal.aborted) { _panelCacheSet('ltv', d); renderLtv(d); } })
