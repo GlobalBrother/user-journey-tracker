@@ -3969,9 +3969,27 @@
 				return cleaned;
 			};
 
+			const inferLabelFromUrl = (url) => {
+				if (!url) return '';
+				try {
+					const parsed = new URL(url, window.location.origin);
+					const p = (parsed.pathname || '').toLowerCase();
+					if (p.includes('/answer/')) {
+						if (p.endsWith('/yes')) return 'Yes';
+						if (p.endsWith('/no')) return 'No, thanks';
+						return 'Answer link';
+					}
+				} catch (_err) {
+					return '';
+				}
+				return '';
+			};
+
 			const renderButtonLabel = (group) => {
 				const itemLabels = Array.isArray(group.items)
-					? group.items.map(item => normalizeButtonLabel(item.label || '')).filter(Boolean)
+					? group.items
+						.map(item => normalizeButtonLabel(item.label || '') || inferLabelFromUrl(item.url || ''))
+						.filter(Boolean)
 					: [];
 				let btnLabel = normalizeButtonLabel(group.label || '');
 				if (!btnLabel && itemLabels.length > 0) {
@@ -3983,7 +4001,7 @@
 						: '';
 					return escHtml(btnLabel) + suffix;
 				}
-				return '';
+				return inferLabelFromUrl((group.items && group.items[0] && group.items[0].url) || '');
 			};
 
 			const ovCards = [
@@ -4038,28 +4056,34 @@
 						// the best known label (including newly captured alt text) in the same range.
 						// Keep sticky and non-sticky separate to avoid leaking sticky copy into page slots.
 						const preferredLabelByProduct = new Map();
+						const preferredLabelByProductAnyScope = new Map();
 						for (const btn of validButtons) {
 							const pid = btn.product_id || '';
 							if (!pid) continue;
 							const scope = btn.position === 'sticky' ? 'sticky' : 'non_sticky';
 							const labelKey = `${pid}||${scope}`;
-							const normalized = normalizeButtonLabel(btn.label || '');
+							const normalized = normalizeButtonLabel(btn.label || '') || inferLabelFromUrl(btn.url || '');
 							if (!normalized) continue;
 							const clicks = Number(btn.clicks || 0);
 							if (!preferredLabelByProduct.has(labelKey) || clicks > preferredLabelByProduct.get(labelKey).clicks) {
 								preferredLabelByProduct.set(labelKey, { label: normalized, clicks: clicks });
+							}
+							if (!preferredLabelByProductAnyScope.has(pid) || clicks > preferredLabelByProductAnyScope.get(pid).clicks) {
+								preferredLabelByProductAnyScope.set(pid, { label: normalized, clicks: clicks });
 							}
 						}
 
 						const groupMap = new Map();
 						for (const btn of validButtons) {
 							totalButtonClicks += Number(btn.clicks || 0);
-							const normalizedLabel = normalizeButtonLabel(btn.label || '');
+							const normalizedLabel = normalizeButtonLabel(btn.label || '') || inferLabelFromUrl(btn.url || '');
 							const pid = btn.product_id || '';
 							const scope = btn.position === 'sticky' ? 'sticky' : 'non_sticky';
 							const labelKey = `${pid}||${scope}`;
 							const inferredLabel = (!normalizedLabel && pid && preferredLabelByProduct.has(labelKey))
 								? preferredLabelByProduct.get(labelKey).label
+								: (!normalizedLabel && pid && preferredLabelByProductAnyScope.has(pid))
+									? preferredLabelByProductAnyScope.get(pid).label
 								: '';
 							const effectiveLabel = normalizedLabel || inferredLabel;
 							const key = `${scope}||${effectiveLabel}||${pid}`;

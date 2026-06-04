@@ -1034,6 +1034,20 @@
 		return { position: null, isHero: false };
 	}
 
+	function _getCheckoutContainerIndicator(element) {
+		const buyContainer = element.closest('[id^="buy-button-"]');
+		if (buyContainer && /^buy-button-\d+$/.test(buyContainer.id)) {
+			return { container_id: buyContainer.id, container_type: 'buy_button' };
+		}
+		if (element.closest('#hero-section')) {
+			return { container_id: 'hero-section', container_type: 'hero' };
+		}
+		if (element.classList.contains('aw-sticky-cta-btn') || element.closest('.aw-sticky-cta-btn')) {
+			return { container_id: 'aw-sticky-cta-btn', container_type: 'sticky' };
+		}
+		return { container_id: null, container_type: null };
+	}
+
 	function _extractProductIdFromCheckoutHref(href) {
 		if (!href) return null;
 		try {
@@ -1083,6 +1097,7 @@
 		return entries.map(({ el, position }) => {
 			const href = el.getAttribute('href') || el.getAttribute('data-widget-link') || null;
 			const meta = _extractCheckoutButtonLabelAndKind(el);
+			const indicator = _getCheckoutContainerIndicator(el);
 			return {
 				position: position,
 				total: total,
@@ -1090,6 +1105,8 @@
 				button_label: meta.label,
 				button_content_kind: meta.kind,
 				button_dom_fingerprint: _domFingerprint(el),
+				button_container_id: indicator.container_id,
+				button_container_type: indicator.container_type,
 				checkout_url: href,
 			};
 		});
@@ -1124,10 +1141,7 @@
 			if (
 				low === 'image cta' ||
 				low === 'checkout button' ||
-				low === 'sticky cta' ||
-				low === 'here' ||
-				low === 'click here' ||
-				low === 'tap here'
+				low === 'sticky cta'
 			) {
 				return null;
 			}
@@ -1227,7 +1241,7 @@
 					// Extrage product_id din URL (ex: /product/640053/ → 640053)
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
 					const productId = productIdMatch ? productIdMatch[1] : null;
-					const buttonMeta = _extractCheckoutButtonLabelAndKind(element);
+					const buttonIndicator = _getCheckoutContainerIndicator(element);
 
 					// Adaugă user_id în 'custom' parameter (Digistore24 format)
 					// Format: user_id---existing_custom_data
@@ -1266,7 +1280,8 @@
 								debugLog('✅ Checkout lookup saved for product_id:', productId);
 							}
 
-							const clickedButtonText = buttonMeta.label;
+							const liveButtonMeta = _extractCheckoutButtonLabelAndKind(element);
+							const clickedButtonText = liveButtonMeta.label;
 
 						// Determine position from structured HTML IDs (#buy-button-N, #hero-section).
 						// Sticky CTA is detected via class and reported with position=null.
@@ -1283,8 +1298,10 @@
 								product_id: productId,
 								checkout_url: url.toString(),
 								button_label: clickedButtonText,
-								button_content_kind: buttonMeta.kind,
+								button_content_kind: liveButtonMeta.kind,
 								button_dom_fingerprint: clickedDomFingerprint,
+								button_container_id: buttonIndicator.container_id,
+								button_container_type: buttonIndicator.container_type,
 								button_position: clickedIndex || null,
 								button_total: clickedTotal || null,
 								is_sticky_cta: isStickyClick || undefined,
