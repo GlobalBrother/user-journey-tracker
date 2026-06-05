@@ -63,13 +63,16 @@
 			// Screen
 			screenResolution: `${screen.width}x${screen.height}`,
 			screenDepth: screen.colorDepth,
+			screenAvail: `${screen.availWidth}x${screen.availHeight}`,
+			devicePixelRatio: window.devicePixelRatio || 1,
 
 			// Browser
 			userAgent: navigator.userAgent,
-			language: navigator.language,
+			languages: (navigator.languages || [navigator.language]).join(','),
 			platform: navigator.platform,
 			hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
 			deviceMemory: navigator.deviceMemory || 'unknown',
+			maxTouchPoints: navigator.maxTouchPoints || 0,
 
 			// Timezone
 			timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -80,6 +83,9 @@
 
 			// WebGL fingerprint
 			webgl: getWebGLFingerprint(),
+
+			// Audio fingerprint (cel mai mare câștig de entropie)
+			audio: await getAudioFingerprint(),
 
 			// Fonts
 			fonts: await detectFonts()
@@ -160,6 +166,40 @@
 	async function isFontAvailable(fontName) {
 		if (!document.fonts || !document.fonts.check) return false;
 		return document.fonts.check(`12px "${fontName}"`);
+	}
+
+	/**
+	 * Audio fingerprinting - entropie mare bazată pe hardware audio/driver
+	 */
+	async function getAudioFingerprint() {
+		try {
+			const AudioCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+			if (!AudioCtx) return 'audio-not-available';
+
+			const ctx = new AudioCtx(1, 44100, 44100);
+			const oscillator = ctx.createOscillator();
+			const compressor = ctx.createDynamicsCompressor();
+
+			oscillator.type = 'triangle';
+			oscillator.frequency.value = 10000;
+			compressor.threshold.value = -50;
+			compressor.knee.value = 40;
+			compressor.ratio.value = 12;
+			compressor.attack.value = 0;
+			compressor.release.value = 0.25;
+
+			oscillator.connect(compressor);
+			compressor.connect(ctx.destination);
+			oscillator.start(0);
+
+			const buffer = await ctx.startRendering();
+			const data = buffer.getChannelData(0);
+			let sum = 0;
+			for (let i = 4500; i < 5000; i++) sum += Math.abs(data[i]);
+			return sum.toFixed(10);
+		} catch (e) {
+			return 'audio-error';
+		}
 	}
 
 	/**
