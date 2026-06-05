@@ -39,6 +39,8 @@
 			'buginguide.com',
 			'www.theamishways.com',
 			'theamishways.com',
+			'www.theamishways.co.uk',
+			'theamishways.co.uk',
 			'nogridsurvivalprojects.com',
 			'www.nogridsurvivalprojects.com',
 			'advertorials645.lpages.co',
