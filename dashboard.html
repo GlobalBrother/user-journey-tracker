@@ -3879,15 +3879,9 @@
 				return 'Legacy';
 			};
 
-			const summarizeSlots = (buttons) => {
-				// Effective total = distinct non-sticky position count in this view.
-				// More reliable than btn.total which is inflated when a single
-				// #buy-button-N section contains links for multiple products
-				// (e.g. physical + digital book in the same container → total=4 instead of 2).
-				const _effectiveTotal = new Set(
-					(buttons || []).filter(b => b.position !== 'sticky' && b.position != null).map(b => b.position)
-				).size || null;
-
+				// forcedTotal: domain-level distinct non-sticky position count, passed in from the call site.
+				// This ensures group cards show "Button N of [domain total]" not "Button N of [group size]".
+				const summarizeSlots = (buttons, forcedTotal = null) => {
 				// Key by position only; track clicks per total to pick dominant total per position.
 				const slotMap = new Map(); // posKey -> { clicks, totalClicks: Map<total, clicks> }
 				for (const btn of buttons || []) {
@@ -3897,7 +3891,7 @@
 					const entry = slotMap.get(posKey);
 					entry.clicks += clicks;
 					if (posKey.startsWith('pos:')) {
-						const t = _effectiveTotal != null ? String(_effectiveTotal) : (btn.total != null ? String(btn.total) : null);
+						const t = forcedTotal != null ? String(forcedTotal) : (btn.total != null ? String(btn.total) : null);
 						if (t) entry.totalClicks.set(t, (entry.totalClicks.get(t) || 0) + clicks);
 					}
 				}
@@ -4032,6 +4026,7 @@
 					let totalButtonClicks = 0;
 					let buttonGroups = [];
 					let domainSlots = [];
+					let domainPositionCount = null;
 
 					if (hasButtons) {
 						const validButtons = row.buttons.filter(btn => {
@@ -4078,7 +4073,10 @@
 							// hidden so they don't appear as anonymous "Button X of Y" tiles.
 							.filter(g => g.label && g.label.length > 0)
 							.sort((a, b) => b.clicks - a.clicks);
-						domainSlots = summarizeSlots(validButtons);
+						domainPositionCount = new Set(
+							(validButtons || []).filter(b => b.position !== 'sticky' && b.position != null).map(b => b.position)
+						).size || null;
+						domainSlots = summarizeSlots(validButtons, domainPositionCount);
 					}
 
 					const convPct = row.initiated ? (row.converted / row.initiated) * 100 : 0;
@@ -4096,7 +4094,7 @@
 						: 'No button slot data';
 
 					const groupsHtml = buttonGroups.map(group => {
-						const slots = filterOutEmptyLegacy(summarizeSlots(group.items));
+						const slots = filterOutEmptyLegacy(summarizeSlots(group.items, domainPositionCount));
 						const maxSlotClicks = Math.max(...slots.map(s => s.clicks), 1);
 						const slotRows = slots.map(slot => {
 							const pct = group.clicks ? Math.round((slot.clicks / group.clicks) * 100) : 0;
