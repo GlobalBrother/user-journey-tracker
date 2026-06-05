@@ -2599,6 +2599,19 @@
 			letter-spacing: .05em;
 		}
 
+		.conv-card-product {
+			flex: 1 1 100%;
+		}
+
+		.conv-card-product-name {
+			max-width: 100%;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			font-size: 12px;
+			color: var(--text2);
+		}
+
 		/* Collapsed duplicate events */
 		.timeline-collapsed-toggle {
 			display: flex;
@@ -6207,10 +6220,14 @@
 			// Conversion card
 			let convCard = '';
 			if (ev.event_type === 'conversion') {
+				const productHtml = ev.product_name
+					? `<div class="conv-card-stat conv-card-product"><div class="conv-card-val conv-card-product-name" title="${escHtml(ev.product_name)}">${escHtml(ev.product_name)}</div><div class="conv-card-lbl">Product</div></div>`
+					: '';
 				convCard = `
 				<div class="timeline-conv-card">
 					<div class="conv-card-stat"><div class="conv-card-val">${fmtEUR(ev.value || 0)}</div><div class="conv-card-lbl">Revenue</div></div>
 					<div class="conv-card-stat"><div class="conv-card-val">${escHtml(ev.order_id || '—')}</div><div class="conv-card-lbl">Order ID</div></div>
+					${productHtml}
 				</div>`;
 				// also show domain row for conversion page
 				if (!domainRow && ev.conversion_page) {
