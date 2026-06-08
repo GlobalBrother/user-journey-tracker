@@ -4088,12 +4088,15 @@
 							// hidden so they don't appear as anonymous "Button X of Y" tiles.
 							.filter(g => g.label && g.label.length > 0)
 							.sort((a, b) => b.clicks - a.clicks);
-						// detectDominantLayoutTotal reads btn.total (ground truth from tracker).
-						// Fall back to distinct-position count only when btn.total is absent.
-						const domainDistinctPositions = new Set(
-							(validButtons || []).filter(b => b.position !== 'sticky' && b.position !== 'hero' && b.position != null).map(b => b.position)
-						).size || null;
-						domainPositionCount = detectDominantLayoutTotal(validButtons) || domainDistinctPositions;
+						// Count distinct positions from ALL raw buttons (before active/product_id
+						// filter) so a quiet period (active=false for some slots) doesn't change
+						// the "N" in "Button X of N". btn.total is NOT used — it counts checkout
+						// links, not #buy-button-N containers, so it overcounts on multi-product pages.
+						const _allPosForCount = (row.buttons || []).filter(b => {
+							if (b.position === 'sticky' || b.position === 'hero' || b.position == null) return false;
+							return !slotPosKey(b).startsWith('legacy:');
+						});
+						domainPositionCount = new Set(_allPosForCount.map(b => b.position)).size || null;
 						domainSlots = summarizeSlots(validButtons, domainPositionCount);
 					}
 
