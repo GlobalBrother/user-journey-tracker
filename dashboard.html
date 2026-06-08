@@ -4088,9 +4088,12 @@
 							// hidden so they don't appear as anonymous "Button X of Y" tiles.
 							.filter(g => g.label && g.label.length > 0)
 							.sort((a, b) => b.clicks - a.clicks);
-						domainPositionCount = new Set(
+						// detectDominantLayoutTotal reads btn.total (ground truth from tracker).
+						// Fall back to distinct-position count only when btn.total is absent.
+						const domainDistinctPositions = new Set(
 							(validButtons || []).filter(b => b.position !== 'sticky' && b.position !== 'hero' && b.position != null).map(b => b.position)
 						).size || null;
+						domainPositionCount = detectDominantLayoutTotal(validButtons) || domainDistinctPositions;
 						domainSlots = summarizeSlots(validButtons, domainPositionCount);
 					}
 
