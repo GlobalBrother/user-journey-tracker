@@ -7,7 +7,6 @@
 
 <script>
   // ── Așteaptă AppCore să fie gata (apărat față de CDN lent) ──
-  // Dacă AppCore nu e disponibil în 8s → log warning și sare
   function _waitForAppCore(cb, attempts) {
     attempts = attempts || 0;
     if (window.AppCore && window.AppCore.trackConversion) {
@@ -19,32 +18,20 @@
     }
   }
 
-  var params = new URLSearchParams(window.location.search);
-
-  // Singurii parametri necriptați de Digistore
-  var orderId   = params.get('order_id');                       // ex: 'WH7YT23H'
-  var productId = params.get('digistore_initial_product_id');   // ex: '594082'
+  var orderId = new URLSearchParams(window.location.search).get('order_id');
 
   // ── Dacă order_id lipsește din URL, nu trimite conversia ──
-  // order_id = 'unknown' ar cauza pierderea tuturor conversiilor ulterioare
-  // din cauza UNIQUE constraint în DB (doar prima ar fi salvată, restul respinse silențios)
+  // order_id lipsă ar cauza conflict pe UNIQUE constraint în DB
   if (!orderId) {
     console.warn('[AppCore] trackConversion skipped — order_id missing from URL');
     // Încearcă din nou după 2s (uneori Digistore adaugă params cu întârziere)
     setTimeout(function() {
-      var retryOrderId = new URLSearchParams(window.location.search).get('order_id');
-      if (retryOrderId) window.location.reload();
+      if (new URLSearchParams(window.location.search).get('order_id')) window.location.reload();
     }, 2000);
   } else {
     _waitForAppCore(function() {
-      // amount și product_name sunt criptate — le punem hardcodat
-      AppCore.trackConversion({
-        order_id:     orderId,
-        product_id:   productId || '',
-        product_name: 'No Grid Survival Projects',  // ← hardcodat, nu vine din URL
-        value:        24.00,           // ← hardcodat, prețul real al produsului
-        currency:     'USD'
-      });
+      // Trimitem doar order_id — product_name și value vin din digistore_sync
+      AppCore.trackConversion({ order_id: orderId });
     });
   }
 </script>
