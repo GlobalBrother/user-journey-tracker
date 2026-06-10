@@ -3409,6 +3409,7 @@
 			<div class="panel-header">
 				<span class="panel-title">Checkout Abandon Rate</span>
 				<span style="font-size:14px;color:var(--text3);">Users who clicked checkout but didn't convert</span>
+				<button id="btnAbandonRefresh" class="btn" style="margin-left:auto;font-size:12px;padding:4px 10px;" title="Forțează reîncărcarea (bypass cache)">↻ Refresh</button>
 			</div>
 			<div class="panel-body" id="abandonRatePanel">
 				<div class="loading"><span class="spinner"></span> Loading…</div>
@@ -6583,6 +6584,31 @@
 			if (e.key === 'Enter') {
 				const uid = e.target.value.trim();
 				if (uid) lookupUser(uid);
+			}
+		});
+
+		// Checkout Abandon Rate — force refresh (bypass server cache)
+		document.getElementById('btnAbandonRefresh').addEventListener('click', async () => {
+			const btn = document.getElementById('btnAbandonRefresh');
+			const panel = document.getElementById('abandonRatePanel');
+			btn.disabled = true;
+			btn.textContent = '↻ Se încarcă…';
+			panel.innerHTML = '<div class="loading"><span class="spinner"></span> Reîncărcare forțată…</div>';
+			try {
+				const start = document.getElementById('startDate').value;
+				const end = document.getElementById('endDate').value;
+				const domain = document.getElementById('domainFilter').value.trim();
+				const params = new URLSearchParams({ start_date: start, end_date: end, force_refresh: 'true' });
+				if (domain) params.set('domain', domain);
+				const res = await fetch(`${API_ENDPOINT}/api/analytics/checkout/abandon-rate?${params}`, { headers: HEADERS });
+				if (!res.ok) throw new Error(`API ${res.status}`);
+				const data = await res.json();
+				renderAbandonRate(data);
+			} catch (err) {
+				panel.innerHTML = `<p style="color:var(--red);">Eroare la reîncărcare: ${err.message}</p>`;
+			} finally {
+				btn.disabled = false;
+				btn.textContent = '↻ Refresh';
 			}
 		});
 
