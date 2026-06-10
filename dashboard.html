@@ -3849,6 +3849,7 @@
 				el.innerHTML = '<p style="color:var(--text3);">No checkout events in this period.</p>';
 				return;
 			}
+			const isDegraded = !!data.degraded;
 
 			const o = data.overall;
 			const color = o.abandon_rate_pct > 70 ? 'var(--red)' : o.abandon_rate_pct > 40 ? 'var(--yellow)' : 'var(--green)';
@@ -4028,6 +4029,9 @@
 
 			if (data.by_domain && data.by_domain.length > 0) {
 				html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin:12px 0 8px;">Site Drilldown</div>`;
+				if (isDegraded) {
+					html += `<div style="font-size:12px;color:var(--yellow);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:8px 12px;margin-bottom:10px;">⚠ Date aproximative — interogarea completă a depăşit limita de timp. Statisticile de abandon sunt corecte, dar detaliile butoanelor nu sunt afişate (date istorice mixate).</div>`;
+				}
 				html += `<div class="abx-wrap">`;
 
 				for (const [index, row] of data.by_domain.entries()) {
