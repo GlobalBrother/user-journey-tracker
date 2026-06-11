@@ -3558,6 +3558,7 @@
 		let _slugShowAll = false;  // true after user clicks "Show all slugs"
 		let _domainRevRevealed = false;  // true after user reveals revenue column in Sites Performance
 		let _cohortRevRevealed = false;  // true after user reveals revenue column in Audience Cohorts
+		let _ltvRevRevealed = false;     // true after user reveals revenue column in LTV per Traffic Source
 		const SLUG_INITIAL_COUNT = 20;
 		let _ltvData = null;     // LTV data — re-render after _adsMap is populated
 		let sortColD = 'revenue';
@@ -4598,7 +4599,7 @@
 					<th style="text-align:left;padding:6px 8px;">Source</th>
 					<th style="text-align:right;padding:6px 8px;">Buyers</th>
 					<th style="text-align:right;padding:6px 8px;">Orders</th>
-					<th style="text-align:right;padding:6px 8px;">Revenue</th>
+					<th class="${_ltvRevRevealed ? '' : 'blur-col-revenue'}" style="text-align:right;padding:6px 8px;">Revenue</th>
 					<th style="text-align:right;padding:6px 8px;">Avg Order</th>
 					<th style="text-align:right;padding:6px 8px;">Avg LTV</th>
 					<th style="text-align:right;padding:6px 8px;">Repeat Buyers</th>
@@ -4619,7 +4620,7 @@
 					<td style="padding:6px 8px;">${slugCell}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.unique_buyers)}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.total_orders)}</td>
-					<td style="text-align:right;padding:6px 8px;">${fmtEUR(row.total_revenue)}</td>
+					<td class="${_ltvRevRevealed ? '' : 'blur-col-revenue'}" style="text-align:right;padding:6px 8px;">${fmtEUR(row.total_revenue)}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtEUR(row.avg_order_value)}</td>
 					<td style="text-align:right;padding:6px 8px;font-weight:700;color:var(--accent);">${fmtEUR(row.avg_ltv)}</td>
 					<td style="text-align:right;padding:6px 8px;">${fmtNum(row.repeat_buyers)}</td>
@@ -6676,6 +6677,13 @@
 		document.querySelector('#cohortTableBody').closest('table').addEventListener('click', function(e) {
 			if (e.target.closest('.blur-col-revenue')) {
 				_cohortRevRevealed = true;
+				this.querySelectorAll('.blur-col-revenue').forEach(el => el.classList.remove('blur-col-revenue'));
+			}
+		});
+
+		document.getElementById('ltvPanel').addEventListener('click', function(e) {
+			if (e.target.closest('.blur-col-revenue')) {
+				_ltvRevRevealed = true;
 				this.querySelectorAll('.blur-col-revenue').forEach(el => el.classList.remove('blur-col-revenue'));
 			}
 		});
