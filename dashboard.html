@@ -719,6 +719,34 @@
 		.kpi-grid .kpi-card:nth-child(6) { animation-delay: 0.17s; }
 		.kpi-grid .kpi-card:nth-child(7) { animation-delay: 0.2s; }
 
+		/* ── KPI BLUR-TO-REVEAL ── */
+		.kpi-card .kpi-value,
+		.kpi-card .kpi-sub,
+		.kpi-card .kpi-delta {
+			transition: filter 0.35s ease;
+		}
+		.kpi-card.blurred {
+			cursor: pointer;
+		}
+		.kpi-card.blurred .kpi-value,
+		.kpi-card.blurred .kpi-sub,
+		.kpi-card.blurred .kpi-delta {
+			filter: blur(7px);
+			user-select: none;
+		}
+		.kpi-card.blurred::after {
+			content: '\1F441  Click to reveal';
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 12px;
+			letter-spacing: 0.06em;
+			color: rgba(255, 255, 255, 0.45);
+			pointer-events: none;
+		}
+
 		.grid-2 .panel:nth-child(1) { animation-delay: 0.04s; }
 		.grid-2 .panel:nth-child(2) { animation-delay: 0.08s; }
 		#abandonRatePanel {
@@ -3146,43 +3174,43 @@
 
 		<!-- KPI Cards -->
 		<div class="kpi-grid">
-			<div class="kpi-card purple">
+			<div class="kpi-card purple blurred">
 				<div class="kpi-label">Unique Users</div>
 				<div class="kpi-value" id="kpiUsers">—</div>
 				<div class="kpi-sub" id="kpiUsersSub">unique visitors</div>
 				<div class="kpi-delta" id="deltaUsers"><span class="delta-neutral">—</span></div>
 			</div>
-			<div class="kpi-card cyan">
+			<div class="kpi-card cyan blurred">
 				<div class="kpi-label">Pageviews</div>
 				<div class="kpi-value" id="kpiPageviews">—</div>
 				<div class="kpi-sub">total visits</div>
 				<div class="kpi-delta" id="deltaPageviews"><span class="delta-neutral">—</span></div>
 			</div>
-			<div class="kpi-card green">
+			<div class="kpi-card green blurred">
 				<div class="kpi-label">Conversions</div>
 				<div class="kpi-value" id="kpiConversions">—</div>
 				<div class="kpi-sub" id="kpiConvRate">rate: —</div>
 				<div class="kpi-delta" id="deltaConversions"><span class="delta-neutral">—</span></div>
 			</div>
-			<div class="kpi-card yellow">
+			<div class="kpi-card yellow blurred">
 				<div class="kpi-label">Revenue</div>
 				<div class="kpi-value" id="kpiRevenue">—</div>
 				<div class="kpi-sub" id="kpiAvgOrder">avg order: —</div>
 				<div class="kpi-delta" id="deltaRevenue"><span class="delta-neutral">—</span></div>
 			</div>
-			<div class="kpi-card red">
+			<div class="kpi-card red blurred">
 				<div class="kpi-label">Cross-Domain Users</div>
 				<div class="kpi-value" id="kpiCrossDomain">—</div>
 				<div class="kpi-sub" id="kpiAvgDomains">avg domains: —</div>
 				<div class="kpi-delta" id="deltaCrossDomain"><span class="delta-neutral">—</span></div>
 			</div>
-			<div class="kpi-card purple">
+			<div class="kpi-card purple blurred">
 				<div class="kpi-label">Bounce Rate</div>
 				<div class="kpi-value" id="kpiBounceRate">—</div>
 				<div class="kpi-sub">single-page visitors</div>
 				<div class="kpi-delta" id="deltaBounce"><span class="delta-neutral">—</span></div>
 			</div>
-			<div class="kpi-card cyan">
+			<div class="kpi-card cyan blurred">
 				<div class="kpi-label">Avg Time on Page</div>
 				<div class="kpi-value" id="kpiTimeOnPage">—</div>
 				<div class="kpi-sub">per session</div>
@@ -6618,6 +6646,14 @@
 		});
 		document.getElementById('overlay').addEventListener('click', e => {
 			if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+		});
+
+		// ════════════════════════════════════════
+		// KPI BLUR-TO-REVEAL
+		// ════════════════════════════════════════
+		document.querySelector('.kpi-grid').addEventListener('click', function(e) {
+			const card = e.target.closest('.kpi-card.blurred');
+			if (card) card.classList.remove('blurred');
 		});
 
 		// ════════════════════════════════════════
