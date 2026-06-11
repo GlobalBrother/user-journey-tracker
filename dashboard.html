@@ -3559,6 +3559,7 @@
 		let _domainRevRevealed = false;  // true after user reveals revenue column in Sites Performance
 		let _cohortRevRevealed = false;  // true after user reveals revenue column in Audience Cohorts
 		let _ltvRevRevealed = false;     // true after user reveals revenue column in LTV per Traffic Source
+		let _slugRevRevealed = false;    // true after user reveals revenue in Ad Slugs Performance cards
 		const SLUG_INITIAL_COUNT = 20;
 		let _ltvData = null;     // LTV data — re-render after _adsMap is populated
 		let sortColD = 'revenue';
@@ -5240,7 +5241,7 @@
 	  <div class="adslug-metrics">
 		<div class="adslug-metric"><div class="adslug-metric-label">Users</div><div class="adslug-metric-value">${fmtNum(s.users)}</div></div>
 		<div class="adslug-metric"><div class="adslug-metric-label">Pageviews</div><div class="adslug-metric-value">${fmtNum(s.pageviews)}</div></div>
-		<div class="adslug-metric"><div class="adslug-metric-label">Revenue</div><div class="adslug-metric-value">${fmtEUR(s.revenue)}</div></div>
+		<div class="adslug-metric${_slugRevRevealed ? '' : ' blur-col-revenue'}"><div class="adslug-metric-label">Revenue</div><div class="adslug-metric-value">${fmtEUR(s.revenue)}</div></div>
 	  </div>
 	  <div class="adslug-bars">
 		<div class="adslug-bar-row"><span>Users share vs top slug</span><strong>${usersPct}%</strong></div>
@@ -6684,6 +6685,13 @@
 		document.getElementById('ltvPanel').addEventListener('click', function(e) {
 			if (e.target.closest('.blur-col-revenue')) {
 				_ltvRevRevealed = true;
+				this.querySelectorAll('.blur-col-revenue').forEach(el => el.classList.remove('blur-col-revenue'));
+			}
+		});
+
+		document.getElementById('slugTableBody').addEventListener('click', function(e) {
+			if (e.target.closest('.blur-col-revenue')) {
+				_slugRevRevealed = true;
 				this.querySelectorAll('.blur-col-revenue').forEach(el => el.classList.remove('blur-col-revenue'));
 			}
 		});
