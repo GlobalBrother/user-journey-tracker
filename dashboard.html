@@ -5241,7 +5241,7 @@
 	  <div class="adslug-metrics">
 		<div class="adslug-metric"><div class="adslug-metric-label">Users</div><div class="adslug-metric-value">${fmtNum(s.users)}</div></div>
 		<div class="adslug-metric"><div class="adslug-metric-label">Pageviews</div><div class="adslug-metric-value">${fmtNum(s.pageviews)}</div></div>
-		<div class="adslug-metric${_slugRevRevealed ? '' : ' blur-col-revenue'}"><div class="adslug-metric-label">Revenue</div><div class="adslug-metric-value">${fmtEUR(s.revenue)}</div></div>
+		<div class="adslug-metric"><div class="adslug-metric-label">Revenue</div><div class="adslug-metric-value${_slugRevRevealed ? '' : ' blur-col-revenue'}">${fmtEUR(s.revenue)}</div></div>
 	  </div>
 	  <div class="adslug-bars">
 		<div class="adslug-bar-row"><span>Users share vs top slug</span><strong>${usersPct}%</strong></div>
