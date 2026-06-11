@@ -725,6 +725,14 @@
 		.kpi-card .kpi-delta {
 			transition: filter 0.35s ease;
 		}
+
+		/* ── COLUMN BLUR-TO-REVEAL ── */
+		.blur-col-revenue {
+			filter: blur(6px);
+			user-select: none;
+			cursor: pointer;
+			transition: filter 0.35s ease;
+		}
 		.kpi-card.blurred {
 			cursor: pointer;
 		}
@@ -3286,7 +3294,7 @@
 							<th data-col-d="users">Users</th>
 							<th data-col-d="pageviews">Pageviews</th>
 							<th data-col-d="conversions">Conversions</th>
-							<th data-col-d="revenue">Revenue</th>
+							<th data-col-d="revenue" class="blur-col-revenue">Revenue</th>
 							<th data-col-d="conversion_rate">Conv. Rate</th>
 						</tr>
 					</thead>
@@ -3548,6 +3556,8 @@
 		let _adsPreviewLoading = false;
 		let _adsPreviewLoadedKey = null;
 		let _slugShowAll = false;  // true after user clicks "Show all slugs"
+		let _domainRevRevealed = false;  // true after user reveals revenue column in Sites Performance
+		let _cohortRevRevealed = false;  // true after user reveals revenue column in Audience Cohorts
 		const SLUG_INITIAL_COUNT = 20;
 		let _ltvData = null;     // LTV data — re-render after _adsMap is populated
 		let sortColD = 'revenue';
@@ -5286,7 +5296,7 @@
       <td>${fmtNum(d.users)}</td>
       <td>${fmtNum(d.pageviews)}</td>
       <td>${fmtNum(d.conversions)}</td>
-      <td>${fmtEUR(d.revenue)}</td>
+      <td class="${_domainRevRevealed ? '' : 'blur-col-revenue'}">${fmtEUR(d.revenue)}</td>
       <td>${convRateBadge(d.conversion_rate)}</td>
     </tr>
   `).join('');
@@ -5471,7 +5481,7 @@
         <td style="color:var(--text2);font-size:12px;" title="Utilizatori fără ID stocat în acest segment — prima vizită sau după ștergere ITP">${fmtNum(c.new_id_users ?? 0)}</td>
         <td style="color:${bounceColor};font-weight:600;">${c.bounce_rate}%</td>
         <td>${fmtNum(c.conversions)}</td>
-        <td style="color:var(--green);font-weight:600;">${fmtEUR(c.revenue)}</td>
+        <td class="${_cohortRevRevealed ? '' : 'blur-col-revenue'}" style="color:var(--green);font-weight:600;">${fmtEUR(c.revenue)}</td>
         <td style="color:var(--accent2);">${fmtEUR(c.rpu)}</td>
         <td style="color:var(--text2);">${fmtEUR(c.aov)}</td>
         <td>${convRateBadge(c.conversion_rate)}</td>
@@ -6654,6 +6664,20 @@
 		document.querySelector('.kpi-grid').addEventListener('click', function(e) {
 			const card = e.target.closest('.kpi-card.blurred');
 			if (card) card.classList.remove('blurred');
+		});
+
+		document.querySelector('#domainTableBody').closest('table').addEventListener('click', function(e) {
+			if (e.target.closest('.blur-col-revenue')) {
+				_domainRevRevealed = true;
+				this.querySelectorAll('.blur-col-revenue').forEach(el => el.classList.remove('blur-col-revenue'));
+			}
+		});
+
+		document.querySelector('#cohortTableBody').closest('table').addEventListener('click', function(e) {
+			if (e.target.closest('.blur-col-revenue')) {
+				_cohortRevRevealed = true;
+				this.querySelectorAll('.blur-col-revenue').forEach(el => el.classList.remove('blur-col-revenue'));
+			}
 		});
 
 		// ════════════════════════════════════════
