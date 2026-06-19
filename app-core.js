@@ -46,6 +46,8 @@
 			'advertorials645.lpages.co',
 			'wildernesslongtermsurvival.com',
 			'www.wildernesslongtermsurvival.com',
+			'thelostskillsofindependence.com',
+			'www.thelostskillsofindependence.com',
 		],
 
 		// Debug mode (activează console.logs)
