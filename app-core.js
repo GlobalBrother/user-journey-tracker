@@ -174,13 +174,16 @@
 
 	/**
 	 * Audio fingerprinting - entropie mare bazată pe hardware audio/driver
+	 * Folosim 4096 samples (nu 44100) — entropie identică, de ~10x mai rapid pe mobile.
+	 * Timeout de 500ms: dacă audio procesorul e blocat (iOS Safari strict mode, WebView),
+	 * nu blocăm trackPageview() și pageview-ul se trimite la timp.
 	 */
 	async function getAudioFingerprint() {
 		try {
 			const AudioCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 			if (!AudioCtx) return 'audio-not-available';
 
-			const ctx = new AudioCtx(1, 44100, 44100);
+			const ctx = new AudioCtx(1, 4096, 44100);
 			const oscillator = ctx.createOscillator();
 			const compressor = ctx.createDynamicsCompressor();
 
@@ -196,10 +199,14 @@
 			compressor.connect(ctx.destination);
 			oscillator.start(0);
 
-			const buffer = await ctx.startRendering();
+			const timeout = new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('audio-timeout')), 500)
+			);
+			const buffer = await Promise.race([ctx.startRendering(), timeout]);
 			const data = buffer.getChannelData(0);
 			let sum = 0;
-			for (let i = 4500; i < 5000; i++) sum += Math.abs(data[i]);
+			// Citim primele 500 din cei 4096 samples (suficient pentru entropie)
+			for (let i = 0; i < 500; i++) sum += Math.abs(data[i]);
 			return sum.toFixed(10);
 		} catch (e) {
 			return 'audio-error';
