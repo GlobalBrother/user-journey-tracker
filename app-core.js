@@ -1176,10 +1176,38 @@
 		if (window._acLastButtonsInventorySig === sig) return;
 		window._acLastButtonsInventorySig = sig;
 
+		// Diagnostics: trimise doar când nu se găsesc butoane, pentru debug
+		let _debug = null;
+		if (buttons.length === 0) {
+			try {
+				const containers = Array.from(document.querySelectorAll('[id^="buy-button-"]'))
+					.filter(el => /^buy-button-\d+$/.test(el.id));
+				_debug = {
+					buy_containers_found: containers.map(c => c.id),
+					per_container: containers.map(c => {
+						const allLinks = Array.from(c.querySelectorAll('a'));
+						const withHref = allLinks.filter(a => a.hasAttribute('href'));
+						const withDwl  = allLinks.filter(a => a.hasAttribute('data-widget-link'));
+						const checkout = withHref.filter(a => _isCheckoutHref(a.getAttribute('href') || ''));
+						return {
+							id: c.id,
+							all_anchors: allLinks.length,
+							with_href: withHref.length,
+							with_data_widget_link: withDwl.length,
+							checkout_hrefs: checkout.map(a => a.getAttribute('href').substring(0, 80)),
+							visible_checkout: checkout.filter(_isElementVisible).length,
+						};
+					}),
+					hero_section: !!document.getElementById('hero-section'),
+				};
+			} catch (_e) { _debug = { error: String(_e) }; }
+		}
+
 		await trackEvent('checkout_buttons_inventory', {
 			buttons: buttons,
 			total_buttons: buttons.length,
 			timestamp: Date.now(),
+			...((_debug !== null) ? { _debug } : {}),
 		});
 	}
 
