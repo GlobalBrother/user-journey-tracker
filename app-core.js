@@ -966,10 +966,14 @@
 		// We intentionally skip getBoundingClientRect: buttons below the fold or in
 		// lazy-rendered Leadpages sections have rect={0,0} even though they are
 		// genuinely present and will be visible once the user scrolls to them.
+		// NOTE: opacity is NOT checked — Leadpages uses scroll-triggered CSS fade-in
+		// animations (opacity: 0 → 1) on sections below the fold. At window.load,
+		// those sections have opacity: 0 but the buttons are genuinely present.
+		// Only display:none and visibility:hidden are intentional hiding (e.g. A/B variants).
 		let node = el;
 		while (node && node !== document.body) {
 			const s = window.getComputedStyle(node);
-			if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return false;
+			if (s.display === 'none' || s.visibility === 'hidden') return false;
 			node = node.parentElement;
 		}
 		return true;
@@ -1256,7 +1260,11 @@
 
 			// Determină tipul elementului pentru update ulterior
 			const isLeadpagesButton = element.classList.contains('lp-button-react');
-			const urlAttribute = isLeadpagesButton ? 'data-widget-link' : 'href';
+			// <a> tags navigate via href (browser standard).
+			// Div/span LP buttons fără href folosesc data-widget-link ca target URL.
+			// NOTĂ: noile versiuni Leadpages randează <a href> cu data-widget-link="true"
+			// ca simplu flag boolean — în acest caz urlAttribute trebuie să fie 'href'.
+			const urlAttribute = element.tagName.toLowerCase() === 'a' ? 'href' : 'data-widget-link';
 
 			// Count only genuine checkout links to avoid attaching listeners on generic links.
 			const isCheckoutLink = _isCheckoutHref(href);
@@ -1295,6 +1303,11 @@
 
 					// Update link/button cu URL-ul modificat
 					element.setAttribute(urlAttribute, url.toString());
+					// Dacă <a> are și data-widget-link (LP boolean flag), actualizăm și pe el
+					// — unele versiuni Leadpages citesc data-widget-link pentru propriul router JS
+					if (urlAttribute === 'href' && element.hasAttribute('data-widget-link')) {
+						element.setAttribute('data-widget-link', url.toString());
+					}
 					// ── Marchează elementul ca enhanced (evită re-procesare) ──
 					element.dataset.acEnhanced = '1';
 
