@@ -481,7 +481,10 @@
 			img.height = 1;
 
 			// Adaugă în DOM pentru trigger request
-			document.body.appendChild(img);
+			// Guard: document.body poate fi null dacă scriptul rulează din <head>
+			// înainte ca browser-ul să fi procesat <body>
+			const target = document.body || document.documentElement;
+			target.appendChild(img);
 
 			// Cleanup după 5 secunde
 			setTimeout(() => {
