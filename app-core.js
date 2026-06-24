@@ -1315,30 +1315,13 @@
 					const productIdMatch = url.pathname.match(/(\d{6,})/);
 					const productId = productIdMatch ? productIdMatch[1] : null;
 
-					// Adaugă user_id în 'custom' parameter (Digistore24 format)
-					// Format: user_id---existing_custom_data
-					// Dacă ?custom= există deja și începe cu user_id-ul curent, nu îl mai prefixăm
-					// (evită dublarea la MutationObserver sau re-run)
-					const existingCustom = url.searchParams.get('custom') || '';
-					let customValue;
-					if (existingCustom.startsWith(currentUserId)) {
-						// Deja setat corect — nu modifica
-						customValue = existingCustom;
-					} else if (existingCustom) {
-						// Există alt custom (ex: hardcodat în pagină) — prefixează cu user_id
-						customValue = `${currentUserId}---${existingCustom}`;
-					} else {
-						customValue = currentUserId;
-					}
-					url.searchParams.set('custom', customValue);
-
-					// Update link/button cu URL-ul modificat
-					element.setAttribute(urlAttribute, url.toString());
-					// Dacă <a> are și data-widget-link (LP boolean flag), actualizăm și pe el
-					// — unele versiuni Leadpages citesc data-widget-link pentru propriul router JS
-					if (urlAttribute === 'href' && element.hasAttribute('data-widget-link')) {
-						element.setAttribute('data-widget-link', url.toString());
-					}
+					// ── URL modification dezactivată ──────────────────────────────
+					// Pagina are propriul script care injectează ?custom=<ac_uid>---_fbc=...
+					// la window.load. Dacă modificăm href-ul și la DOMContentLoaded,
+					// scriptul paginii va face APPEND peste modificarea noastră → URL invalid
+					// cu doi parametri ?custom= (ex: ...?custom=X?custom=Y---_fbc=...).
+					// Scriptul paginii citește același localStorage['ac_uid'] ca și noi,
+					// deci attribution funcționează fără intervenția noastră în URL.
 					// ── Marchează elementul ca enhanced (evită re-procesare) ──
 					element.dataset.acEnhanced = '1';
 
