@@ -285,12 +285,10 @@
 	async function getUserId() {
 		if (userId) return userId;
 
-		// 1. Check localStorage — dacă există, îl folosim direct.
-		// NU verificăm fingerprint match pe return visits: Safari 17+ adaugă noise
-		// la Canvas per sesiune, deci fingerprint-ul se schimbă la fiecare vizită
-		// și ar genera un user_id nou la fiecare return visit pe iOS Safari.
+		// 1. Check localStorage — doar dacă valoarea e SHA-256 valid (64 hex chars).
+		// Dacă e UUID (de la scripturi vechi care scriau în ac_uid), ignorăm și regenerăm.
 		const storedUserId = localStorage.getItem(STORAGE_KEY);
-		if (storedUserId) {
+		if (storedUserId && /^[0-9a-f]{64}$/.test(storedUserId)) {
 			userId = storedUserId;
 			fingerprintType = 'persistent';
 			debugLog('User ID from localStorage:', userId);
