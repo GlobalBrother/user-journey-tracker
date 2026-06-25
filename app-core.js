@@ -260,9 +260,27 @@
 	const scrollMilestonesHit = new Set();
 
 	/**
+	 * Generează un UUID v4 simplu (sincron, fără crypto async).
+	 * Folosit ca placeholder sincron pe prima vizită.
+	 */
+	function generateUUID() {
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+			const r = (Math.random() * 16) | 0;
+			return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+		});
+	}
+
+	/**
 	 * Obține sau creează user ID.
 	 * Setează fingerprintType: 'persistent' dacă userId exista în localStorage,
 	 * 'new' dacă a fost generat acum (prima vizită sau după ștergere ITP).
+	 *
+	 * IMPORTANT – race condition cu tracking scripts terțe:
+	 * Scripturi terțe (ex: all-tracking-events-leadpages.html) citesc localStorage['ac_uid']
+	 * la window.load. Dacă fingerprint-ul async nu e gata până atunci, ele generează
+	 * un UUID random separat → același user apare cu două ID-uri diferite.
+	 * Fix: setăm un UUID sincron imediat (placeholder), returnăm acel UUID pentru
+	 * sesiunea curentă, și calculăm SHA-256 fingerprint în background pentru vizitele viitoare.
 	 */
 	async function getUserId() {
 		if (userId) return userId;
@@ -279,20 +297,28 @@
 			return userId;
 		}
 
-		// 2. Prima vizită pe acest domeniu (sau după ce ITP/utilizatorul a șters localStorage)
-		// — generează fingerprint nou. Aceasta este o sesiune "new", fără identificare anterioară.
-		// Pe iOS Safari cu ITP, localStorage poate fi șters după 7 zile de inactivitate,
-		// deci același om poate reveni ca utilizator "new".
-		fingerprint = await generateFingerprint();
-		userId = fingerprint;
-		fingerprintType = 'new';
-
-		localStorage.setItem(STORAGE_KEY, userId);
+		// 2. Prima vizită — setăm imediat un UUID sincron ca placeholder.
+		// Astfel orice script terț care citește localStorage['ac_uid'] la window.load
+		// va găsi un ID valid, chiar dacă SHA-256 fingerprint-ul nu s-a terminat încă.
+		const placeholderId = generateUUID();
+		localStorage.setItem(STORAGE_KEY, placeholderId);
 		if (!localStorage.getItem(STORAGE_KEY_FIRST_SEEN)) {
 			localStorage.setItem(STORAGE_KEY_FIRST_SEEN, new Date().toISOString());
 		}
+		userId = placeholderId;
+		fingerprintType = 'new';
+		debugLog('User ID placeholder set (new visit):', userId);
 
-		debugLog('User ID generated (new):', userId);
+		// 3. Calculează SHA-256 fingerprint în background și upgradează pentru vizitele viitoare.
+		// NU schimbăm userId pentru sesiunea curentă — rămâne placeholderId.
+		// La vizita următoare, fingerprint-ul SHA-256 va fi deja în localStorage.
+		generateFingerprint().then(fp => {
+			localStorage.setItem(STORAGE_KEY, fp);
+			debugLog('User ID upgraded to SHA-256 fingerprint (next visit will use this):', fp);
+		}).catch(() => {
+			// Fingerprint eșuat — UUID-ul placeholder rămâne pentru totdeauna (valid)
+		});
+
 		return userId;
 	}
 
