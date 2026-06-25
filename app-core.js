@@ -297,28 +297,19 @@
 			return userId;
 		}
 
-		// 2. Prima vizită — setăm imediat un UUID sincron ca placeholder.
-		// Astfel orice script terț care citește localStorage['ac_uid'] la window.load
-		// va găsi un ID valid, chiar dacă SHA-256 fingerprint-ul nu s-a terminat încă.
-		const placeholderId = generateUUID();
-		localStorage.setItem(STORAGE_KEY, placeholderId);
+		// 2. Prima vizită — calculează SHA-256 fingerprint și salvează în gb_uid.
+		// Meta external_id folosește ac_uid (gestionat separat de scriptul paginii),
+		// deci nu mai avem race condition și putem face await complet pe fingerprint.
+		fingerprint = await generateFingerprint();
+		userId = fingerprint;
+		fingerprintType = 'new';
+
+		localStorage.setItem(STORAGE_KEY, userId);
 		if (!localStorage.getItem(STORAGE_KEY_FIRST_SEEN)) {
 			localStorage.setItem(STORAGE_KEY_FIRST_SEEN, new Date().toISOString());
 		}
-		userId = placeholderId;
-		fingerprintType = 'new';
-		debugLog('User ID placeholder set (new visit):', userId);
 
-		// 3. Calculează SHA-256 fingerprint în background și upgradează pentru vizitele viitoare.
-		// NU schimbăm userId pentru sesiunea curentă — rămâne placeholderId.
-		// La vizita următoare, fingerprint-ul SHA-256 va fi deja în localStorage.
-		generateFingerprint().then(fp => {
-			localStorage.setItem(STORAGE_KEY, fp);
-			debugLog('User ID upgraded to SHA-256 fingerprint (next visit will use this):', fp);
-		}).catch(() => {
-			// Fingerprint eșuat — UUID-ul placeholder rămâne pentru totdeauna (valid)
-		});
-
+		debugLog('User ID generated (new):', userId);
 		return userId;
 	}
 
