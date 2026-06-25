@@ -295,9 +295,7 @@
 			return userId;
 		}
 
-		// 2. Prima vizită — calculează SHA-256 fingerprint și salvează în gb_uid.
-		// Meta external_id folosește ac_uid (gestionat separat de scriptul paginii),
-		// deci nu mai avem race condition și putem face await complet pe fingerprint.
+		// 2. Prima vizită — calculează SHA-256 fingerprint și salvează în ac_uid.
 		fingerprint = await generateFingerprint();
 		userId = fingerprint;
 		fingerprintType = 'new';
@@ -306,6 +304,8 @@
 		if (!localStorage.getItem(STORAGE_KEY_FIRST_SEEN)) {
 			localStorage.setItem(STORAGE_KEY_FIRST_SEEN, new Date().toISOString());
 		}
+		// Notifică scripturile care așteaptă ac_uid (ex: checkout link script)
+		try { window.dispatchEvent(new CustomEvent('ac_uid_ready', { detail: userId })); } catch (e) {}
 
 		debugLog('User ID generated (new):', userId);
 		return userId;
