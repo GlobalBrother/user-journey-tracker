@@ -245,8 +245,8 @@
 	// USER ID MANAGEMENT
 	// ═══════════════════════════════════════════════════════════════
 
-	const STORAGE_KEY = 'gb_uid'; // cheie separată de ac_uid (folosit de Meta external_id)
-	const STORAGE_KEY_FIRST_SEEN = 'gb_first';
+	const STORAGE_KEY = 'ac_uid';
+	const STORAGE_KEY_FIRST_SEEN = 'ac_first';
 
 	let userId = null;
 	let fingerprint = null;
