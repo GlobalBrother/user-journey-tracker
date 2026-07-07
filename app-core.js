@@ -614,8 +614,10 @@
 	// ═══════════════════════════════════════════════════════════════
 
 	/**
-	 * Trimite un eveniment page_exit via Beacon când userul iese de pe pagină.
-	 * Beacon este singurul API disponibil în evenimentele de tip pagehide.
+	 * Trimite un eveniment page_exit când userul iese de pe pagină.
+	 * fetch(keepalive:true) e folosit ca transport principal — functioneaza cross-origin
+	 * (spre deosebire de navigator.sendBeacon, care e blocat cross-origin pe ACAO wildcard;
+	 * acelasi fix aplicat deja in _sendScrollBehaviorSummary).
 	 */
 	function _sendPageExitEvent() {
 		if (!pageLoadStartTime || !CONFIG.API_KEY) return;
@@ -624,27 +626,30 @@
 		const uid = localStorage.getItem(STORAGE_KEY);
 		if (!uid) return;
 
-		// Avoid CORS noise: sendBeacon uses credentials include and is blocked for cross-origin wildcard ACAO.
+		const payload = JSON.stringify({
+			user_id: uid,
+			event_type: 'custom_event',
+			event_name: 'page_exit',
+			domain: window.location.hostname,
+			url: window.location.href,
+			timestamp: new Date().toISOString(),
+			event_source: 'beacon',
+			metadata: { event_name: 'page_exit', time_on_page_seconds: secs }
+		});
+		const beaconUrl = `${CONFIG.API_ENDPOINT}/api/b?api_key=${encodeURIComponent(CONFIG.API_KEY)}`;
 		try {
-			if (new URL(CONFIG.API_ENDPOINT).origin !== window.location.origin) return;
-		} catch (_e) {}
-
-		try {
-			const payload = JSON.stringify({
-				user_id: uid,
-				event_type: 'custom_event',
-				event_name: 'page_exit',
-				domain: window.location.hostname,
-				url: window.location.href,
-				timestamp: new Date().toISOString(),
-				event_source: 'beacon',
-				metadata: { event_name: 'page_exit', time_on_page_seconds: secs }
-			});
-			navigator.sendBeacon(
-				`${CONFIG.API_ENDPOINT}/api/b?api_key=${encodeURIComponent(CONFIG.API_KEY)}`,
-				new Blob([payload], { type: 'application/json' })
-			);
-		} catch (e) { /* silently fail — page is being hidden */ }
+			fetch(beaconUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: payload,
+				keepalive: true,
+			}).catch(() => {});
+		} catch (_e) {
+			// Last-resort: direct beacon (may fail cross-origin on some browsers)
+			try {
+				navigator.sendBeacon && navigator.sendBeacon(beaconUrl, new Blob([payload], { type: 'application/json' }));
+			} catch (_e2) { /* silently fail — page is being hidden */ }
+		}
 	}
 
 	function _detectPageType() {
