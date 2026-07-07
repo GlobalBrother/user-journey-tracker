@@ -7,15 +7,21 @@
 -- 1. OVERVIEW: Statistics generale
 -- ───────────────────────────────────────────────────────────────────
 
+-- Optimized: the two correlated subqueries each did a full scan of conversions;
+-- folding them into one CROSS JOIN derived table scans conversions once instead of twice.
 SELECT
-    COUNT(DISTINCT user_id) as total_unique_users,
-    COUNT(DISTINCT domain) as total_domains,
+    COUNT(DISTINCT ue.user_id) as total_unique_users,
+    COUNT(DISTINCT ue.domain) as total_domains,
     COUNT(*) as total_pageviews,
-    (SELECT COUNT(*) FROM conversions) as total_conversions,
-    (SELECT SUM(order_value) FROM conversions) as total_revenue
-FROM user_events
-WHERE event_type = 'pageview'
-  AND timestamp >= DATEADD(day, -30, GETDATE());
+    MAX(conv.total_conversions) as total_conversions,
+    MAX(conv.total_revenue) as total_revenue
+FROM user_events ue
+CROSS JOIN (
+    SELECT COUNT(*) as total_conversions, SUM(order_value) as total_revenue
+    FROM conversions
+) conv
+WHERE ue.event_type = 'pageview'
+  AND ue.timestamp >= DATEADD(day, -30, GETDATE());
 
 -- ───────────────────────────────────────────────────────────────────
 -- 2. TOP PERFORMERS: Care FB ads (slugs) convertesc cel mai bine?
@@ -137,33 +143,32 @@ ORDER BY timestamp ASC;
 -- 7. ATTRIBUTION ANALYSIS: First-touch vs Last-touch
 -- ───────────────────────────────────────────────────────────────────
 
+-- Optimized: original scanned+filtered user_profiles twice (once per attribution model).
+-- CROSS APPLY unpivots first_slug/last_slug so the filtered table is read once.
+WITH filtered_profiles AS (
+    SELECT first_slug, last_slug, total_revenue
+    FROM user_profiles
+    WHERE total_conversions > 0
+      AND first_seen >= DATEADD(day, -30, GETDATE())
+)
 SELECT
-    'First Touch' as attribution_model,
-    first_slug as slug,
+    v.attribution_model,
+    v.slug,
     COUNT(*) as conversions,
-    SUM(total_revenue) as revenue
-FROM user_profiles
-WHERE total_conversions > 0
-  AND first_seen >= DATEADD(day, -30, GETDATE())
-GROUP BY first_slug
-
-UNION ALL
-
-SELECT
-    'Last Touch' as attribution_model,
-    last_slug as slug,
-    COUNT(*) as conversions,
-    SUM(total_revenue) as revenue
-FROM user_profiles
-WHERE total_conversions > 0
-  AND first_seen >= DATEADD(day, -30, GETDATE())
-GROUP BY last_slug
-
-ORDER BY attribution_model, revenue DESC;
+    SUM(fp.total_revenue) as revenue
+FROM filtered_profiles fp
+CROSS APPLY (VALUES ('First Touch', fp.first_slug), ('Last Touch', fp.last_slug)) v(attribution_model, slug)
+GROUP BY v.attribution_model, v.slug
+ORDER BY v.attribution_model, revenue DESC;
 
 -- ───────────────────────────────────────────────────────────────────
 -- 8. TIME TO CONVERSION: Cât durează până convertesc users?
 -- ───────────────────────────────────────────────────────────────────
+
+-- Optimized: original ran the user_profiles/conversions JOIN twice (once for the
+-- detail list, once for the average). Materialize it once into a temp table and
+-- query that twice instead.
+IF OBJECT_ID('tempdb..#time_to_conversion') IS NOT NULL DROP TABLE #time_to_conversion;
 
 SELECT
     up.user_id,
@@ -173,18 +178,20 @@ SELECT
     DATEDIFF(hour, up.first_seen, c.timestamp) as hours_to_conversion,
     up.total_pageviews as pageviews_before_conversion,
     c.order_value
-FROM user_profiles up
-JOIN conversions c ON up.user_id = c.user_id
-WHERE c.timestamp >= DATEADD(day, -30, GETDATE())
-ORDER BY hours_to_conversion ASC;
-
--- Average time to conversion
-SELECT
-    AVG(DATEDIFF(hour, up.first_seen, c.timestamp)) as avg_hours_to_conversion,
-    AVG(up.total_pageviews) as avg_pageviews_before_conversion
+INTO #time_to_conversion
 FROM user_profiles up
 JOIN conversions c ON up.user_id = c.user_id
 WHERE c.timestamp >= DATEADD(day, -30, GETDATE());
+
+SELECT * FROM #time_to_conversion ORDER BY hours_to_conversion ASC;
+
+-- Average time to conversion
+SELECT
+    AVG(hours_to_conversion) as avg_hours_to_conversion,
+    AVG(pageviews_before_conversion) as avg_pageviews_before_conversion
+FROM #time_to_conversion;
+
+DROP TABLE #time_to_conversion;
 
 -- ───────────────────────────────────────────────────────────────────
 -- 9. BEST CONVERTING PATHS: Ce combinații de landing pages convertesc?
@@ -214,45 +221,82 @@ ORDER BY conversion_rate DESC;
 -- 10. DAILY TREND: Evoluție zilnică (pageviews, conversii, revenue)
 -- ───────────────────────────────────────────────────────────────────
 
+-- Fixed + optimized: the original joined pageviews to conversions by date only
+-- (no user_id), producing a cartesian product per day (every pageview row paired
+-- with every conversion row from that day). That inflated total_pageviews (x number
+-- of conversions that day) and revenue (x number of pageviews that day).
+-- unique_visitors / conversions / conversion_rate were unaffected since they used
+-- COUNT(DISTINCT ...), which happens to dedupe the fan-out away.
+-- Pre-aggregating each side by day before joining 1:1 fixes both and is also faster
+-- (no row multiplication to compute or discard).
+WITH pageviews_by_day AS (
+    SELECT
+        CAST(timestamp AS DATE) as date,
+        COUNT(DISTINCT user_id) as unique_visitors,
+        COUNT(*) as total_pageviews
+    FROM user_events
+    WHERE event_type = 'pageview'
+      AND timestamp >= DATEADD(day, -30, GETDATE())
+    GROUP BY CAST(timestamp AS DATE)
+),
+conversions_by_day AS (
+    SELECT
+        CAST(timestamp AS DATE) as date,
+        COUNT(DISTINCT id) as conversions,
+        COUNT(DISTINCT user_id) as converting_users,
+        SUM(order_value) as revenue
+    FROM conversions
+    GROUP BY CAST(timestamp AS DATE)
+)
 SELECT
-    CAST(e.timestamp AS DATE) as date,
-    COUNT(DISTINCT e.user_id) as unique_visitors,
-    COUNT(*) as total_pageviews,
-    COUNT(DISTINCT c.id) as conversions,
-    SUM(c.order_value) as revenue,
-    CAST(COUNT(DISTINCT c.user_id) AS FLOAT) / COUNT(DISTINCT e.user_id) * 100 as conversion_rate
-FROM user_events e
-LEFT JOIN conversions c ON CAST(e.timestamp AS DATE) = CAST(c.timestamp AS DATE)
-WHERE e.event_type = 'pageview'
-  AND e.timestamp >= DATEADD(day, -30, GETDATE())
-GROUP BY CAST(e.timestamp AS DATE)
-ORDER BY date DESC;
+    p.date,
+    p.unique_visitors,
+    p.total_pageviews,
+    ISNULL(c.conversions, 0) as conversions,
+    c.revenue,
+    CAST(ISNULL(c.converting_users, 0) AS FLOAT) / p.unique_visitors * 100 as conversion_rate
+FROM pageviews_by_day p
+LEFT JOIN conversions_by_day c ON p.date = c.date
+ORDER BY p.date DESC;
 
 -- ───────────────────────────────────────────────────────────────────
 -- 11. DEVICE & BROWSER ANALYSIS: Ce device-uri convertesc cel mai bine?
 -- ───────────────────────────────────────────────────────────────────
 
+-- Fixed + optimized: the original joined every pageview row to every one of that
+-- user's conversions (join on user_id only, no dedup), so a user with several
+-- pageviews on a device fan-out-multiplied their order_value into "revenue" for
+-- that device_type. total_users / converters / conversion_rate were unaffected
+-- (COUNT DISTINCT dedupes the fan-out away). Deduping users-per-device and summing
+-- each user's revenue once fixes it and is also cheaper (small deduped join vs. a
+-- full pageview x conversion fan-out).
+WITH user_devices AS (
+    SELECT DISTINCT
+        e.user_id,
+        CASE
+            WHEN e.user_agent LIKE '%Mobile%' THEN 'Mobile'
+            WHEN e.user_agent LIKE '%Tablet%' THEN 'Tablet'
+            ELSE 'Desktop'
+        END as device_type
+    FROM user_events e
+    WHERE e.event_type = 'pageview'
+      AND e.timestamp >= DATEADD(day, -30, GETDATE())
+      AND e.user_agent IS NOT NULL
+),
+user_revenue AS (
+    SELECT user_id, SUM(order_value) as total_order_value
+    FROM conversions
+    GROUP BY user_id
+)
 SELECT
-    CASE
-        WHEN user_agent LIKE '%Mobile%' THEN 'Mobile'
-        WHEN user_agent LIKE '%Tablet%' THEN 'Tablet'
-        ELSE 'Desktop'
-    END as device_type,
-    COUNT(DISTINCT e.user_id) as total_users,
-    COUNT(DISTINCT c.user_id) as converters,
-    CAST(COUNT(DISTINCT c.user_id) AS FLOAT) / COUNT(DISTINCT e.user_id) * 100 as conversion_rate,
-    SUM(c.order_value) as revenue
-FROM user_events e
-LEFT JOIN conversions c ON e.user_id = c.user_id
-WHERE e.event_type = 'pageview'
-  AND e.timestamp >= DATEADD(day, -30, GETDATE())
-  AND e.user_agent IS NOT NULL
-GROUP BY
-    CASE
-        WHEN user_agent LIKE '%Mobile%' THEN 'Mobile'
-        WHEN user_agent LIKE '%Tablet%' THEN 'Tablet'
-        ELSE 'Desktop'
-    END
+    ud.device_type,
+    COUNT(DISTINCT ud.user_id) as total_users,
+    COUNT(DISTINCT ur.user_id) as converters,
+    CAST(COUNT(DISTINCT ur.user_id) AS FLOAT) / COUNT(DISTINCT ud.user_id) * 100 as conversion_rate,
+    SUM(ur.total_order_value) as revenue
+FROM user_devices ud
+LEFT JOIN user_revenue ur ON ud.user_id = ur.user_id
+GROUP BY ud.device_type
 ORDER BY conversion_rate DESC;
 
 -- ───────────────────────────────────────────────────────────────────
